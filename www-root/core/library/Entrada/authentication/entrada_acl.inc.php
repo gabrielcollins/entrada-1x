@@ -486,6 +486,106 @@ class CourseOwnerAssertion implements Zend_Acl_Assert_Interface {
 		return false;
 	}
 }
+/**
+ * Online Course Assertion
+ *
+ * Used to assert that the course referenced by the course resource is online and accessible to online learners.
+ *
+ * @author Organisation: Queen's University
+ * @author Unit: School of Medicine
+ * @author Developer: Harry Brundage <hbrundage@qmed.ca>
+ * @copyright Copyright 2010 Queen's University. All Rights Reserved.
+ */
+class OnlineCourseAssertion implements Zend_Acl_Assert_Interface {
+/**
+ * Asserts that the course resource references an online course
+ *
+ * @param Zend_Acl $acl The ACL object isself (the one calling the assertion)
+ * @param Zend_Acl_Role_Interface $role The role being queried
+ * @param Zend_Acl_Resource_Interface $resource The resource being queried
+ * @param string $privilege The privilege being queried
+ * @return boolean
+ */
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+		global $db;
+		//If asserting is off then return true right away
+		if((isset($resource->assert) && $resource->assert == false) || (isset($acl->_entrada_last_query) && isset($acl->_entrada_last_query->assert) && $acl->_entrada_last_query->assert == false)) {
+			return true;
+		}
+
+		if(isset($resource->course_id)) {
+			$course_id = $resource->course_id;
+		} else if(isset($acl->_entrada_last_query->course_id)) {
+			$course_id = $acl->_entrada_last_query->course_id;
+		} else {
+			//Parse out the user ID and course ID
+			$resource_id = $resource->getResourceId();
+			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
+
+			if($resource_type !== "course" && $resource_type !== "coursecontent") {
+				//This only asserts for users on courses.
+				return false;
+			}
+
+			$course_id = preg_replace('/[^0-9]+/', "", $resource_id);
+		}
+
+		$role_id = $role->getRoleId();
+		$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
+		
+		$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
+					WHERE `id` = ".$db->qstr($access_id);
+		$user_id = $db->GetOne($query);
+
+		if(!isset($user_id) || !$user_id) {
+			$role_id = $acl->_entrada_last_query_role->getRoleId();
+			$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
+			
+			$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
+						WHERE `id` = ".$db->qstr($access_id);
+			$user_id = $db->GetOne($query);
+		}
+		return $this->_checkCourseTypeAndEnrolment($user_id, $course_id);
+	}
+
+	/**
+	 * Checks if the $course_id is an online course and if $user_id is enrolled in the course.
+	 *
+	 * @param string|integer $user_id The proxy_id to be checked
+	 * @param string|integer $course_id The course id to be checked
+	 * @return boolean
+	 */
+	static function _checkCourseTypeAndEnrolment($user_id, $course_id) {
+		//Logic taken from the old permissions_check() function.
+		global $db;
+		if ((!defined('ALLOW_REGISTRATION')) || (!ALLOW_REGISTRATION)) {
+			return false;
+		}
+		$query	=  "	SELECT * FROM `courses` 
+						WHERE `course_id` = ".$db->qstr($course_id)." 
+						AND `online_course` = '1' 
+						AND `allow_enroll` = '1'";
+		$result = $db->GetRow($query);
+		if($result) {
+			return true;
+		}
+		
+		$query = "	SELECT * FROM `course_audience` a 
+					LEFT JOIN `group_members` b
+					ON a.`audience_type` = 'group_id'
+					AND a.`audience_value` = b.`group_id`
+					AND b.`member_active` = '1'
+					WHERE a.`course_id` = ".$db->qstr($course_id)."
+					AND ((a.`audience_type` = 'proxy_id' AND a.`audience_value` = ".$db->qstr($user_id).")
+					OR (a.`audience_type` = 'group_id' AND b.`proxy_id` = ".$db->qstr($user_id)."))";
+		$result = $db->GetRow($query);
+		if($result) {
+			return true;
+		}
+
+		return false;
+	}
+}
 
 /**
  * Course Enrollment Assertion
@@ -535,7 +635,7 @@ class CourseEnrollmentAssertion implements Zend_Acl_Assert_Interface {
 			$role_id = $acl->_entrada_last_query_role->getRoleId();
 			$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
 			
-			$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`userr_access`
+			$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
 						WHERE `id` = ".$db->qstr($access_id);
 			$user_id = $db->GetOne($query);
 		}
@@ -1057,6 +1157,94 @@ class EventOwnerAssertion implements Zend_Acl_Assert_Interface {
 		return false;
 	}
 }
+/**
+ * Online Event Assertion
+ *
+ * Used to assert that the event referenced by the course resource is owned by the user referenced by the user role.
+ *
+ * @author Organisation: Queen's University
+ * @author Unit: School of Medicine
+ * @author Developer: Harry Brundage <hbrundage@qmed.ca>
+ * @copyright Copyright 2010 Queen's University. All Rights Reserved.
+ */
+class OnlineEventAssertion implements Zend_Acl_Assert_Interface {
+/**
+ * Asserts that the role references the director, coordinator, or secondary director of the course resource
+ *
+ * @param Zend_Acl $acl The ACL object isself (the one calling the assertion)
+ * @param Zend_Acl_Role_Interface $role The role being queried
+ * @param Zend_Acl_Resource_Interface $resource The resource being queried
+ * @param string $privilege The privilege being queried
+ * @return boolean
+ */
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+		global $db;
+		if((isset($resource->assert) && $resource->assert == false) || (isset($acl->_entrada_last_query) && isset($acl->_entrada_last_query->assert) && $acl->_entrada_last_query->assert == false)) {
+			return true;
+		}
+
+		if(isset($resource->event_id)) {
+			$event_id = $resource->event_id;
+		} else if(isset($acl->_entrada_last_query->event_id)) {
+			$event_id = $acl->_entrada_last_query->event_id;
+		} else {
+			return false;
+
+			$resource_id = $resource->getResourceId();
+			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
+
+			if($resource_type !== "event" && $resource_type !== "eventcontent") {
+			//This only asserts for events.
+				return false;
+			}
+
+			$event_id = preg_replace('/[^0-9]+/', "", $resource_id);
+		}
+
+		$role_id = $role->getRoleId();
+		$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
+		
+		$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
+					WHERE `id` = ".$db->qstr($access_id);
+		$user_id = $db->GetOne($query);
+
+		if(!isset($user_id) || !$user_id) {
+			$role_id = $acl->_entrada_last_query_role->getRoleId();
+			$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
+			
+			$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
+						WHERE `id` = ".$db->qstr($access_id);
+			$user_id = $db->GetOne($query);
+		}
+
+		return $this->_checkEventTypeAndAudience($user_id, $event_id);
+	}
+
+	/**
+	 * Checks if the $event_id is an online event and if $user_id is an audience member of the course
+	 *
+	 * @param string|integer $user_id The proxy id to be checked
+	 * @param string|integer $event_id The event id to be checked
+	 * @return boolean
+	 */
+	static function _checkEventTypeAndAudience($user_id, $event_id) {
+		global $db;
+		if(!defined('ALLOW_REGISTRATION') || !ALLOW_REGISTRATION){
+			return false;
+		}
+		$query		= "	SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($event_id)." AND `online_event` = '1'";
+		$results	= $db->GetAll($query);
+		if($results) {
+			return true;
+		}
+		
+		if(events_fetch_event_audience_for_user($event_id,$user_id)){
+			return true;
+		}
+
+		return false;
+	}
+}
 
 /**
  * Is Student Assertion
@@ -1321,7 +1509,7 @@ class NotGuestAssertion implements Zend_Acl_Assert_Interface {
 			}
 
 		}
-		if($GROUP == "guest") {
+		if($GROUP == "guest" || $GROUP == "online") {
 			return false;
 		}	 else {
 			return true;

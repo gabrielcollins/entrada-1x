@@ -353,6 +353,208 @@ if ($ACTION == "login") {
 
 	unset($result, $username, $password);
 
+} elseif ($ACTION == "register") {
+	$PROCESSED["register"] = true;
+	/**
+	 * Required field "firstname" / Firstname.
+	 */
+	if ((isset($_POST["firstname"])) && ($firstname = clean_input($_POST["firstname"], "trim"))) {
+		$PROCESSED["firstname"] = $firstname;
+	} else {
+		$ERROR++;
+		$ERRORSTR[] = "The firstname of the user is a required field.";
+	}
+
+	/**
+	 * Required field "lastname" / Lastname.
+	 */
+	if ((isset($_POST["lastname"])) && ($lastname = clean_input($_POST["lastname"], "trim"))) {
+		$PROCESSED["lastname"] = $lastname;
+	} else {
+		$ERROR++;
+		$ERRORSTR[] = "The lastname of the user is a required field.";
+	}
+
+	/**
+	 * Required field "username" / Username.
+	 */
+	if ((isset($_POST["username"])) && ($username = clean_input($_POST["username"], "trim"))) {
+		$query	= "SELECT * FROM `".AUTH_DATABASE."`.`user_data` WHERE `username` = ".$db->qstr($username);
+		$result	= $db->GetRow($query);
+		if ($result) {
+			$ERROR++;
+			$ERRORSTR[] = "The username <strong>".html_encode($username)."</strong> already exists in the system.";
+		} else {
+			$PROCESSED["username"] = $username;
+		}
+	} else {
+		$ERROR++;
+		$ERRORSTR[] = "The username is a required field.";
+	}	
+	
+	/**
+	 * Required field "email" / Primary E-Mail.
+	 */
+	if ((isset($_POST["email"])) && ($email = clean_input($_POST["email"], "trim", "lower"))) {
+		if (@valid_address($email)) {
+			$query	= "SELECT * FROM `".AUTH_DATABASE."`.`user_data` WHERE `email` = ".$db->qstr($email);
+			$result	= $db->GetRow($query);
+			if ($result) {
+				$ERROR++;
+				$ERRORSTR[] = "The e-mail address <strong>".html_encode($email)."</strong> already exists in the system.";
+			} else {
+				$PROCESSED["email"] = $email;
+			}
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The e-mail address you have provided is invalid. Please make sure that you provide a properly formatted e-mail address.";
+		}
+	} else {
+		$ERROR++;
+		$ERRORSTR[] = "The e-mail address is a required field.";
+	}	
+	
+	if ((isset($_POST["country_id"])) && ($tmp_input = clean_input($_POST["country_id"], "int"))) {
+		$query = "SELECT * FROM `global_lu_countries` WHERE `countries_id` = ".$db->qstr($tmp_input);
+		$result = $db->GetRow($query);
+		if ($result) {
+			$PROCESSED["country_id"] = $tmp_input;
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "The selected country does not exist in our countries database. Please select a valid country.";
+
+			application_log("error", "Unknown countries_id [".$tmp_input."] was selected. Database said: ".$db->ErrorMsg());
+		}
+	} else {
+		$ERROR++;
+		$ERRORSTR[]	= "You must select a country.";
+	}
+
+	if ((isset($_POST["prov_state"])) && ($tmp_input = clean_input($_POST["prov_state"], array("trim", "notags")))) {
+		$PROCESSED["province_id"] = 0;
+		$PROCESSED["province"] = "";
+
+		if (ctype_digit($tmp_input) && ($tmp_input = (int) $tmp_input)) {
+			if ($PROCESSED["country_id"]) {
+				$query = "SELECT * FROM `global_lu_provinces` WHERE `province_id` = ".$db->qstr($tmp_input)." AND `country_id` = ".$db->qstr($PROCESSED["country_id"]);
+				$result = $db->GetRow($query);
+				if (!$result) {
+					$ERROR++;
+					$ERRORSTR[] = "The province / state you have selected does not appear to exist in our database. Please selected a valid province / state.";
+				}
+			}
+
+			$PROCESSED["province_id"] = $tmp_input;
+		} else {
+			$PROCESSED["province"] = $tmp_input;
+		}
+
+		$PROCESSED["prov_state"] = ($PROCESSED["province_id"] ? $PROCESSED["province_id"] : ($PROCESSED["province"] ? $PROCESSED["province"] : ""));
+	}
+	
+	if ((isset($_POST["password"])) && ($password = clean_input($_POST["password"], "trim"))) {
+		if ((isset($_POST["confirm"])) && ($confirm = clean_input($_POST["confirm"], "trim"))) {
+			if ($password == $confirm){
+				if ((strlen($password) >= 6) && (strlen($password) <= 24)) {
+					$PROCESSED["password"] = $password;
+				} else {
+					$ERROR++;
+					$ERRORSTR[] = "The password field must be between 6 and 24 characters.";
+				}
+			} else {
+				$ERROR++;
+				$ERRORSTR[] = "The passwords do not match.";					
+			}
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "You must provide value in the confirm password field.";
+		}	
+	} else {
+		$ERROR++;
+		$ERRORSTR[] = "You must provide a valid password for this user to login with.";
+	}	
+
+	
+	if (!$ERROR) {
+		$PROCESSED["organisation_id"] = 1;//figure out how to get this information
+		$PROCESSED["email_updated"] = time();
+		$PROCESSED["updated_date"] = time();
+		$PROCESSED["updated_by"] = 1;
+		$PROCESSED["prefix"] = "";
+		$PROCESSED["email_alt"] = "";
+		$PROCESSED["telephone"] = "";
+		$PROCESSED["fax"] = "";
+		$PROCESSED["address"] = "";
+		$PROCESSED["postcode"] = "";
+		$PROCESSED["note"] = "";	
+		$PROCESSED["password"] = md5($PROCESSED["password"]);
+		$PROCESSED["email_updated"] = time();
+		if (($db->AutoExecute(AUTH_DATABASE.".user_data", $PROCESSED, "INSERT")) && ($PROCESSED_ACCESS["user_id"] = $db->Insert_Id())) {
+			$index = 0;
+				$org_id = $PROCESSED["organisation_id"];
+//				$query = "SELECT g.`group_name`, r.`role_name`
+//						  FROM `" . AUTH_DATABASE . "`.`system_groups` g
+//						  JOIN `" . AUTH_DATABASE . "`.`system_roles` r
+//					      ON r.`group_id` = g.`id`
+//						  AND g.`group_name` = 'online'
+//						  JOIN `" . AUTH_DATABASE . "`.`system_group_organisation` gho
+//						  ON g.`id` = gho.`group_id`
+//						  AND gho.`organisation_id` = ".$db->qstr($org_id);
+//				$group_role = $db->GetRow($query);
+				$PROCESSED_ACCESS["group"] = 'online';
+				$PROCESSED_ACCESS["role"] = 'learner';
+
+				$PROCESSED_ACCESS["app_id"] = AUTH_APP_ID;
+				$PROCESSED_ACCESS["organisation_id"] = $org_id;
+				$PROCESSED_ACCESS["private_hash"] = generate_hash(32);
+				$PROCESSED_ACCESS["last_up"] = "";
+				$PROCESSED_ACCESS["extras"] = "";
+				$PROCESSED_ACCESS["notes"] = "";
+
+			if ($db->AutoExecute(AUTH_DATABASE.".user_access", $PROCESSED_ACCESS, "INSERT")) {
+				$url			= ENTRADA_URL."/firstlogin";
+
+
+				// If $ENTRADA_USER was previously initialized in init.inc.php before the 
+				// session was authorized it is set to false and needs to be re-initialized.
+				if ($ENTRADA_USER == false) {
+					$ENTRADA_USER = User::get($PROCESSED_ACCESS["user_id"]);
+				}
+
+				$_SESSION["isAuthorized"] = true;
+				$_SESSION["details"] = array();
+				$_SESSION["details"]["app_id"] = (int) AUTH_APP_ID;
+				$_SESSION["details"]["id"] = $PROCESSED_ACCESS["user_id"];
+				$_SESSION["details"]["access_id"] = $ENTRADA_USER->getAccessId();
+				$_SESSION["details"]["username"] = $PROCESSED["username"];
+				$_SESSION["details"]["prefix"] = $PROCESSED["prefix"];
+				$_SESSION["details"]["firstname"] = $PROCESSED["firstname"];
+				$_SESSION["details"]["lastname"] = $PROCESSED["lastname"];
+				$_SESSION["details"]["email"] = $PROCESSED["email"];
+				$_SESSION["details"]["telephone"] = $PROCESSED["telephone"];
+				$_SESSION["details"]["role"] = $PROCESSED_ACCESS["role"];
+				$_SESSION["details"]["group"] = $PROCESSED_ACCESS["group"];
+				$_SESSION["details"]["organisation_id"] = $PROCESSED["organisation_id"];
+				$_SESSION["details"]["expires"] = (int)0;
+				$_SESSION["details"]["lastlogin"] = time();
+				$_SESSION["details"]["privacy_level"] = (int)0;
+				$_SESSION["details"]["private_hash"] = $PROCESSED_ACCESS["private_hash"];
+				$_SESSION["details"]["allow_podcasting"] = false;				
+				
+				header("Location: ".$url);
+			} else {
+				$ERROR++;
+				$ERRORSTR[]	= "Unable to give this new user access permissions to this application. ".$db->ErrorMsg();
+
+				application_log("error", "Error giving new user access to application id [".AUTH_APP_ID."]. Database said: ".$db->ErrorMsg());
+			}					
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "Unable to create a new user account at this time. The MEdTech Unit has been informed of this error, please try again later.";
+
+			application_log("error", "Unable to create new user account. Database said: ".$db->ErrorMsg());
+		}
+	}	
 } elseif ($ACTION == "logout") {
 	users_online("logout");
 

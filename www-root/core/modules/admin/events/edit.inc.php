@@ -141,6 +141,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						} else {
 							$PROCESSED["event_location"] = "";
 						}
+						
+						/**
+						 * Check to see if this event is online or not.
+						 */
+						if ((isset($_POST["online_event"])) && ($_POST["online_event"] == "1")) {
+							$PROCESSED["online_event"] = 1;
+						} else {
+							$PROCESSED["online_event"] = 0;
+						}						
 
 						/**
 						 * Required fields "eventtype_id" / Event Type

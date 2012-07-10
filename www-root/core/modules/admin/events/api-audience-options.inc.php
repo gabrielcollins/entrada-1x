@@ -387,6 +387,17 @@ if (!defined("IN_EVENTS")) {
 				</td>
 			</tr>
 			<?php
+			if ($course_info["online_course"]) { ?>
+			<tr>
+				<td></td>
+				<td style="vertical-align: top"><span class="form-nrequired">Online Accessibility</span></td>
+				<td style="vertical-align: top">
+					<input type="radio" name="online_event" id="online_false" value="0"<?php echo ((!isset($PROCESSED["online_event"])) || ((isset($PROCESSED["online_event"])) && (!$PROCESSED["online_event"])) ? " checked=\"checked\"" : ""); ?> /> <label for="online_false">None of this event is taught to learners online.</label><br />							
+					<input type="radio" name="online_event" id="online_true" value="1"<?php echo ((((isset($PROCESSED["online_event"])) && ($PROCESSED["online_event"]))) ? " checked=\"checked\"" : ""); ?> /> <label for="online_true">This event is completely or partially taught to learners online.</label>							
+				</td>
+			</tr>									
+			<?php
+			}			
 		}
 	}
 

@@ -23,7 +23,7 @@ return array (
 			"courses" => array ("title" => "Courses"),
 			"events" => array ("title" => "Learning Events"),
 			"clerkship" => array ("title" => "Clerkship", "resource" => "clerkship", "permission" => "read"),
-			"search" => array ("title" => "Curriculum Search"),
+			"search" => array ("title" => "Curriculum Search","resource"=>"search","permission"=>"read"),
 //			"curriculum" => array (
 //				"title" => "Curriculum",
 //				"children" => array (
@@ -38,12 +38,12 @@ return array (
 //					)
 //				)
 //			),
-			"people" => array ("title" => "People Search"),
+			"people" => array ("title" => "People Search","resource"=>"people","permission"=>"read"),
 			"evaluations" => array ("title" => "My Evaluations"),
 			"tasks" => array ("title" => "My Tasks", "resource" => "tasktab", "permission" => "read"),
 			"annualreport" => array ("title" => "My Annual Report", "resource" => "annualreport", "permission" => "read"),
 			"profile" => array ("title" => "My Profile"),
-			"library" => array ("title" => "Library", "target" => "_blank"),
+			"library" => array ("title" => "Library", "target" => "_blank", "resource"=>"library","permission"=>"read"),
 			"help" => array ("title" => "Help")
 		),
 /*		@todo This is not currently used, unfortunately this exists in core/includes/settings.php in the $MODULES array.

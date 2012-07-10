@@ -138,6 +138,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			} else {
 				$PROCESSED["sync_ldap"] = 0;
 			}
+			/**
+			 * Check to see if this course allows users to enrol themselves or not.
+			 */
+			if ((isset($_POST["allow_enroll"])) && ($_POST["allow_enroll"] == "1")) {
+				$PROCESSED["allow_enroll"] = 1;
+			} else {
+				$PROCESSED["allow_enroll"] = 0;
+			}
+			/**
+			 * Check to see if this course is online or not.
+			 */
+			if ((isset($_POST["online_course"])) && ($_POST["online_course"] == "1")) {
+				$PROCESSED["online_course"] = 1;
+			} else {
+				$PROCESSED["online_course"] = 0;
+			}
 			
 			$posted_objectives = array();
 			
@@ -646,6 +662,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						<td style="vertical-align: top">
 							<input type="radio" name="permission" id="visibility_on" value="open"<?php echo (((!isset($PROCESSED["permission"])) || ((isset($PROCESSED["permission"])) && ($PROCESSED["permission"] == "open"))) ? " checked=\"checked\"" : ""); ?> /> <label for="visibility_on">This course is <strong>open</strong> and visible to all logged in users.</label><br />
 							<input type="radio" name="permission" id="visibility_off" value="closed"<?php echo (((isset($PROCESSED["permission"])) && ($PROCESSED["permission"] == "closed")) ? " checked=\"checked\"" : ""); ?> /> <label for="visibility_off">This course is <strong>private</strong> and only visible to logged in users enrolled in the course.</label>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td style="vertical-align: top"><span class="form-nrequired"><?php echo $module_singular_name; ?> Enrolment</span></td>
+						<td style="vertical-align: top">
+							<input type="radio" name="allow_enroll" id="enroll_notallowed" value="0"<?php echo (((!isset($PROCESSED["allow_enroll"])) || (isset($PROCESSED["allow_enroll"])) && (!$PROCESSED["allow_enroll"])) ? " checked=\"checked\"" : ""); ?> /> <label for="enroll_notallowed">Learners can <strong>not</strong> enroll themselves in this course.</label><br />							
+							<input type="radio" name="allow_enroll" id="enroll_allowed" value="1"<?php echo ((((isset($PROCESSED["allow_enroll"])) && ($PROCESSED["allow_enroll"]))) ? " checked=\"checked\"" : ""); ?> /> <label for="enroll_allowed">Learners can enroll themselves in this course.</label>							
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td style="vertical-align: top"><span class="form-nrequired">Online Accessibility</span></td>
+						<td style="vertical-align: top">
+							<input type="radio" name="online_course" id="online_false" value="0"<?php echo ((!isset($PROCESSED["online_course"])) || ((isset($PROCESSED["online_course"])) && (!$PROCESSED["online_course"])) ? " checked=\"checked\"" : ""); ?> /> <label for="online_false">None of this course is taught to learners online.</label><br />							
+							<input type="radio" name="online_course" id="online_true" value="1"<?php echo ((((isset($PROCESSED["online_course"])) && ($PROCESSED["online_course"]))) ? " checked=\"checked\"" : ""); ?> /> <label for="online_true">This course is completely or partially taught to learners online.</label>							
 						</td>
 					</tr>
 					<?php
