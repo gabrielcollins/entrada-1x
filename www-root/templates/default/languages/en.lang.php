@@ -41,6 +41,7 @@ return array (
 			"people" => array ("title" => "People Search","resource"=>"people","permission"=>"read"),
 			"evaluations" => array ("title" => "My Evaluations"),
 			"tasks" => array ("title" => "My Tasks", "resource" => "tasktab", "permission" => "read"),
+			"payments" => array ("title" => "My Payments"),
 			"annualreport" => array ("title" => "My Annual Report", "resource" => "annualreport", "permission" => "read"),
 			"profile" => array ("title" => "My Profile"),
 			"library" => array ("title" => "Library", "target" => "_blank", "resource"=>"library","permission"=>"read"),

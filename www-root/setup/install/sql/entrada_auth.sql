@@ -116,6 +116,13 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('metadata', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('evaluation', NULL, 'group', 'faculty', 1, 0, 1, 0, 0, 'IsEvaluated');
 
+INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`, `entity_value`, `app_id`, `create`, `read`, `update`, `delete`, `assertion`)
+VALUES
+	('course', NULL, 'group:role', 'online:learner', NULL, NULL, 1, NULL, NULL, 'OnlineCourse'),
+	('event', NULL, 'group:role', 'online:learner', NULL, NULL, 1, NULL, NULL, 'OnlineEvent'),
+	('profile', NULL, 'group:role', 'online:learner', NULL, NULL, 1, NULL, NULL, NULL),
+	('dashboard', NULL, 'group:role', 'online:learner', NULL, NULL, 1, NULL, NULL, NULL);
+
 CREATE TABLE IF NOT EXISTS `departments` (
   `department_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
   `organisation_id` int(12) unsigned NOT NULL DEFAULT '1',
@@ -252,6 +259,17 @@ CREATE TABLE IF NOT EXISTS `registered_apps` (
 
 INSERT INTO `registered_apps` (`id`, `script_id`, `script_password`, `server_ip`, `server_url`, `employee_rep`, `notes`) VALUES
 (1, '%AUTH_USERNAME%', MD5('%AUTH_PASSWORD%'), '%', '%', 1, 'Entrada');
+
+CREATE TABLE `registration_confirmation` (
+  `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `ip` varchar(24) NOT NULL DEFAULT '',
+  `date` bigint(64) NOT NULL DEFAULT '0',
+  `user_id` int(12) NOT NULL DEFAULT '0',
+  `hash` varchar(64) NOT NULL DEFAULT '',
+  `complete` int(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `hash` (`hash`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `sessions` (
   `sesskey` varchar(64) NOT NULL DEFAULT '',

@@ -11,12 +11,19 @@
  * @author Developer: Brandon Thorn <bt37@qmed.ca>
  * @copyright Copyright 2012 Queen's University. All Rights Reserved.
  */
-class Chase extends BasePaymentModel{
+class Generic extends BasePaymentModel{
 	
-	function makePayment(){
-		
+	function __construct($options = false) {
+	  $this->payment_type = 'generic';
 	}
+	
+	function parseResponse($post,$trans_id){	
+	}	
+	
+	function printForm(){
 
+	}
+	
 }
 
 ?>

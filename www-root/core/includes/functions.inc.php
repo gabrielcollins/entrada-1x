@@ -2476,6 +2476,9 @@ function application_log($type, $message) {
 		case "notice" :
 			$log_file = "notice_log.txt";
 			break;
+		case "payment" :
+			$log_file = "payment_log.txt";
+			break;
 		case "error" :
 			$log_file = "error_log.txt";
 			$log_entry .= get_caller_string() . "\n";
@@ -3799,6 +3802,32 @@ function fade_element($direction = "out", $element_id, $start_opacity = 100, $fa
 	return;
 }
 
+/**
+ * Function makes it easier to add a javascript redirect. 
+ * @param type $url 
+ */
+function onload_redirect($url, $timeout = 5000){
+	global $ONLOAD;
+	$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', ".$timeout.")";
+}
+
+/**
+ * Function that tells you if the value is present in your database results. No more need to iterate through each time. 
+ * @param type $results
+ * @param type $field
+ * @param type $value
+ * @return type  
+ */
+function in_results($results,$field,$value){
+	if ($results) {
+		foreach ($results as $result){
+			if (array_key_exists($field,$result)) {
+				if ($result[$field] == $value) return true;
+			}
+		}
+	}
+	return false;	
+}
 /**
  * The nl2bar function doesn't remove the \n, it merely adds <br /> to the front of it.
  * Well, I need it removed somtimes.

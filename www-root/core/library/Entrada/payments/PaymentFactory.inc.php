@@ -18,13 +18,14 @@ class PaymentFactory{
 	/**
 	 * Accepts the payment type in lower case (chase,paypal,etc) and an array of options and returns an instance 
 	 * of the model if it finds a match based on the name, or false if no match was found.
+	 * @todo the list of models could probably be Cached, no point in hitting the filesystem over and over
 	 * @param type $type
 	 * @param type $options
 	 * @return  
 	 */
 	static function getPaymentModel($type,$options = false){
 		$cur_dir = dirname(__FILE__);
-        if (!self::$models) {
+        if (!self::$payment_models) {
             $models = array();			
             if ($handle = opendir($cur_dir)) {
                 while (false !== ($file = readdir($handle))) {
@@ -38,7 +39,7 @@ class PaymentFactory{
             self::$payment_models = $models;
         }		
 		
-        if (array_key_exists($type, self::$payment_models)) {
+        if (array_key_exists($type, self::$payment_models) && self::$payment_models[$type]['file'] && self::$payment_models[$type]['class']) {
             require_once $cur_dir.DIRECTORY_SEPARATOR.'BasePaymentModel.class.php';
             require_once $cur_dir.DIRECTORY_SEPARATOR.self::$payment_models[$type]['file'];
 			if (!$options) {

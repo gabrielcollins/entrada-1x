@@ -31,6 +31,7 @@ require_once "Zend/Loader/Autoloader.php";
 $loader = Zend_Loader_Autoloader::getInstance();
 //$loader->registerNamespace('Entrada_');
 
+require_once("library/Entrada/payments/PaymentFactory.inc.php");
 require_once("config/settings.inc.php");
 
 require_once("Entrada/adodb/adodb.inc.php");

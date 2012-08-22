@@ -1985,6 +1985,13 @@ background:transparent url(../images/btn_add.gif) no-repeat center left;
 padding:0 14px 0 16px;
 }
 
+.page-action li.edit {
+background:transparent url(../images/action-edit.gif) no-repeat center left;
+}
+.page-action li.edit a{
+color:#036;
+}
+
 .page-action li a {
 color:#693;
 font-weight:700;
@@ -3763,6 +3770,10 @@ a.paginate_button, a.paginate_active {
     color: #333333 !important;
     margin: 0 3px;
     padding: 2px 5px;
+}
+
+.no-show{
+	display:none;
 }
 
 /*!

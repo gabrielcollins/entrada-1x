@@ -473,6 +473,7 @@ $MODULES["gradebook"] = array("title" => "Manage Gradebook", "resource" => "grad
 $MODULES["mspr"] = array("title" => "Manage MSPRs", "resource" => "mspr", "permission" => "create");
 $MODULES["tasks"] = array("title" => "Manage Tasks", "resource" => "task", "permission" => "create");
 $MODULES["notices"] = array("title" => "Manage Notices", "resource" => "notice", "permission" => "update");
+$MODULES["payments"] = array("title" => "Manage Payments", "resource" => "payments", "permission" => "update");
 $MODULES["polls"] = array("title" => "Manage Polls", "resource" => "poll", "permission" => "update");
 $MODULES["quizzes"] = array("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update");
 $MODULES["users"] = array("title" => "Manage Users", "resource" => "user", "permission" => "update");

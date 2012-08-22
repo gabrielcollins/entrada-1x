@@ -29,7 +29,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		header("Location: ".ENTRADA_URL);
 		exit;
-} else {
+} elseif ($COURSE_ID) {
 
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/".$MODULE, "title" => "View " . $module_title);
 
@@ -85,31 +85,35 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		}
 	}
 
-	/**
-	 * If we were going into the $COURSE_ID
-	 */
-	if ($COURSE_ID) {
-		$query = "	SELECT b.`community_url` FROM `community_courses` AS a
-					JOIN `communities` AS b
-					ON a.`community_id` = b.`community_id`
-					WHERE a.`course_id` = ".$db->qstr($COURSE_ID);
-		$course_community = $db->GetOne($query);
-		if ($course_community) {
-			header("Location: ".ENTRADA_URL."/community".$course_community);
-			exit;
-		}
 
-		$query = "	SELECT * FROM `courses` 
-					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
-					AND `course_active` = '1'";
-		$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
-		if (!$course_details) {
-			$ERROR++;
-			$ERRORSTR[] = "The course identifier that was presented to this page currently does not exist in the system.";
+	$query = "	SELECT * FROM `courses` 
+				WHERE `course_id` = ".$db->qstr($COURSE_ID)."
+				AND `course_active` = '1'";
+	$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
+	if (!$course_details) {
+		$ERROR++;
+		$ERRORSTR[] = "The course identifier that was presented to this page currently does not exist in the system.";
 
-			echo display_error();
-		} else {
-			if (($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getOrganisationId()), "read")) && ($course_details["allow_enroll"])) {
+		echo display_error();
+	} else {
+		$query = "	SELECT a.*, c.`payment_model` FROM `payment_catalog` a
+					LEFT JOIN `payment_options` b 
+					ON a.`poption_id` = b.`poption_id`
+					LEFT JOIN `payment_lu_types` c 
+					ON b.`ptype_id` = c.`ptype_id`
+					WHERE `item_type` = 'course' 
+					AND `item_value` = ".$db->qstr($COURSE_ID)." 
+					AND `active` = 1";			
+		$course_cost_details = $db->GetRow($query);			
+		if (($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getOrganisationId()), "read")) && ($course_details["allow_enroll"])) {
+									
+			$query = "	SELECT * FROM `course_audience` 
+						WHERE `audience_type` = 'proxy_id'
+						AND `audience_value` = ".$db->qstr($ENTRADA_USER->getId())."
+						AND `audience_active` != '0'";
+			if ($enrolment_record = $db->GetRow($query)) {
+				echo display_notice("You are alredy enrolled or have a pending enromment in this course.");
+			} else {
 				//add_statistic($MODULE, "view", "course_id", $COURSE_ID);
 
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE."?".replace_query(array("id" => $course_details["course_id"])), "title" => $course_details["course_name"].(($course_details["course_code"]) ? ": ".$course_details["course_code"] : ""));
@@ -124,18 +128,72 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					}
 				}
 
-				// Meta information for this page.
-				$PAGE_META["title"]			= $course_details["course_name"].(($course_details["course_code"]) ? ": ".$course_details["course_code"] : "")." - ".APPLICATION_NAME;
-				$PAGE_META["description"]	= trim(str_replace(array("\t", "\n", "\r"), " ", html_encode(strip_tags($course_details["course_description"]))));
-				$PAGE_META["keywords"]		= "";
+				switch($STEP){
+					case 2:
+						if(isset($_POST["cperiod_id"]) && $c_id = (int)$_POST["cperiod_id"]){
+							$PROCESSED["cperiod_id"] = $c_id;
+						}else {
+							add_error("The <strong>Period</strong> is a required field.");
+						}	
 
-				$course_details_section			= true;
-				$course_description_section		= false;
-				$course_objectives_section		= false;
-				$course_assessment_section		= false;
-				$course_textbook_section		= false;
-				$course_message_section			= false;
-				$course_resources_section		= true;
+						if (!$ERROR) {
+							$PROCESSED["course_id"] = $COURSE_ID;
+							$PROCESSED["audience_type"] = "proxy_id";
+							$PROCESSED["audience_value"] = $ENTRADA_USER->getId();
+							$PROCESSED["enroll_start"] = time();
+							$PROCESSED["enroll_finish"] = 0;
+							$PROCESSED["audience_active"] = $course_cost_details?2:1;
+
+							if ($db->AutoExecute("course_audience",$PROCESSED,"INSERT")) {
+								if (!$course_cost_details) {
+									add_success("Successfully enrolled in ".$course_details['course_name'].".");
+									onload_redirect(ENTRADA_URL."/courses?id=".$COURSE_ID);
+								} else {
+									if ($payment = PaymentFactory::getPaymentModel($course_cost_details["payment_model"])) {
+										$payment->addLineItem(array("name"=>$course_details["course_name"]." Payment","value"=>$course_cost_details["item_cost"],"catalog_id"=>$course_cost_details["pcatalog_id"]));
+										$payment->fetchCredentials($course_cost_details["poption_id"]);
+										try {
+											$payment->createPayment();
+											$payment->printForm();
+										} catch(Exception $e) {
+											add_error($e->getMessage());
+										}								
+									} else {
+										add_error("An error occurred while trying to access payment information for ".$course_details["course_name"].". Please try again later.");
+									}
+								}
+							} else {
+								add_error("Error occurred while enrolling in course. Please try again later.");
+							}
+
+						}					
+						if ($ERROR) {
+							$STEP = 1;
+						}
+						break;
+					case 1:
+					default:
+						break;
+				}
+
+				switch($STEP){
+					case 2:										
+
+						if ($SUCCESS) {
+							echo display_success();
+						}
+
+						if ($NOTICE) {
+							echo display_notice();
+						}
+
+						break;						
+					case 1:
+					default:
+
+					if ($ERROR) {
+						echo display_error();
+					}					
 				?>
 				<div class="no-printing" style="text-align: right">
 					<form>
@@ -161,20 +219,70 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				<a name="course-enrol-section"></a>
 				<h2 title="Course Enrol Section"><?php echo $module_singular_name; ?> Enrolment</h2>
 				<div id="course-enrol-section">
-					<form action="<?php echo ENTRADA_URL.$MODULE; ?>?<?php echo replace_query(array("step" => 2)); ?>" method="post">
+					<form action="<?php echo ENTRADA_URL."/courses";?>?<?php echo replace_query(array("section"=>"enrol","step" => 2)); ?>" method="post">
+						<table class="tableList">
+							<tbody>
+								<tr>
+									<td style="width:20%;"><label for="cperiod_id">Period:</label></td>
+									<td>
+										<select name="cperiod_id" id="cperiod_id" style="width:100%;">
+											<option value="0">--Select Period--</option>
+											<?php 
+											$query = "	SELECT * FROM `curriculum_periods` 
+														WHERE `curriculum_type_id` = ".$db->qstr($course_details["curriculum_type_id"])."
+														AND `active` = '1'";
+											$periods = $db->GetAll($query);
+											if ($periods) {
+												foreach($periods as $period){
+													?><option value="<?php echo $period["cperiod_id"];?>"><?php echo date("M d/y",$period["start_date"]).' - '.date("M d/y",$period["finish_date"]);?></option><?php
+												}
+											} 												
+											?>
+										</select>
+									</td>
+								</tr>
+							</tbody>
+						</table>					
+						<?php 
+						if ($course_cost_details) {							
+						?>					
+						<table class="tableList">
+							<thead>
+								<tr>
+									<th style="text-align:right;">Course Name</th>
+									<th style="text-align:right;width:25%">Course Cost</th>
+									<th style="text-align:right;width:25%">Course Vacancies</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td style="text-align:right;"><?php echo $course_details["course_name"];?></td>
+									<td style="text-align:right;width:25%"><?php echo '$'.$course_cost_details["item_cost"];?></td>
+									<td style="text-align:right;width:25%"><?php echo $course_cost_details["quantity"] == '-1'?'Unlimited':$course_cost_details["quantity"];?></td>
+								</tr>
+							</tbody>
+						</table>
+						<br/>
+						<?php
+						} else {
+							echo display_notice("This course has no costs associated with it. Click Enroll to continute enrolment into the course.");
+						}
+						?>
 						<input type="button" class="button" value="Cancel" onclick="window.location='<?php echo ENTRADA_URL; ?>/courses'" />
 						<input type="submit" value="Enroll">
 					</form>
 				</div>
 				<?php
-			} else {
-				$ERROR++;
-				$ERRORSTR[] = "You do not have the permissions required to enrol in this course. If you believe that you have received this message in error, please contact a system administrator.";
-
-				echo display_error();
+				break;
+				}
 			}
+		} else {
+			$ERROR++;
+			$ERRORSTR[] = "You do not have the permissions required to enrol in this course or this course doesn't allow self enrolment. If you believe that you have received this message in error, please contact a system administrator.";
+
+			echo display_error();
 		}
-	} else {
-		echo display_error(array("You must provide a valid course identifier."));
-	}
+	}	
+} else {
+	echo display_error(array("You must provide a valid course identifier."));
 }
