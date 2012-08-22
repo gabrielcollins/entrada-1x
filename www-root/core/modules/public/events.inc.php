@@ -260,6 +260,7 @@ if (!defined("PARENT_INCLUDED")) {
 					$event_files = $event_resources["files"];
 					$event_links = $event_resources["links"];
 					$event_quizzes = $event_resources["quizzes"];
+					$event_conferences = $event_resources["conferences"];
 					$event_discussions = $event_resources["discussions"];
 					$event_types = $event_resources["types"];
 					
@@ -985,7 +986,74 @@ if ($topic_results) { ?>
 					echo "		</table>\n";
 					echo "	</div>\n";
 					echo "</div>\n";
+					
+					if (defined('ALLOW_WEB_CONFERENCING') && ALLOW_WEB_CONFERENCING) {
+					?>
+						<div class="section-holder">
+								<h3>Attached Web Conferences</h3><a name="event-resources-conferences"></a>
+								<table class="tableList" cellspacing="0" summary="List of Attached Web Conferences">
+								<colgroup>
+									<col class="modified" />
+									<col class="title" />
+									<col class="date" />
+								</colgroup>
+								<thead>
+									<tr>
+									<td class="modified">&nbsp;</td>
+										<td class="title sortedASC"><div class="noLink">Conference Name</div></td>
+										<td class="date">Conference Starts</td>
+									</tr>
+								</thead>
+						<tbody>
+						<?php
+						if ($event_conferences) {
+							foreach ($event_conferences as $conference) {
 
+								$conference_end = (int)$conference["conference_start"] + ($conference["conference_duration"]*60);
+								if ($conference["conference_started"] && ($conference["conference_start"] <= time()) && (time() < $conference_end)) {
+									$allow_access = true;
+								} else {
+									$allow_access = false;
+								}
+
+								echo "	<tr id=\"conference-".$conference["wconference_id"]."\">\n";
+								echo "		<td class=\"modified\" style=\"vertical-align: top\">&nbsp;</td>\n";
+								echo "		<td class=\"title\" style=\"vertical-align: top; white-space: normal; overflow: visible\">\n";
+								if ($allow_access) {
+									echo "		<a href=\"".ENTRADA_URL."/conferences?id=".$conference["wconference_id"]."\"  target=\"_blank\" title=\"Launch ".html_encode($conference["conference_title"])."\" style=\"font-weight: bold\">".html_encode($conference["conference_title"])."</a>";
+								} else {
+									echo "		<span style=\"color: #666666; font-weight: bold\">".html_encode($conference["conference_title"])."</span>";
+								}
+
+								echo "			<div class=\"content-small\" style=\"margin-top: 3px; margin-bottom: 5px\">\n";
+
+								if($allow_access) {
+									echo "This conference is currently running. Click the link to launch the conference.<br /><br />";
+								} elseif (((int) $conference["conference_start"]) && ($conference["conference_start"] > time())) {
+									echo "You will be able to attend this web conference starting <strong>".date(DEFAULT_DATE_FORMAT, $conference["conference_start"])."</strong>.<br /><br />";
+								} else {
+									echo "This conference already took place.";
+								}
+								echo "			</div>\n";
+
+								echo "		</td>\n";
+								echo "		<td class=\"date\" style=\"vertical-align: top\">".(((int) $conference["conference_start"]) ? date(DEFAULT_DATE_FORMAT, $conference["conference_start"]) : "TBA")."</td>\n";
+								echo "	</tr>\n";
+							}
+						} else {
+							echo "		<tr>\n";
+							echo "			<td colspan=\"3\">\n";
+							echo "				<div class=\"content-small\" style=\"margin-top: 3px; margin-bottom: 5px\">There are no web conferences attached to this learning event.</div>\n";
+							echo "			</td>\n";
+							echo "		</tr>\n";
+						}
+						?>
+								</tbody>
+								</table>
+							</div>
+					<?php } ?>
+					</div>
+					<?php
 					echo "<a name=\"event-comments-section\"></a>\n";
 					echo "<h2 title=\"Event Comments Section\">Discussions &amp; Comments</h2>\n";
 					echo "<div id=\"event-comments-section\" class=\"section-holder\">\n";

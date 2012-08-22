@@ -10614,7 +10614,6 @@ function tracking_fetch_filtered_events($community_id,$filters = array(),$pagina
  * @return string
  */
 function events_fetch_sorting_query($sort_by = "", $sort_order = "ASC") {
-
 	switch ($sort_by) {
 		case "teacher" :
 			$sort_by = "`fullname` ".strtoupper($sort_order).", `events`.`event_start` ASC";
@@ -11507,6 +11506,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 	$fetch_files = false;
 	$fetch_links = false;
 	$fetch_quizzes = false;
+	$fetch_conferences = false;
 	$fetch_discussions = false;
 	$fetch_types = false;
 
@@ -11539,6 +11539,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 			$fetch_files = true;
 			$fetch_links = true;
 			$fetch_quizzes = true;
+			$fetch_conferences = true;
 			$fetch_discussions = true;
 			$fetch_types = true;
 		}
@@ -11639,6 +11640,21 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 						GROUP BY a.`aquiz_id`
 						ORDER BY a.`required` DESC, a.`quiz_title` ASC, a.`release_until` ASC";
 			$output["quizzes"] = $db->GetAll($query);
+		}
+		
+		if ($fetch_conferences) {
+
+			/**
+			 * This query will retrieve all of the quizzes associated with this evevnt.
+			 */
+			$query	= "	SELECT a.*
+						FROM `web_conferences` a
+						JOIN `conference_lu_software` b
+						ON a.`csoftware_id` = b.`csoftware_id` 
+						WHERE a.`attached_type` = 'event'
+						AND a.`attached_id` = ".$db->qstr($event_id)."
+						ORDER BY a.`conference_start` DESC";
+			$output["conferences"] = $db->GetAll($query);
 		}
 
 		if ($fetch_discussions) {

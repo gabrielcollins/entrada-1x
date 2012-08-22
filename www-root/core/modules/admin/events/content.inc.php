@@ -627,6 +627,50 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 								}
 							}
 						break;
+						case "conferences" :
+							$QUIZ_IDS = array();
+
+							if ((!isset($_POST["delete"])) || (!is_array($_POST["delete"])) || (!@count($_POST["delete"]))) {
+								add_error("You must select at least 1 conference to delete by checking the box to the left the conference.");
+
+								application_log("notice", "User pressed the Delete Selected button without selecting any conferences to delete.");
+							} else {
+								foreach ($_POST["delete"] as $wconference_id) {
+									$wconference_id = clean_input($wconference_id, "int");
+									if ($wconference_id) {
+										$CONFERENCE_IDS[] = $wconference_id;
+									}
+								}
+
+								if (count($CONFERENCE_IDS) < 1) {
+									add_error("There were no valid quiz identifiers provided to detach.");
+								} else {
+									foreach ($CONFERENCE_IDS as $wconference_id) {
+										$query	= "SELECT * FROM `web_conferences` WHERE `wconference_id` = ".$db->qstr($wconference_id)." AND `attached_type` = 'event' AND `attached_id` = ".$db->qstr($EVENT_ID);
+										$result	= $db->GetRow($query);
+										if ($result) {
+											$query = "DELETE FROM `web_conferences` WHERE `wconference_id` = ".$db->qstr($wconference_id)." AND `attached_type` = 'event' AND `attached_id` = ".$db->qstr($EVENT_ID);
+											if ($db->Execute($query)) {
+												if ($db->Affected_Rows()) {
+													$query = "DELETE FROM `web_conference_key_values` WHERE `wconference_id` = ".$db->qstr($wconference_id);
+													if (!$db->Execute($query)) {
+													application_log("error", "Failed to delete conference [".$result["wconference_id"]."] key valuesfrom event [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());	
+													}
+													application_log("success", "Deleted conference [".$result["wconference_id"]."] from event [".$EVENT_ID."].");
+												} else {
+													application_log("error", "Failed to delete conference [".$result["wconference_id"]."] from event [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());
+												}
+											} else {
+												add_error("We are unable to delete <strong>".html_encode($result["conference_title"])."</strong> from this event. The system administrator has been informed of the error; please try again later.");
+
+												application_log("error", "Failed to delete conference [".$result["wconference_id"]."] from event [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());
+											}
+										}
+									}
+									history_log($EVENT_ID, "deleted ". count($CONFERENCE_IDS) ." conference".($CONFERENCE_IDS>1?"s":""));
+								}
+							}
+						break;
 						default :
 							continue;
 						break;
@@ -709,6 +753,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 					if (ask_user == true) {
 						$('quiz-listing').submit();
+					} else {
+						return false;
+					}
+				}
+				
+				function confirmConferenceDelete() {
+					ask_user = confirm("Press OK to confirm that you would like to delete the selected conference or conferences from this event, otherwise press Cancel.");
+
+					if (ask_user == true) {
+						$('conference-listing').submit();
 					} else {
 						return false;
 					}
@@ -1102,6 +1156,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 							</tr>
 						</tbody>
 					</table>
+				</div>
+				<a name="event-topics-section"></a>
+				<h2 title="Event Topics Section">Event Topics</h2>
+				<div id="event-topics-section">
 									<table style="width: 100%" cellspacing="0" summary="List of ED10">
 										<colgroup>
 											<col style="width: 55%" />
@@ -1116,7 +1174,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 										</tfoot>
 										<tr>
 											<td colspan="4">
-												<h2>Event Topics</h2>
 												<div class="content-small" style="padding-bottom: 10px">Please select the topics that will be covered in your learning event and indicate if the amount of time that will be devoted.</div>
 											</td>
 										</tr>
@@ -1436,6 +1493,98 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						echo "</form>\n";
 						?>
 					</div>
+					
+					<?php
+					if(defined('ALLOW_WEB_CONFERENCING') && ALLOW_WEB_CONFERENCING) { ?>
+					<div style="margin-bottom: 15px" id="web-conferences-top">
+						<div style="float: left; margin-bottom: 5px">
+							<h3>Attached Web Conferences</h3>
+						</div>
+						<div style="float: right; margin-bottom: 5px">
+							<ul class="page-action">
+								<li><a href="#web-conferences-top" onclick="openDialog('<?php echo ENTRADA_URL; ?>/api/conference-wizard.api.php?action=create&id=<?php echo $EVENT_ID; ?>')">Create New Conference</a></li>
+							</ul>
+						</div>
+						<div class="clear"></div>
+						<?php
+						$query		= "	SELECT a.*, b.`software_model`
+										FROM `web_conferences` AS a
+										LEFT JOIN `conference_lu_software` AS b
+										ON b.`csoftware_id` = a.`csoftware_id`
+										WHERE a.`attached_type` = 'event' 
+										AND a.`attached_id` = ".$db->qstr($EVENT_ID)."
+										ORDER BY a.`conference_start` DESC";
+						$results	= $db->GetAll($query);
+						echo "<form id=\"conference-listing\" action=\"".ENTRADA_URL."/admin/events?".replace_query()."\" method=\"post\">\n";
+						echo "<input type=\"hidden\" name=\"type\" value=\"conferences\" />\n";
+						echo "<table class=\"tableList\" cellspacing=\"0\" summary=\"List of Attached Conferences\">\n";
+						echo "<colgroup>\n";
+						echo "	<col class=\"modified\" style=\"width: 50px\"  />\n";
+						echo "	<col class=\"title\" />\n";
+						echo "	<col class=\"date\" />\n";
+						echo "</colgroup>\n";
+						echo "<thead>\n";
+						echo "	<tr>\n";
+						echo "		<td class=\"modified\">&nbsp;</td>\n";
+						echo "		<td class=\"title\">Conference Title</td>\n";
+						echo "		<td class=\"date-small\">Conference Start</td>\n";
+						echo "	</tr>\n";
+						echo "</thead>\n";
+						echo "<tbody>\n";
+						$removable = false;
+						if ($results) {							
+							foreach ($results as $result) {								
+								$end = (int)$result["conference_start"]+($result["conference_duration"]*60);
+								$is_live = (($result["conference_started"]) && (time() > $result["conference_start"]) && (($end) > time()));
+								$is_editable = (!$result["conference_started"] && $result["conference_start"] > time());
+								if ($is_editable) {
+									$removable = false;
+								}
+								echo "<tr>\n";
+								echo "	<td class=\"modified\" style=\"width: 50px; white-space: nowrap\">\n";
+								echo $is_editable?"		<input type=\"checkbox\" name=\"delete[]\" value=\"".$result["wconference_id"]."\" style=\"vertical-align: middle\" />\n":"";							
+								echo "	</td>\n";
+								echo "	<td class=\"title\" style=\"white-space: normal; overflow: visible\">\n";
+								if (time() > $end) {
+									echo "		<span style=\"color: #666666; font-weight: bold\">".html_encode($result["conference_title"])."</span><br/>\n";
+									echo "		<div class=\"content-small\">Unable to edit conference because it has already finished.</div>";									
+								} elseif ($is_live) {
+									echo "		<a href=\"".ENTRADA_URL."/conferences?id=".$result["wconference_id"]."\" target=\"_blank\"title=\"Click to Launch ".html_encode($result["conference_title"])."\" style=\"font-weight: bold\">".html_encode($result["conference_title"])."</a><br/>\n";
+									echo "		<div class=\"content-small\">Unable to edit conference because it has already been created on the web conferencing server. Clicking the link will launch the conference.</div>";
+								} elseif (!$is_editable) {
+									echo "		<span style=\"color: #666666; font-weight: bold\">".html_encode($result["conference_title"])."</span><br/>\n";
+									echo "		<div class=\"content-small\">Unable to edit conference because ".($result["conference_started"]?"it has already been created on the web conferencing server.":"it is currently past the start time of the conference.").($result["conference_started"]?"":" Unfortunately it has not been created on the conferencing server. Please wait a few more minutes and if this link does not become active please contact an administrator.")."</div>";
+								} else {
+									echo "		<a href=\"#web-conferences-top\" onclick=\"openDialog('".ENTRADA_URL."/api/conference-wizard.api.php?action=edit&id=".$EVENT_ID."&cid=".$result["wconference_id"]."')\" title=\"Click to edit ".html_encode($result["conference_title"])."\" style=\"font-weight: bold\">".html_encode($result["conference_title"])."</a>\n";
+									echo "		<div class=\"content-small\">This conference hasn't started or been created on the web conferencing server yet. You can click the name to make changes to it.</div>";
+								}
+								echo "	</td>\n";
+								echo "	<td class=\"date-small\"><span class=\"content-date\">".(((int) $result["conference_start"]) ? date(DEFAULT_DATE_FORMAT, $result["conference_start"]) : "No Restrictions")."</span></td>\n";
+								echo "</tr>\n";
+							}
+						} else {
+							echo "<tr>\n";
+							echo "	<td colspan=\"3\">\n";
+							echo "		<div class=\"display-generic\" style=\"white-space: normal\">\n";
+							echo "			There have been no web conferencess attached to this event. To <strong>create a new conference</strong> click <strong>Create New Conference</strong>.\n";
+							echo "		</div>\n";
+							echo "	</td>\n";
+							echo "</tr>\n";
+						}
+						echo "</tbody>\n";
+						echo "<tfoot>\n";
+						echo "	<tr>\n";
+						echo "		<td>&nbsp;</td>\n";
+						echo "		<td colspan=\"2\" style=\"padding-top: 10px\">\n";
+						echo "			".(($removable) ? "<input type=\"button\" class=\"button\" value=\"Delete Selected\" onclick=\"confirmConferenceDelete()\" />" : "&nbsp;");
+						echo "		</td>\n";
+						echo "	</tr>\n";
+						echo "</tfoot>\n";						
+						echo "</table>\n";
+						echo "</form>\n";
+						?>
+					</div>
+					<?php } ?>
 				</div>
 				
 				<script type="text/javascript">
