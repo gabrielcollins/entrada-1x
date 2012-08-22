@@ -9810,9 +9810,17 @@ function events_output_filter_controls($module_type = "") {
 				<select id="filter_select" onchange="showMultiSelect();" style="width: 184px; vertical-align: middle">
 					<option>Select Filter</option>
 					<?php
-					if ($filter_controls) {
-						foreach ($filter_controls as $value => $control) {
-							echo "<option value=\"" . $value . "\">" . $control["label"] . "</option>";
+					/**
+					 * If the user is an online learner we don't want them to have access to the information they may be able to get via the other filters. 
+					 * Hardcode any options here (for now just Course filters which already takes into account the ACL rules for courses).
+					 */
+					if ($ENTRADA_USER->getGroup() == "online") {
+						echo "<option value=\"course\">Course Filters</option>";
+					} else {
+						if ($filter_controls) {
+							foreach ($filter_controls as $value => $control) {
+								echo "<option value=\"" . $value . "\">" . $control["label"] . "</option>";
+							}
 						}
 					}
 					?>
@@ -11157,6 +11165,12 @@ function events_fetch_filtered_events($proxy_id = 0, $user_group = "", $user_rol
 					foreach ($learning_events as &$event) {
 						$event["last_visited"] = $dates_array[$event["event_id"]];
 					}
+				}
+			}
+		} elseif ($user_group == "online") {
+			foreach($learning_events as $key=>$event){
+				if (!$ENTRADA_ACL->amIAllowed(new EventResource($event["event_id"], $event['course_id'], $event['organisation_id']), 'read')) {
+					unset($learning_events[$key]);
 				}
 			}
 		}

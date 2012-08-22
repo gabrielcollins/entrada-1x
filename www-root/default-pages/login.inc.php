@@ -62,6 +62,10 @@ $ONLOAD[] = "document.getElementById('username').focus()";
 							<?php if ((defined("PASSWORD_RESET_URL")) && (PASSWORD_RESET_URL != "")) : ?>
 							<a href="<?php echo PASSWORD_RESET_URL; ?>" style="font-size: 10px">Forgot your password?</a> <span class="content-small">|</span>
 							<?php endif; ?>
+							<?php if (defined('ALLOW_REGISTRATION') && ALLOW_REGISTRATION && defined('REGISTRATION_CONFIRMATION_URL') && REGISTRATION_CONFIRMATION_URL) { 
+								//link to resend email: need login page to be styled different to avoid wordwrap?>
+							
+							<?php } ?>
 							<a href="<?php echo ENTRADA_URL; ?>/help" style="font-size: 10px">Need Help?</a>
 						</td>
 					</tr>
@@ -112,15 +116,19 @@ $ONLOAD[] = "provStateFunction()";
 				</tfoot>
 				<tbody>
 					<tr>
-						<td><label for="username" style="font-weight: bold">First Name:</label></td>
+						<td><label for="firstname" style="font-weight: bold">First Name:</label></td>
 						<td style="text-align: right"><input type="text" id="firstname" name="firstname" value="<?php echo ((isset($_REQUEST["username"])) ? html_encode(trim($_REQUEST["firstname"])) : ""); ?>" style="width: 150px" /></td>
 					</tr>
 					<tr>
-						<td><label for="username" style="font-weight: bold">Last Name:</label></td>
+						<td><label for="lastname" style="font-weight: bold">Last Name:</label></td>
 						<td style="text-align: right"><input type="text" id="lastname" name="lastname" value="<?php echo ((isset($_REQUEST["username"])) ? html_encode(trim($_REQUEST["lastname"])) : ""); ?>" style="width: 150px" /></td>
 					</tr>
+					<tr class="no-show">
+						<td><label for="lastname" style="font-weight: bold">Age:</label></td>
+						<td style="text-align: right"><input type="text" id="age" name="age" value="<?php echo ((isset($_REQUEST["age"])) ? html_encode(trim($_REQUEST["age"])) : ""); ?>" style="width: 150px" tabindex="-1"/></td>
+					</tr>
 					<tr>
-						<td><label for="username" style="font-weight: bold">Email:</label></td>
+						<td><label for="email" style="font-weight: bold">Email:</label></td>
 						<td style="text-align: right"><input type="text" id="email" name="email" value="<?php echo ((isset($_REQUEST["email"])) ? html_encode(trim($_REQUEST["email"])) : ""); ?>" style="width: 150px" /></td>
 					</tr>
 					<tr>
@@ -160,6 +168,26 @@ $ONLOAD[] = "provStateFunction()";
 						<td><label for="password" style="font-weight: bold">Confirm Password:</label></td>
 						<td style="text-align: right"><input type="password" id="register_password_confirm" name="confirm" value="" style="width: 150px" /></td>
 					</tr>
+					<tr>
+						<td><label for="organisations" style="font-weight: bold">Organisations:</label></td>
+						<td>
+							<?php
+								$query = "	SELECT * FROM `".AUTH_DATABASE."`.`organisations`
+											WHERE `organisation_active` = '1'";
+								$organisations = $db->GetAll($query);
+								if (false &&$organisations) {
+									foreach($organisations as $organisation){
+										echo '<div style="margin-left:15px;">';
+										echo '<input type="checkbox" name="organisations[]" id="org_'.$organisation["organisation_id"].'" value = "'.$organisation["organisation_id"].'"/>';
+										echo '<label for="org_'.$organisation["organisation_id"].'">'.$organisation["organisation_title"].'</label><br/>';
+										echo '</div>';
+									}
+								} else {
+									echo display_notice("No organisations available to register with.");
+								}
+								?>							
+						</td>
+					</tr>					
 				</tbody>
 			</table>
 		</form>

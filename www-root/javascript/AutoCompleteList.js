@@ -113,6 +113,15 @@ var AutoCompleteList = function() {
 						document.fire(type+'_autocomplete:overlimit');
 					}
 				}
+				//fires the change event for the list holding the added elements
+				if ("fireEvent" in $(type+'_list'))
+					$(type+'_list').fireEvent("onchange");
+				else
+				{
+					var evt = document.createEvent("HTMLEvents");
+					evt.initEvent("change", false, true);
+					$(type+'_list').dispatchEvent(evt);
+				}				
 			}
 		}
 

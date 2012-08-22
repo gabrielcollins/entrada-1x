@@ -89,6 +89,53 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	 * If we were going into the $COURSE_ID
 	 */
 	if ($COURSE_ID) {
+		/**
+		 * Fetch course details prior to other checks so it can be used in deciding if user should be redirected to enrol page.
+		 */
+		$query = "	SELECT * FROM `courses` 
+					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
+					AND `course_active` = '1'";
+		$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
+		
+		$allow_view = true;
+		
+		if($ENTRADA_USER->getGroup() == "online"){
+			$query = "	SELECT * FROM `course_audience` a 
+						LEFT JOIN `group_members` b
+						ON a.`audience_type` = 'group_id'
+						AND a.`audience_value` = b.`group_id`
+						AND b.`member_active` = '1'
+						WHERE a.`course_id` = ".$db->qstr($COURSE_ID)."
+						AND ((a.`audience_type` = 'proxy_id' AND a.`audience_value` = ".$db->qstr($ENTRADA_USER->getId()).")
+						OR (a.`audience_type` = 'group_id' AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getId())."))";
+			if ($result = $db->GetRow($query)) {
+				switch($result["audience_active"]){
+					case 2:
+						add_notice("You have a pending enrolment in this course. Please wait until we've processed your enrolment application. If you feel you're seeing this message in error, please contact the director of this course.");
+						$allow_view = false;
+						break;
+					case 1:
+						break;
+					case 0:
+					default:
+						if (isset($course_details["allow_enroll"]) && $course_details["allow_enroll"]) {
+							header("Location: ".ENTRADA_URL."/courses?section=enrol&id=".$COURSE_ID);
+							exit;
+						} else {
+							add_error("Your account does not have access to this course.");
+						}
+						$allow_view = false;
+						break;					
+				}
+			} elseif (isset($course_details["allow_enroll"]) && $course_details["allow_enroll"]) {
+				header("Location: ".ENTRADA_URL."/courses?section=enrol&id=".$COURSE_ID);
+				exit;
+			} else {
+				add_error("Your account does not have access to this course.");				
+				$allow_view = false;
+			}
+		}
+		
 		$query = "	SELECT b.`community_url` FROM `community_courses` AS a
 					JOIN `communities` AS b
 					ON a.`community_id` = b.`community_id`
@@ -99,16 +146,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			exit;
 		}
 
-		$query = "	SELECT * FROM `courses` 
-					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
-					AND `course_active` = '1'";
-		$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
 		if (!$course_details) {
 			$ERROR++;
 			$ERRORSTR[] = "The course identifier that was presented to this page currently does not exist in the system.";
-
 			echo display_error();
-		} else {
+		} elseif ($allow_view) {
 			if ($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getOrganisationId()), "read")) {
 				add_statistic($MODULE, "view", "course_id", $COURSE_ID);
 
@@ -533,6 +575,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				$ERRORSTR[] = "You do not have the permissions required to view this course. If you believe that you have received this message in error, please contact a system administrator.";
 
 				echo display_error();
+			}
+		} else {
+			if($ERROR) {
+				echo display_error();
+			}
+			
+			if($NOTICE) {
+				echo display_notice();
 			}
 		}
 	} else {

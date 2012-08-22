@@ -230,7 +230,6 @@ class Entrada_ACL extends ACL_Factory {
 		if(!($user instanceof Zend_Acl_Role_Interface)) {
 			$user = new EntradaUser($user);
 		}
-
 		return $this->acl->isAllowed($user, $resource, $action);
 	}
 
@@ -513,20 +512,20 @@ class OnlineCourseAssertion implements Zend_Acl_Assert_Interface {
 			return true;
 		}
 
+		//Parse out the user ID and course ID
+		$resource_id = $resource->getResourceId();
+		$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
+
+		if($resource_type !== "course" && $resource_type !== "coursecontent") {
+			//This only asserts for users on courses.
+			return false;
+		}		
+		
 		if(isset($resource->course_id)) {
 			$course_id = $resource->course_id;
 		} else if(isset($acl->_entrada_last_query->course_id)) {
 			$course_id = $acl->_entrada_last_query->course_id;
 		} else {
-			//Parse out the user ID and course ID
-			$resource_id = $resource->getResourceId();
-			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
-
-			if($resource_type !== "course" && $resource_type !== "coursecontent") {
-				//This only asserts for users on courses.
-				return false;
-			}
-
 			$course_id = preg_replace('/[^0-9]+/', "", $resource_id);
 		}
 
@@ -576,6 +575,7 @@ class OnlineCourseAssertion implements Zend_Acl_Assert_Interface {
 					AND a.`audience_value` = b.`group_id`
 					AND b.`member_active` = '1'
 					WHERE a.`course_id` = ".$db->qstr($course_id)."
+					AND a.`audience_active` = '1'
 					AND ((a.`audience_type` = 'proxy_id' AND a.`audience_value` = ".$db->qstr($user_id).")
 					OR (a.`audience_type` = 'group_id' AND b.`proxy_id` = ".$db->qstr($user_id)."))";
 		$result = $db->GetRow($query);
@@ -1160,7 +1160,7 @@ class EventOwnerAssertion implements Zend_Acl_Assert_Interface {
 /**
  * Online Event Assertion
  *
- * Used to assert that the event referenced by the course resource is owned by the user referenced by the user role.
+ * Used to assert that the event referenced is intended for viewing by online users.
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
@@ -1179,9 +1179,6 @@ class OnlineEventAssertion implements Zend_Acl_Assert_Interface {
  */
 	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
 		global $db;
-		if((isset($resource->assert) && $resource->assert == false) || (isset($acl->_entrada_last_query) && isset($acl->_entrada_last_query->assert) && $acl->_entrada_last_query->assert == false)) {
-			return true;
-		}
 
 		if(isset($resource->event_id)) {
 			$event_id = $resource->event_id;
@@ -1193,14 +1190,13 @@ class OnlineEventAssertion implements Zend_Acl_Assert_Interface {
 			$resource_id = $resource->getResourceId();
 			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
 
-			if($resource_type !== "event" && $resource_type !== "eventcontent") {
+			if($resource_type !== "event" && $resource_type !== "eventcontent") {				
 			//This only asserts for events.
 				return false;
 			}
 
 			$event_id = preg_replace('/[^0-9]+/', "", $resource_id);
 		}
-
 		$role_id = $role->getRoleId();
 		$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
 		
@@ -1216,8 +1212,7 @@ class OnlineEventAssertion implements Zend_Acl_Assert_Interface {
 						WHERE `id` = ".$db->qstr($access_id);
 			$user_id = $db->GetOne($query);
 		}
-
-		return $this->_checkEventTypeAndAudience($user_id, $event_id);
+		return $this->_checkEventTypeAndAudience($user_id, $event_id);	
 	}
 
 	/**
@@ -1234,14 +1229,11 @@ class OnlineEventAssertion implements Zend_Acl_Assert_Interface {
 		}
 		$query		= "	SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($event_id)." AND `online_event` = '1'";
 		$results	= $db->GetAll($query);
-		if($results) {
-			return true;
-		}
-		
-		if(events_fetch_event_audience_for_user($event_id,$user_id)){
-			return true;
-		}
-
+		if($results) {				
+			if(events_fetch_event_audience_for_user($event_id,$user_id)){
+				return true;
+			}
+		}	
 		return false;
 	}
 }

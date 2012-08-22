@@ -238,7 +238,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 				echo display_error($errorstr);
 			} else {
-				if ($ENTRADA_ACL->amIAllowed(new EventResource($EVENT_ID, $event_info['course_id'], $event_info['organisation_id']), 'read')) {
+				if ($ENTRADA_ACL->amIAllowed(new EventResource($EVENT_ID, $event_info['course_id'], $event_info['organisation_id']), 'read')) {					
 					add_statistic($MODULE, "view", "event_id", $EVENT_ID);
 					
 					$event_contacts = events_fetch_event_contacts($EVENT_ID);

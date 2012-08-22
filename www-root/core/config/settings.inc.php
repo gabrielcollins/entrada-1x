@@ -129,6 +129,7 @@ define("AUTH_CAS_SESSION", "phpCAS");											// The session key set by phpCAS
 define("AUTH_CAS_ID", "peopleid");												// The session key that holds the employee / student number.
 
 define("PASSWORD_RESET_URL", ENTRADA_URL."/password-reset.php");				// The URL that users are directed to if they have forgotten their password.
+define("REGISTRATION_CONFIRMATION_URL", ENTRADA_URL."/registration-confirmation.php");			// The URL that users are directed to if they need to confirm their account or need confirmation email resent.
 define("PASSWORD_CHANGE_URL", ENTRADA_URL."/password-change.php");				// The URL that users are directed to if they wish to change their password.
 
 define("DATABASE_SESSIONS", false);

@@ -356,6 +356,14 @@ if ($ACTION == "login") {
 } elseif ($ACTION == "register") {
 	$PROCESSED["register"] = true;
 	/**
+	 * Bot detection field / Age
+	 * Field is in a row with display:none. If it contains a value, its safe to assume it was a bot that filled out the form and registration should fail.
+	 */
+	if ((isset($_POST["age"])) && ($age = clean_input($_POST["age"], array("trim","notags")))) {
+		$ERROR++;
+		$ERRORSTR[] = "There was a problem with your registration request. Please try again.";
+	}
+	/**
 	 * Required field "firstname" / Firstname.
 	 */
 	if ((isset($_POST["firstname"])) && ($firstname = clean_input($_POST["firstname"], "trim"))) {
@@ -506,51 +514,68 @@ if ($ACTION == "login") {
 
 				$PROCESSED_ACCESS["app_id"] = AUTH_APP_ID;
 				$PROCESSED_ACCESS["organisation_id"] = $org_id;
+				$PROCESSED_ACCESS["account_active"] = "false";
 				$PROCESSED_ACCESS["private_hash"] = generate_hash(32);
-				$PROCESSED_ACCESS["last_up"] = "";
+				$PROCESSED_ACCESS["last_ip"] = $_SERVER["REMOTE_ADDR"];
 				$PROCESSED_ACCESS["extras"] = "";
 				$PROCESSED_ACCESS["notes"] = "";
 
 			if ($db->AutoExecute(AUTH_DATABASE.".user_access", $PROCESSED_ACCESS, "INSERT")) {
-				$url			= ENTRADA_URL."/firstlogin";
-
-
-				// If $ENTRADA_USER was previously initialized in init.inc.php before the 
-				// session was authorized it is set to false and needs to be re-initialized.
-				if ($ENTRADA_USER == false) {
-					$ENTRADA_USER = User::get($PROCESSED_ACCESS["user_id"]);
-				}
-
-				$_SESSION["isAuthorized"] = true;
-				$_SESSION["details"] = array();
-				$_SESSION["details"]["app_id"] = (int) AUTH_APP_ID;
-				$_SESSION["details"]["id"] = $PROCESSED_ACCESS["user_id"];
-				$_SESSION["details"]["access_id"] = $ENTRADA_USER->getAccessId();
-				$_SESSION["details"]["username"] = $PROCESSED["username"];
-				$_SESSION["details"]["prefix"] = $PROCESSED["prefix"];
-				$_SESSION["details"]["firstname"] = $PROCESSED["firstname"];
-				$_SESSION["details"]["lastname"] = $PROCESSED["lastname"];
-				$_SESSION["details"]["email"] = $PROCESSED["email"];
-				$_SESSION["details"]["telephone"] = $PROCESSED["telephone"];
-				$_SESSION["details"]["role"] = $PROCESSED_ACCESS["role"];
-				$_SESSION["details"]["group"] = $PROCESSED_ACCESS["group"];
-				$_SESSION["details"]["organisation_id"] = $PROCESSED["organisation_id"];
-				$_SESSION["details"]["expires"] = (int)0;
-				$_SESSION["details"]["lastlogin"] = time();
-				$_SESSION["details"]["privacy_level"] = (int)0;
-				$_SESSION["details"]["private_hash"] = $PROCESSED_ACCESS["private_hash"];
-				$_SESSION["details"]["allow_podcasting"] = false;				
+				do {
+					$hash = md5(uniqid(rand(), 1));
+				} while($db->GetRow("SELECT `id` FROM `".AUTH_DATABASE."`.`registration_confirmation` WHERE `hash` = ".$db->qstr($hash)));
 				
-				header("Location: ".$url);
-			} else {
-				$ERROR++;
-				$ERRORSTR[]	= "Unable to give this new user access permissions to this application. ".$db->ErrorMsg();
+				$hash_params = array("ip"=>$PROCESSED_ACCESS["last_ip"],"date"=>time(),"user_id"=>$PROCESSED_ACCESS["user_id"],"hash"=>$hash,"complete"=>0);
+				if ($db->AutoExecute("`".AUTH_DATABASE."`.`registration_confirmation`",$hash_params,"INSERT")){
+					$message  = "Hello ".$PROCESSED["firstname"]." ".$PROCESSED["lastname"].",\n\n";
+					$message .= "This is an automated e-mail containing instructions to help you login to your ".APPLICATION_NAME." account.\n\n";
+					$message .= "Your ".APPLICATION_NAME." Username is: ".$PROCESSED["username"]."\n\n";
+					$message .= "Please visit the following link to confirm to your account:\n";
+					$message .= str_replace("http://", "https://", ENTRADA_URL)."/registration-confirmation.php?hash=".rawurlencode($PROCESSED_ACCES["user_id"].":".$hash)."\n\n";
+					$message .= "Please Note:\n";
+					$message .= "This confirmation link will be valid for the next 3 days. If you do not confirm your\n";
+					$message .= "account within this time period, you will need to reinitate this process.\n\n";
+					$message .= "If you did not register an account in ".APPLICATION_NAME." and you believe\n";
+					$message .= "there has been a mistake, DO NOT click the above link. Please forward this\n";
+					$message .= "message along with a description of the problem to: ".$AGENT_CONTACTS["administrator"]["email"]."\n\n";
+					$message .= "Best Regards,\n";
+					$message .= $AGENT_CONTACTS["administrator"]["name"]."\n";
+					$message .= $AGENT_CONTACTS["administrator"]["email"]."\n";
+					$message .= ENTRADA_URL."\n\n";
+					$message .= "Requested By:\t".$_SERVER["REMOTE_ADDR"]."\n";
+					$message .= "Requested At:\t".date("r", time())."\n";
 
+					if(@mail($PROCESSED["email"], "Account Confirmation - ".APPLICATION_NAME." Authentication System", $message, "From: \"".$AGENT_CONTACTS["administrator"]["name"]."\" <".$AGENT_CONTACTS["administrator"]["email"].">\nReply-To: \"".$AGENT_CONTACTS["administrator"]["name"]."\" <".$AGENT_CONTACTS["administrator"]["email"].">")) {										
+						$SUCCESS++;
+						$SUCCESSSTR[] = "You have successfully created an account in ".APPLICATION_NAME.". You should recieve an email confirmation shortly. You will need to click the link in the email to confirm your account before you'll be able to login.";				
+						application_log("notice", "A registration confirmation e-mail has just been sent for ".$PROCESSED["username"]." [".$PROCESSED_ACCES["user_id"]."].");
+					} else {
+						$ERROR++;
+						$ERRORSTR[] =	"We were unable to send you your registration authorisation e-mail at this time due to an unrecoverable error but your account has been created. "
+										.(defined('REGISTRATION_CONFIRMATION_URL') && REGISTRATION_CONFIRMATION_URL?"Please <a href=\"".REGISTRATION_CONFIRMATION_URL."\">click here</a> to request a confirmation email and we will resend you one. "
+										:"You can request a confirmation email be sent from the login page.")
+										."An administrator has been made aware of this error and will resolve it as soon as possible.";
+						application_log("error", "Unable to send registration confirmation notice as PHP's mail() function failed to initialize.");
+					}
+
+					$_SESSION = array();
+					@session_destroy();
+				} else {
+						$ERROR++;
+						$ERRORSTR[] =	"An error occurred while generating a registration authorisation e-mail at this time due to an unrecoverable error but your account has been created. "
+										.(defined('REGISTRATION_CONFIRMATION_URL') && REGISTRATION_CONFIRMATION_URL?"Please <a href=\"".REGISTRATION_CONFIRMATION_URL."\">click here</a> to request a confirmation email and we will resend you one. "
+										:"You can request a confirmation email be sent from the login page.")
+										."An administrator has been made aware of this error and will resolve it as soon as possible.";
+						application_log("error", "Unable to send registration confirmation notice because a registration_confirmation record could not be created. Database said: ".$db->ErrorMsg());					
+				}
+			} else {
+					$ERROR++;
+					$ERRORSTR[] = "An error occurred while giving your account access to the application. Please contact ".$AGENT_CONTACTS["administrator"]["name"]." by emailing ".$AGENT_CONTACTS["administrator"]["email"]." to have access granted for your account. We apologize for any inconvenience this may have caused.";					
 				application_log("error", "Error giving new user access to application id [".AUTH_APP_ID."]. Database said: ".$db->ErrorMsg());
 			}					
 		} else {
 			$ERROR++;
-			$ERRORSTR[] = "Unable to create a new user account at this time. The MEdTech Unit has been informed of this error, please try again later.";
+			$ERRORSTR[] = "Unable to create a new user account at this time. An administrator has been informed of this error, please try again later.";
 
 			application_log("error", "Unable to create new user account. Database said: ".$db->ErrorMsg());
 		}
