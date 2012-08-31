@@ -1,0 +1,11 @@
+div.printing-enabled,.yes-printing,div.print-only {
+display:block;
+}
+
+#navigator-container,div.printing-disabled,.no-printing,div.bread-crumb-trail {
+display:none;
+}
+
+#dashboardCalendar div.wc-scrollable-grid {
+height: 974px !important;
+}

@@ -1,0 +1,844 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<style type="text/css">
+			.header {
+				font-weight:normal;
+				font-size:small;
+			}
+
+			.category {
+				background-color:#808080;
+			}
+
+			.subCategory {
+				background-color:silver;
+			}
+
+			.checkbox {
+				text-align:center;
+			}
+		</style>
+		<script type="text/javascript">
+			function createArray(module)
+			{
+				var category = module.slice(0,7);
+				if (category == "discuss")
+				{
+					var arrayName = module;
+					array = new Array();
+
+					array[0] = arrayName + "Forum";
+					array[1] = arrayName + "Post";
+
+					if (arrayName == "discussView")
+					{
+						array[2] = arrayName + "Spacer";
+					}
+
+					return array;
+				}
+				else if (category == "gallery")
+				{
+					var arrayName = module;
+					array = new Array();
+
+					if (arrayName == "galleryView")
+					{
+						array[0] = arrayName + "Gallery";
+						array[1] = arrayName + "Photo";
+						array[2] = arrayName + "Spacer";
+					}
+					else
+					{
+						array[0] = arrayName + "Comment";
+						array[1] = arrayName + "Gallery";
+						array[2] = arrayName + "Photo";
+					}
+
+					return array;
+				}
+				else if (category == "sharing")
+				{
+					var arrayName = module;
+					array = new Array();
+
+					if (arrayName == "sharingCreate" || arrayName == "sharingDelete")
+					{
+						array[0] = arrayName + "Comment";
+						array[1] = arrayName + "File";
+						array[2] = arrayName + "Folder";
+						array[3] = arrayName + "Revision";
+					}
+					else if (arrayName == "sharingEdit")
+					{
+						array[0] = arrayName + "Comment";
+						array[1] = arrayName + "File";
+						array[2] = arrayName + "Folder";
+					}
+					else if (arrayName == "sharingView")
+					{
+						array[0] = arrayName + "File";
+						array[1] = arrayName + "Folder";
+						array[2] = arrayName + "Spacer";
+					}
+
+					return array;
+				}
+			}
+
+			function showHideSubCategory(module,span)
+			{
+				var blockArray = createArray(module);
+
+				for (i=0;i<blockArray.length;i++)
+				{
+					if (document.getElementById(blockArray[i]).style.display=="none")
+					{
+						document.getElementById(blockArray[i]).style.display="";
+						document.getElementById(span).innerHTML = " - ";
+					}
+					else if (document.getElementById(blockArray[i]).style.display=="")
+					{
+						document.getElementById(blockArray[i]).style.display="none";
+						document.getElementById(span).innerHTML = " + ";
+					}
+				}
+			}
+			function showHideCategory(block,span)
+			{
+				if (document.getElementById(block).style.display=="none")
+				{
+					document.getElementById(block).style.display="";
+					document.getElementById(span).innerHTML = " - "
+				}
+				else if (document.getElementById(block).style.display=="")
+				{
+					document.getElementById(block).style.display="none";
+					document.getElementById(span).innerHTML = " + "
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<table border="1">
+			<thead>
+				<tr>
+					<th colspan="3">&nbsp;</th>
+					<th class="header">Community Administrators</th>
+					<th class="header">Community Members</th>
+					<th class="header">Browsing Non-Members</th>
+					<th class="header">Non-Authenticated / Public Users</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;" width="120"><a href="#" onclick="showHideCategory('announceBlock','announceSpan')"><span id="announceSpan"> - </span>Announcements</a></td>
+					<td width="185" colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="announceBlock">
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Create</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Edit</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Delete</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Moderate</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;"><a href="#" onclick="showHideCategory('discussBlock','discussSpan')"><span id="discussSpan"> - </span>Discussions</a></td>
+					<td colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="discussBlock">
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td width="65"><a href="#" onclick="showHideSubCategory('discussCreate','discussCreateSpan')"><span id="discussCreateSpan"> - </span>Create</a></td>
+					<td width="110">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="discussCreateForum">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Forum</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr
+				<tr id="discussCreatePost">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Post</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('discussEdit','discussEditSpan')"><span id="discussEditSpan"> - </span>Edit</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="discussEditForum">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Forum</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr
+				<tr id="discussEditPost">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Post</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('discussDelete','discussDeleteSpan')"><span id="discussDeleteSpan"> - </span>Delete</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="discussDeleteForum">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Forum</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr
+				<tr id="discussDeletePost">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Post</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('discussView','discussViewSpan')"><span id="discussViewSpan"> - </span>View</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="discussViewForum">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View Forum</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr
+				<tr id="discussViewPost">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View Post</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="discussViewSpacer" class="subCategory">
+					<td height="10" colspan="7"></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Reply Post</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;"><a href="#" onclick="showHideCategory('eventsBlock','eventsSpan')"><span id="eventsSpan"> - </span>Events</a></td>
+					<td colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="eventsBlock">
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Create</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Edit</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Delete</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Moderate</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;"><a href="#" onclick="showHideCategory('galleryBlock','gallerySpan')"><span id="gallerySpan"> - </span>Galleries</a></td>
+					<td colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="galleryBlock">
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('galleryCreate','galleryCreateSpan')"><span id="galleryCreateSpan"> - </span>Create</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="galleryCreateComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryCreateGallery">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Gallery</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryCreatePhoto">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Photo</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('galleryEdit','galleryEditSpan')"><span id="galleryEditSpan"> - </span>Edit</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="galleryEditComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryEditGallery">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Gallery</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryEditPhoto">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Photo</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('galleryDelete','galleryDeleteSpan')"><span id="galleryDeleteSpan"> - </span>Delete</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="galleryDeleteComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryDeleteGallery">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Gallery</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryDeletePhoto">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Photo</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('galleryView','galleryViewSpan')"><span id="galleryViewSpan"> - </span>View</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="galleryViewGallery">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View Gallery</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryViewPhoto">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View Photo</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="galleryViewSpacer" class="subCategory">
+					<td height="10" colspan="7"></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Move Photo</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;" width="120"><a href="#" onclick="showHideCategory('pagesBlock','pagesSpan')"><span id="pagesSpan"> - </span>Pages</a></td>
+					<td width="185" colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="pagesBlock">
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Create</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Edit</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Delete</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;" width="120"><a href="#" onclick="showHideCategory('pollsBlock','pollsSpan')"><span id="pollsSpan"> - </span>Polls</a></td>
+					<td width="185" colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="pollsBlock">
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Create</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Edit</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Delete</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">View</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Vote</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">"My Votes"</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td style="text-align:right;" colspan="2">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+			<tbody>
+				<tr class="category">
+					<td style="text-align:left;"><a href="#" onclick="showHideCategory('sharingBlock','sharingSpan')"><span id="sharingSpan"> - </span>Shares</a></td>
+					<td colspan="2">&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+			</tbody>
+			<tbody id="sharingBlock">
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td width="65"><a href="#" onclick="showHideSubCategory('sharingCreate','sharingCreateSpan')"><span id="sharingCreateSpan"> - </span>Create</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="sharingCreateComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingCreateFile">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create File</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingCreateFolder">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Folder</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingCreateRevision">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Create Revision</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('sharingEdit','sharingEditSpan')"><span id="sharingEditSpan"> - </span>Edit</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="sharingEditComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingEditFile">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit File</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingEditFolder">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Edit Folder</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('sharingDelete','sharingDeleteSpan')"><span id="sharingDeleteSpan"> - </span>Delete</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="sharingDeleteComment">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Comment</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingDeleteFile">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete File</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingDeleteFolder">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Folder</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingDeleteRevision">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Delete Revision</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr class="subCategory">
+					<td>&nbsp;</td>
+					<td><a href="#" onclick="showHideSubCategory('sharingView','sharingViewSpan')"><span id="sharingViewSpan"> - </span>View</a></td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr id="sharingViewFile">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View File</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingViewFolder">
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">View Folder</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr id="sharingViewSpacer" class="subCategory">
+					<td height="10" colspan="7"></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Move File</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+					<td style="text-align:right;">Index</td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+					<td class="checkbox"><input type="checkbox" /></td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+</html>

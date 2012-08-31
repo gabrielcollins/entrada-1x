@@ -1,0 +1,1 @@
+ALTER TABLE `user_data` ADD `email_updated` BIGINT( 64 ) NULL DEFAULT NULL AFTER `email_alt`;

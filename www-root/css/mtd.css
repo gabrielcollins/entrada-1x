@@ -1,0 +1,148 @@
+table.mtd_table {
+width:99%;
+display:table;
+table-layout:fixed;
+border: 1px solid #A0A0A0;
+float: left;
+}
+
+table.mtd_table col {
+display:table-column;
+text-align:center;
+}
+
+table.mtd_table thead tr td a,table.mtd_table thead tr td a:hover {
+display:block;
+width:auto;
+color:#333;
+text-decoration:none;
+text-align: center;
+}
+
+table.mtd_table thead tr th {
+/*background-image:url(../images/list-header-dark.gif);*/
+background-color: #F6F9ED;
+}
+
+table.mtd_table thead {
+    text-align: center;
+}
+
+table td.first {
+    display: none;
+}
+
+table th.first {
+    display: none;
+}
+
+table.mtd_table tbody tr td {
+height:16px;
+font-size:11px;
+overflow:hidden;
+white-space:nowrap;
+text-overflow:ellipsis;
+padding:2px 4px 10px 2px;
+border-right:1px solid #999999;
+}
+
+table.resident_data thead {
+    font-weight: bold;
+}
+
+table.resident_data td{
+    border-top: 1px solid #999999;
+}
+
+.resident_data_label {
+    font-weight: bold;
+}
+
+.resident_data {
+    font-weight: normal;
+}
+
+table.resident_data tr td span {
+    font-weight: normal;
+}
+
+#MTD_form_container label {
+    font-weight: bold;
+}
+
+table.mtd_table caption {
+    font-weight: bold;
+}
+
+div.autocomplete {
+  position:absolute;
+  width:250px;
+  background-color:white;
+  border:1px solid #888;
+  margin:0;
+  padding:0;
+}
+div.autocomplete ul {
+  list-style-type:none;
+  margin:0;
+  padding:0;
+}
+div.autocomplete ul li.selected { background-color: #ffb;}
+div.autocomplete ul li {
+  list-style-type:none;
+  display:block;
+  margin:0;
+  padding:2px;
+  height:32px;
+  cursor:pointer;
+}
+
+.even {
+    background-color: #F6F9ED;
+}
+
+.rowhighlight {
+    background-color: #ECFFB3 !important;
+}
+
+.dataTables_length {
+    float: left;
+}
+
+.dataTables_filter {
+    float: right;
+}
+
+.dataTables_info {
+    float: left;
+}
+
+.dataTables_wrapper {
+    float: left;
+}
+
+.sorting_asc {
+	background: url('../javascript/datatable/media/images/sort_asc.png') no-repeat center right;
+}
+
+.sorting_desc {
+	background: url('../javascript/datatable/media/images/sort_desc.png') no-repeat center right;
+}
+
+.sorting {
+	background: url('../javascript/datatable/media/images/sort_both.png') no-repeat center right;
+}
+
+.sorting_asc_disabled {
+	background: url('../javascript/datatable/media/images/sort_asc_disabled.png') no-repeat center right;
+}
+
+.sorting_desc_disabled {
+	background: url('../javascript/datatable/media/images/sort_desc_disabled.png') no-repeat center right;
+}
+
+.last_column {
+    border-right: 0;
+}
+
+.clearboth { clear: both; }

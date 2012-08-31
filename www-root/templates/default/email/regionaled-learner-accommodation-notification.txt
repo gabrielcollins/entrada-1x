@@ -1,0 +1,11 @@
+%LEARNER_NAME%, 
+
+This is an automatically generated email to notify you that your accommodation begins in 30 days. 
+
+You will be staying at %ACCOMMODATION_TITLE% located at %ACCOMMODATION_NUMBER% %ACCOMMODATION_STREET% in %ACCOMMODATION_REGION%. Your occupancy begins %INHABITING_START% and ends %INHABITING_FINISH%. 
+
+Should you have any questions, feel free to contact %ACCOMMODATION_CONTACT_NAME% at %ACCOMMODATION_CONTACT_INFO%. 
+
+Sincerely, 
+
+%APPLICATION_NAME%

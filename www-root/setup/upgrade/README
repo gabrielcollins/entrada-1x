@@ -1,0 +1,14 @@
+
+ENTRADA UPGRADE README
+
+Unfortunately there is no automated upgrade utility for Entrada at this point,
+although that will change in a future release.
+
+In the mean time upgrading is not very difficult simply replace all Entrada
+files and then execute the SQL queries within this directory sequentially from
+your old version to your new version. For example if you are currently running
+Entrada 1.0.0 and you wish to upgrade to Entrada 1.2.0 then execute each SQL
+file in the 1100 and 1200 directories.
+
+For more information please visit the Entrada wiki:
+https://developer.entrada-project.org/projects/entrada/wiki/Upgrading_Entrada

@@ -1,0 +1,85 @@
+div.entrada-header {
+height:104px;
+background:url(../images/header-bg1.jpg) no-repeat left top;
+}
+
+.tail-top {
+background:url(../images/tail-top.gif) left top repeat-x #FFF;
+margin-bottom:10px;
+}
+
+.tail-bottom {
+background:url(../images/tail-bottom.gif) left bottom repeat-x;
+}
+
+#system-sidebar {
+float:left;
+width:20%;
+}
+
+#system-sidebar > div {
+padding:5px;
+}
+
+#system-content {
+float:left;
+width:80%;
+}
+
+#system-content > div {
+padding:0 0 5px 5px;
+}
+
+table.DataTable tbody tr th {
+color: #036;
+}
+
+div.person-data span.person-name {
+color: #036; 
+}
+
+a {
+color:#036;
+}
+
+h1, h2, h3, .head-heading, .content-heading, .content-subheading {
+color:#036;
+}
+
+ul.objective-list li label.heading, ol.objective-list li span.heading {
+color:#036;
+}
+
+.discussion-title {
+color:#036;
+}
+
+.usage-container {
+border:1px #036 solid;
+background-color:#036;
+}
+
+ul.navigation li {
+border-left:4px #036 solid;
+color:#036;
+}
+
+ul.general-list li a {
+color:#036;
+}
+
+.radio-group-title {
+color:#036;
+}
+
+.accordion_toggle_active {
+background-color:#036;
+}
+
+.accordion_content h2 {
+color:#036;
+}
+
+.vertical_accordion_toggle_active {
+background-color:#036;
+}

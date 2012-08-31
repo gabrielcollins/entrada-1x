@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos -->
+			<title>File Source for StudentRunElectives.class.php</title>
+			<link rel="stylesheet" href="../media/stylesheet.css" />
+			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+		</head>
+		<body>
+						<h1>Source for file StudentRunElectives.class.php</h1>
+<p>Documentation is available at <a href="../phpDocumentor/_mspr---StudentRunElectives.class.php.html">StudentRunElectives.class.php</a></p>
+<div class="src-code">
+<div class="src-code"><ol><li><div class="src-line"><a name="a1"></a><span class="src-php">&lt;?php</span></div></li>
+<li><div class="src-line"><a name="a2"></a>&nbsp;</div></li>
+<li><div class="src-line"><a name="a3"></a><span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;StudentRunElective.class.php&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a4"></a><span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;Models/utility/Collection.class.php&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a5"></a>&nbsp;</div></li>
+<li><div class="src-line"><a name="a6"></a><span class="src-key">class&nbsp;</span><a href="../phpDocumentor/StudentRunElectives.html">StudentRunElectives</a>&nbsp;<span class="src-key">extends&nbsp;</span><a href="../phpDocumentor/Collection.html">Collection</a>&nbsp;<span class="src-sym">{</span></div></li>
+<li><div class="src-line"><a name="a7"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">public&nbsp;</span><span class="src-key">static&nbsp;</span><span class="src-key">function&nbsp;</span><a href="../phpDocumentor/StudentRunElectives.html#methodget">get</a><span class="src-sym">(</span><span class="src-id">User&nbsp;</span><span class="src-var">$user</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span></div></li>
+<li><div class="src-line"><a name="a8"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">global&nbsp;</span><span class="src-var">$db</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a9"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$user_id&nbsp;</span>=&nbsp;<span class="src-var">$user</span><span class="src-sym">-&gt;</span><span class="src-id">getID</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a10"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$query&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>=&nbsp;<span class="src-str">&quot;SELECT&nbsp;*&nbsp;FROM&nbsp;`student_student_run_electives`&nbsp;WHERE&nbsp;`user_id`&nbsp;=&nbsp;&quot;</span>.<span class="src-var">$db</span><span class="src-sym">-&gt;</span><span class="src-id">qstr</span><span class="src-sym">(</span><span class="src-var">$user_id</span><span class="src-sym">)</span>.<span class="src-str">&quot;&nbsp;ORDER&nbsp;BY&nbsp;`start_year`&nbsp;ASC,&nbsp;`start_month`&nbsp;ASC&quot;</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a11"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$results&nbsp;</span>=&nbsp;<span class="src-var">$db</span><span class="src-sym">-&gt;</span><span class="src-id">getAll</span><span class="src-sym">(</span><span class="src-var">$query</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a12"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$sres&nbsp;</span>=&nbsp;<span class="src-key">array</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a13"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">if&nbsp;</span><span class="src-sym">(</span><span class="src-var">$results</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span></div></li>
+<li><div class="src-line"><a name="a14"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">foreach&nbsp;</span><span class="src-sym">(</span><span class="src-var">$results&nbsp;</span><span class="src-key">as&nbsp;</span><span class="src-var">$result</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span></div></li>
+<li><div class="src-line"><a name="a15"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$sre&nbsp;</span>=&nbsp;&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id"><a href="../phpDocumentor/StudentRunElective.html">StudentRunElective</a></span><span class="src-sym">(</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'id'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'user_id'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'group_name'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'university'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'location'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'start_month'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'start_year'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'end_month'</span><span class="src-sym">]</span><span class="src-sym">,&nbsp;</span><span class="src-var">$result</span><span class="src-sym">[</span><span class="src-str">'end_year'</span><span class="src-sym">]</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a16"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$sres</span><span class="src-sym">[</span><span class="src-sym">]&nbsp;</span>=&nbsp;<span class="src-var">$sre</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a17"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a18"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}&nbsp;</span></div></li>
+<li><div class="src-line"><a name="a19"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">return&nbsp;</span><span class="src-key">new&nbsp;</span><span class="src-id">self</span><span class="src-sym">(</span><span class="src-var">$sres</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a20"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a21"></a><span class="src-sym">}</span></div></li>
+</ol></div>
+</div>
+	<p class="notes" id="credit">
+		Documentation generated on Tue, 29 Mar 2011 13:53:49 -0400 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.3</a>
+	</p>
+	</body>
+</html>

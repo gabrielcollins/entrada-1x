@@ -1,0 +1,136 @@
+body {
+	height: 100%;
+}
+table {
+	background:url('../images/agenda-bg.jpg');
+	width: 100%;
+}
+table td {
+	height:40px;
+}
+table td.event{
+	background: #68a1e5;
+	border: 1px solid #DDD;
+	border-top: none;
+	border-bottom: none;
+	color: #fff;
+	font-size: 11px;
+	font-weight:bold;
+	margin:0;
+	padding:0;
+	text-align:center;
+	text-shadow: 0 0 0;
+	-moz-opacity:0.8;
+	-khtml-opacity: 0.8;
+	opacity: 0.8;
+}
+
+table td.overlap-events {
+	height:40px;
+}
+table td {
+	overflow:hidden;
+}
+
+table td.event p {
+	background: #2b72d0;
+	border: 1px solid #1b62c0;
+    margin:0;
+	padding:2px 0 2px 2px;
+}
+
+table td.event p.event-title {
+	background: #68a1e5;
+	border: none;
+    margin:0;
+	padding:2px 0 2px 2px;
+}
+
+table td.hour {
+	background:#DDD;
+	border-right: 1px solid #BBB;
+	padding: 0 0 0 7px;
+	width:50px;
+	
+}
+div.hour-container {
+	background:url('../images/agenda-bg.jpg');
+	height: 40px;
+	margin:0;
+	padding:0;
+	width:100%
+}
+
+div.hour {
+	background:#DDD;
+	border-right: 1px solid #BBB;
+	float:left;
+	height:40px;
+	padding:0 0 0 7px;
+	width:8%;
+	z-index:1;
+
+}
+div.event-container {
+	height:40px;
+	margin:0;
+	padding:0;
+	width:100%;
+	z-index:1;
+
+}
+div.event {
+	background: #68a1e5;
+	border: 1px solid #FFF;
+	border-top: none;
+	border-bottom: none;
+	color: #FFF;
+	float:left;
+	font-size: 11px;
+	font-weight:bold;
+	height:40px;
+	left:82px;
+	margin:0;
+	padding:0;
+	position:absolute;
+    z-index:10;
+	text-align:center;
+	text-shadow: 0 0 0;
+	-moz-opacity:0.8;
+	-khtml-opacity: 0.8;
+	opacity: 0.8;
+	width:87%;
+
+}
+
+p.event-time {
+	background: #2b72d0;
+	border: 1px solid #1b62c0;
+	color: #FFF;
+	font-size: 11px;
+	font-weight:bold;
+    margin:0;
+	padding:2px 0 2px 2px;
+}
+
+p.event-title {
+	border: none;
+	color: #FFF;
+	font-size: 11px;
+	font-weight:bold;
+    margin:0;
+	padding:2px 0 4px 2px;
+}
+
+div.clear-fix{
+	clear:both;
+}
+
+div.calendar-container{
+	background:url('../images/agenda-bg.jpg');
+	width:100%;
+	margin:0;
+	padding:0;
+	height:100%;
+	z-index:1;
+}

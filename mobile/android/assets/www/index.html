@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Entrada Mobile</title>
+        
+		<meta name="viewport" content="width=height=device-height, device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+		<meta charset="utf-8">
+        <link rel="stylesheet" href="lib/jquery/jquery.mobile.structure-1.0.min.css" />
+		<link rel="stylesheet" href="lib/codebase/dhtmlxscheduler_mobile.css" type="text/css" media="screen"/>  
+		<link rel="stylesheet" href="lib/jquery/jquery.mobile-1.0.min.css" />
+		<script type="text/javascript" charset="utf-8" src="phonegap-1.3.0.js"></script>
+		<script type="text/javascript" src="lib/jquery/jquery-1.6.4.min.js"></script>
+		<script type="text/javascript" src="lib/jquery/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="lib/jquery/jquery.mobile-1.0.min.js"></script>
+		<script src="lib/codebase/dhtmlxscheduler_mobile.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript" charset="utf-8">
+			var authenticated = null;
+			var user_id = null;
+			var organisation_id = null;
+			var firstname = null;
+			var lastname = null;
+			var role = null;
+			var group = null;
+			var username = null;
+			var password = null;
+			var previous_data = 0;
+			var orientation2 = null;
+			var l_width = null;
+			var p_width = null;
+			var url = null;
+			var events = null;
+			var testing = null;
+			
+			function onBodyLoad(){
+				document.addEventListener("deviceready", onDeviceReady, false);
+				function onDeviceReady(){
+				window.localStorage.clear();
+					if (window.localStorage.getItem("password-settings") && window.localStorage.getItem("password-settings") == 0) {
+						$("#require-password").prop("checked", true);
+					}
+					if (window.localStorage.getItem("url") && window.localStorage.getItem("username") && window.localStorage.getItem("password") && window.localStorage.getItem("password-settings")) {
+						window.url = window.localStorage.getItem("url");
+						$("#url").val(window.url);
+
+						window.username = window.localStorage.getItem("username");
+						$("#username").val(username);
+
+						if (window.localStorage.getItem("password-settings") == 1) {
+							window.password = window.localStorage.getItem("password");
+							$("#password").val(password);
+
+							var method = "login";
+								$.ajax({
+								url:'https://' + window.url + 'api/mobile.api.php',
+								type: 'post',
+								data: ({method: method, username: window.username, password: window.password}),
+								dataType: 'json',
+								
+								success: function (data) {
+									
+									window.authenticated = data.authenticated;
+									window.user_id = data.id;
+									window.organisation_id = data.organisation_id;
+									window.firstname = data.firstname;
+									window.lastname = data.lastname;
+									window.role = data.role;
+									window.group = data.group;
+									//$(".agenda").addClass("ui-btn-active");
+									load_scheduler();
+									set_methods();
+									window.location.href = "#agenda";
+								}
+							});
+						} else {
+							window.location.href = "#settings";
+							dhx.Touch.disable();
+						}
+
+					} else {
+						window.location.href = "#settings";
+						dhx.Touch.disable();
+					}
+
+					$("#save-settings").bind("tap", function () {
+						
+						window.url = $("#url").val();
+						window.username = $("#username").val();
+						window.password = $("#password").val();
+						window.localStorage.setItem("password-settings", $("input[name=login-option]:radio:checked").val());
+						//console.log(window.localStorage.getItem("password_settings"));
+
+						window.localStorage.setItem("url", window.url);
+						window.localStorage.setItem("username", window.username);
+						window.localStorage.setItem("password", window.password);
+
+						var method = "login";
+						$(document).ready(function () {
+							$.ajax({
+							url:'https://' + window.url + 'api/mobile.api.php',
+							type: 'post',
+							data: ({method: method, username: window.username, password: window.password}),
+							dataType: 'json',
+							success: function (data) {
+								window.authenticated = data.authenticated;
+								window.user_id = data.id;
+								window.organisation_id = data.organisation_id;
+								window.firstname = data.firstname;
+								window.lastname = data.lastname;
+								window.role = data.role;
+								window.group = data.group;
+								load_scheduler();
+								set_methods();
+								window.location.href = "#agenda";
+								dhx.Touch.enable();
+								}					
+							});
+						});
+
+
+						$("#login-status").ajaxError(function(event, request, settings, exception) {
+							$("#login-status").html("Error Calling: " + settings.url + "<br />HTTP Code: " + request.status + exception);
+							$("#login-status").slideDown("fast");
+						});
+
+					});
+
+					function set_methods() {
+						fetch_notices();
+						count_notices(true);
+						
+						$("#logout").bind("tap", function () {
+							$$("scheduler").clearAll();
+						});
+						
+						$(".agenda").bind("tap", function () {
+							$(".agenda").addClass("ui-btn-active");
+							$(".notices").removeClass("ui-btn-active");
+							dhx.Touch.enable();
+							scheduler_update();
+
+						});
+
+						$(".notices").bind("tap", function () {
+							$(".notices").addClass("ui-btn-active");
+							$(".agenda").removeClass("ui-btn-active");
+							$(".agenda").attr("data-direction", "reverse");
+							$(".notices").addClass("ui-btn-active");
+							dhx.Touch.disable();
+							count_notices(false);
+							fetch_notices();
+						});
+						
+						$(".settings").bind("tap", function() {
+							dhx.ready(function (){
+								dhx.Touch.disable();
+							});
+						});
+						
+						$(".close").bind("tap", function() {
+							dhx.Touch.enable();
+							if ($(".agenda").hasClass("ui-btn-active")) {
+								window.location.href = "#agenda";
+							} else if ($(".notices").hasClass("ui-btn-active") || $(".notices").hasClass("ui-li-has-count")) {
+								window.location.href = "#events";
+							}
+						});
+						
+						$(".back").bind("tap", function () {
+							$(".notices").addClass("ui-btn-active");
+						});
+					}
+
+					function load_scheduler () {
+						var method = "agenda";
+						$.ajax({
+							url:'https://' + window.url + 'api/mobile.api.php',
+							type: 'post',
+							data: ({method: method, authenticated: window.authenticated, firstname: window.firstname, lastname: window.lastname, role: window.role, group: window.group, id: window.user_id, organisation_id: window.organisation_id}),
+							success:function(data){
+								$(document).ready(function () {
+									scheduler.config.readonly = true;
+									scheduler.config.header_date = "%M %j, %Y";
+									scheduler.config.item_date = "%l %F %j, %Y";
+									scheduler.config.hour_date = "%h:%i%a";
+									scheduler.config.scale_hour = "%h";
+									//scheduler.config.prevent_cache = true;
+									//scheduler.config.details_on_create = true;
+									dhx.ready(function(){
+										dhx.ui({
+											view: "scheduler",
+											container: "content",
+											id: "scheduler"
+										});
+										$$("scheduler").parse(data, "json");
+										$$("scheduler").$$("dayList").scrollTo(0,31*8);
+										$$("scheduler").$$("buttons").setValue("day");
+										$$("scheduler").$$("day").show();
+										scheduler_size();
+									});
+
+									$(window).bind("resize", function () {
+										scheduler_size();
+									});
+									function scheduler_size () {
+										var width = $("html").width();
+										var height = $("html").height() - 90;
+										$("#content").css("height", height);
+										$$("scheduler").define("width", width);
+										$$("scheduler").define("height", height);
+										$$("scheduler").resize();
+										$(".dhx_dayevents_scale_event").css("width", width - 45);
+										$(".dhx_dayevents_scale_event").children("div").each(function () {
+											$(this).css("width", width - 44);
+										});
+										
+										if ($$("scheduler").$$("buttons").getValue() =="day") { 
+											$$("scheduler").$$("dayList").render();
+										}
+									}
+								});	
+							}
+						});
+					}
+
+					function fetch_notices () {
+						console.log("fetch");
+						var method = "notices";
+						var sub_method = "fetch_notices";
+						$.ajax({
+							url:'https://' + window.url + 'api/mobile.api.php',
+							type: 'post',
+							data: ({method: method, group: window.group, id: window.user_id, organisation_id: window.organisation_id, sub_method: sub_method}),
+							dataType: 'json',
+							success:function (data) {
+								list_notices (data);
+							}	
+						});
+					}
+
+					function list_notices (data) {
+						$("#old_notice_list").hide();
+						console.log("list");
+						var list = $("#notice_list");
+						var old_list = $("#old_notice_list");
+						list.html("");
+						list.append("<li data-role='list-divider' role='heading' class='ui-li ui-li-divider ui-btn ui-bar-b ui-corner-top ui-btn-up-undefined'>Newest Notices</li>");
+						old_list.html("");
+						old_list.append("<li data-role='list-divider' role='heading' class='ui-li ui-li-divider ui-btn ui-bar-c ui-corner-top ui-btn-up-undefined'>Previously Read Notices</li>");
+						$.each(data, function (key, val) {
+							if (val.last_read <= val.updated_date) {
+								list.append("<li data-theme='d' data-role='button' id='"+ val.notice_id +"' class='ui-btn notice_button'><a href='#notice_page'>"+ val.default_date +"</a></li>");
+								$("#"+ val.notice_id +"").bind("tap", function () {
+									var notice_details_list = $("#notice_details_list");
+									notice_details_list.html("");
+									notice_details_list.append("<li data-role='list-divider' role='heading' class='ui-li ui-li-divider ui-btn ui-bar-b ui-corner-top ui-btn-up-undefined'>" + val.default_date + "</li>");
+									notice_details_list.append("<li data-theme='d' class='notice_summary'>" + val.notice_summary + "</li>");
+									$(".mark_read").bind("tap", function() {
+										//$(".notices").addClass("ui-btn-actuve");
+										console.log("attached tap event");
+										var method = "notices";
+										var sub_method = "mark_read";
+										var notice_id = val.notice_id;
+										$.ajax({
+											url:'http://' + window.url + 'api/mobile.api.php',
+											type: 'post',
+											data: ({method: method, group: window.group, id: window.user_id, organisation_id: window.organisation_id, sub_method: sub_method, notice_id: val.notice_id}),
+											dataType: 'text',
+											success: function(data) {
+												count_notices (false);
+											}	
+										});
+										count_notices(false);
+										$(".mark_read").unbind("tap");
+									});
+									notice_details_list.listview("destroy").listview();
+								});
+							} else {
+								$("#old_notice_list").show();
+								old_list.append("<li data-theme='d' data-role='button' id='"+ val.notice_id +"' class='ui-btn notice_button'><a href='#old_notice_page'>"+ val.default_date +"</a></li>");
+								$("#"+ val.notice_id +"").bind("tap", function () {
+									var old_notice_details_list = $("#old_notice_details_list");
+									old_notice_details_list.html("");
+									old_notice_details_list.append("<li data-role='list-divider' role='heading' class='ui-li ui-li-divider ui-btn ui-bar-b ui-corner-top ui-btn-up-undefined'>" + val.default_date + "</li>");
+									old_notice_details_list.append("<li data-theme='d' class='notice_summary'>" + val.notice_summary + "</li>");
+									old_notice_details_list.listview("destroy").listview();
+								});
+							}
+						});
+						old_list.listview("destroy").listview();
+						list.listview("destroy").listview();
+					}
+					
+					function scheduler_update () {
+						var method = "agenda";
+						$.ajax({
+							url:'https://' + window.url + 'api/mobile.api.php',
+							type: 'post',
+							data: ({method: method, authenticated: window.authenticated, firstname: window.firstname, lastname: window.lastname, role: window.role, group: window.group, id: window.user_id, organisation_id: window.organisation_id}),
+							success:function(data){
+								$$("scheduler").clearAll()
+								$$("scheduler").parse(data);
+								
+								if($$("scheduler").$$("buttons").getValue()=="day"){ 
+									$$("scheduler").$$("dayList").render();
+								}
+								
+								if($$("scheduler").$$("buttons").getValue() == "month") {
+									$$("scheduler").$$("calendarView").render();
+								}
+							}
+						});
+					}
+
+					function count_notices (timeout) {
+						var method = "notices";
+						var sub_method = "count_notices";
+						$.ajax({
+							url:'https://' + window.url + 'api/mobile.api.php',
+							type: 'post',
+							data: ({method: method, group: window.group, id: window.user_id, organisation_id: window.organisation_id, sub_method: sub_method}),
+							dataType: 'text',
+							complete: function() {
+								if (timeout) {
+									console.log("timeout has been set");
+									setTimeout(function () {
+										count_notices(true);
+									}, 30000);
+								} else {
+									console.log("time out not set");
+								}
+							},
+							success: function(data) {
+								if (data > 0) {
+									$("#notice_list").show();
+									if (data != window.previous_data) {
+										console.log(previous_data + " " + data);
+										//$(".notices").addClass("ui-btn-up-e");
+										$(".notice").addClass("ui-li-has-count");
+										$(".notice").append("<span class='ui-li-count ui-btn-down-e ui-btn-corner-all count' style='right: 18px;'>" + data + "</span>");
+										fetch_notices();
+									} else {
+										console.log("no new notices");
+									}
+								} else if (data == 0) {
+									$("#notice_list").hide();
+									$(".count").remove();
+									$(".notices").removeClass("ui-btn-up-e");
+									fetch_notices();
+								}
+								window.previous_data = data;
+							}
+						});
+					}
+				}
+			}
+		</script>
+    </head>
+    <body onload ="onBodyLoad();" class="body" style="background:#CCC;">
+		<div data-role="page" id="agenda" data-theme="b" data-transition="slide">
+		    <div data-role="header" class="header">
+		        <h1>MEdTech Central</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="ui-btn-active agenda" data-transition="slide">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="notices" data-transition="slide">My Notices</a></li>
+                        <!--<li><a href="#gradebook" data-role="button" data-icon="check" data-iconpos="top" class="gradebook">My Gradebook</a></li>-->
+                    </ul>
+                </div>
+		    </div>
+            <div data-role="content" id="content" style="margin:0; padding:0;">	  
+			</div>
+			
+		</div>		
+		
+        
+        <div data-role="page" id="events" data-theme="b">
+            <div data-role="header" class="header">
+                <h1>MEdTech Central</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="agenda" data-transition="slide">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="ui-btn-active notices" data-transition="slide">My Notices</a></li>
+                        <!--<li><a href="#gradebook" data-role="button" data-icon="check" data-iconpos="top" class="gradebook">My Gradebook</a></li>-->
+                    </ul>
+                </div>
+            </div>
+            
+            <div data-role="content" id="notice_content">
+				<ul id="notice_list" data-role="listview" data-inset="true">
+				</ul>
+				<ul id="old_notice_list" data-role="listview" data-inset="true">
+				</ul>
+            </div>
+        </div>
+        
+        <div data-role="page" id="notice_page" data-theme="b" data-transition="slide">
+            <div data-role="header">
+                <h1>MEdTech Central</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="agenda" data-transition="slide">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="ui-btn-active notices" data-transition="slide">My Notices</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div data-role="content" data-theme="c" id="notice_page_content">
+				<div data-role="controlgroup" data-type="horizontal">
+					<a href="#events" data-role="button" data-icon="delete" class="mark_read" data-transition="slide" data-direction="reverse">Mark as Read</a>
+				</div>
+				<ul id="notice_details_list" data-role="listview" data-inset="true">
+				</ul>
+            </div>
+        </div>
+		
+		<div data-role="page" id="old_notice_page" data-theme="b" data-transition="slide">
+            <div data-role="header">
+                <h1>MEdTech Central</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="agenda" data-transition="slide">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="ui-btn-active notices" data-transition="slide">My Notices</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div data-role="content" data-theme="c" id="old_notice_page_content">
+				<div data-role="controlgroup" data-type="horizontal">
+					<a href="#events" data-role="button" data-icon="arrow-l" class="back" data-transition="slide" data-direction="reverse">Back</a>
+				</div>
+				<ul id="old_notice_details_list" data-role="listview" data-inset="true">
+				</ul>
+            </div>
+        </div>
+        
+        <div data-role="page" id="settings" data-theme="b">
+            <div data-role="header">
+                <h1>MEdTech Central Settings</h1>
+                <a href="#agenda" data-role="button" data-icon="delete" class="ui-btn-right ui-btn-active close" data-transition="flip">Close</a>
+            </div>
+            
+            <div data-role="content">	
+                <h1>My Settings</h1>
+                <div data-role="fieldcontain">
+                    <label for="url">MEdTech:</label>
+                    <input type="text" name="url" id="url" value="" />
+                </div>
+                <div data-role="fieldcontain">
+                    <label for="username">Username:</label>
+                    <input type="text" name="username" id="username" value="" />
+                </div>
+                <div data-role="fieldcontain">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" id="password" value="" />
+                </div>
+                <fieldset data-role="controlgroup">
+                    <legend>Auto-login options:</legend>
+                    <input type="radio" name="login-option" id="save-password" value="1" checked="checked" />
+                    <label for="save-password">Keep me logged in, and remember my password.</label>
+                    
+                    <input type="radio" name="login-option" id="require-password" value="0"  />
+                    <label for="require-password">Require me to enter my password each launch.</label>
+                </fieldset>
+				<input type="button" id="save-settings" value="Save Settings" />
+				<input type="button" id="logout" value="Log Out" />
+				<div id="result"></div>
+            </div>
+        </div>
+    </body>
+</html>

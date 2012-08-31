@@ -1,0 +1,25 @@
+body {
+font-size:12px;
+margin:5px;
+}
+
+span.quoteStyle {
+display:block;
+color:#666;
+background:#FCFCFC url(../images/quote.gif) no-repeat 10px 10px;
+border:1px #666 dotted;
+border-left:3px #999 solid;
+margin:20px 0;
+padding:15px 15px 15px 40px;
+}
+
+span.codeStyle {
+display:block;
+font-family:Monaco, monospace;
+color:#333;
+background:#FCFCFC url(../images/code.gif) no-repeat 10px 10px;
+border:1px #666 dotted;
+border-left:3px #999 solid;
+margin:20px 0;
+padding:15px 15px 15px 40px;
+}

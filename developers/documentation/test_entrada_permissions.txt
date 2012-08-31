@@ -1,0 +1,567 @@
+ENTRADA Application Permission Test Template				Completed:	20090611
+********************************************************************************
+Description: This documentation provides the layout of which roles found in
+			 ENTRADA may or may not gain access to the application features and
+			 capabilities through the applications set permissions.
+
+NOTE: "Special Access" is determined if the role can carry out the actions of
+	  the listed module because it is part of their course for example.
+********************************************************************************
+										    SPECIAL
+											ACCESS	ALLOWED?	PASS		FAIL
+											-------	--------	----		----
+================================================================================
+=									  Courses								   =
+================================================================================
+
+   +----------+
+   |Add Course|
+   +--+-------+----------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-----------+
+   |Edit Course|
+   +--+--------+---------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-------------+
+   |Delete Course|
+   +--+----------+-------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +--------------+
+   |Course Content|
+   +--+-----------+------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director						   [YES] [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator					   [YES] [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +--------------------+
+   |Course Index (Admin)|
+   +--------------------+------------------------------+
+   |File: /www-root/modules/admin/courses/index.inc.php|
+   +--+------------------------------------------------+-----------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +---------------------+
+   |Course Index (Public)|
+   +---------------------+------------------------+
+   |File: /www-root/modules/public/courses.inc.php|
+   +--+-------------------------------------------+----------------------------+
+	  | -Students									 [YES]		 [ ]		[ ]|
+	  | -Alumnus									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [YES]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [YES]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+================================================================================
+=									  Events								   =
+================================================================================
+   +---------+
+   |Add Event|
+   +--+------+-----------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator					   [YES] [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +----------+
+   |Edit Event|
+   +--+-------+----------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator					   [YES] [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +------------+
+   |Delete Event|
+   +--+---------+--------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator					   [YES] [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-------------+
+   |Event Content|
+   +--+----------+-------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer						   [YES] [NO]		 [ ]		[ ]|
+	  |		-Director						   [YES] [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [NO]		 [ ]		[ ]|
+	  |			-Content created for PCoordinator	 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +--------------------+
+   |Event Index (Admin)|
+   +--------------------+------------------------------+
+   |File: /www-root/modules/admin/events/events.inc.php|
+   +--+------------------------------------------------+-----------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +--------------------+
+   |Event Index (Public)|
+   +--------------------+------------------------+
+   |File: /www-root/modules/public/events.inc.php|
+   +--+------------------------------------------+-----------------------------+
+	  | -Students									 [YES]		 [ ]		[ ]|
+	  | -Alumnus									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [YES]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [YES]		 [ ]		[ ]|
+	  |		-Lecturer								 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+================================================================================
+=									 Notices								   =
+================================================================================
+   +----------+
+   |Add Notice|
+   +--+-------+----------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-----------+
+   |Edit Notice|
+   +--+--------+---------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-------------+
+   |Delete Notice|
+   +--+----------+-------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-------------------------+
+   |Notice Index (Admin Only)|
+   +-------------------------+---------------------------+
+   |File: /www-root/modules/admin/notices/notices.inc.php|
+   +--+--------------------------------------------------+---------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [YES]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+================================================================================
+=									 POLLS								       =
+================================================================================
+   +--------+
+   |Add Poll|
+   +--+-----+------------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +---------+
+   |Edit Poll|
+   +--+------+-----------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-----------+
+   |Delete Poll|
+   +--+--------+---------------------------------------------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+   +-----------------------+
+   |Poll Index (Admin Only)|
+   +-----------------------+-------------------------+
+   |File: /www-root/modules/admin/polls/polls.inc.php|
+   +--+----------------------------------------------+-------------------------+
+	  | -Students									 [NO]		 [ ]		[ ]|
+	  | -Alumnus									 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  | Faculty:															   |
+	  |		-Faculty								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |		-Director								 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |																		   |
+	  |	Resident:															   |
+	  |		-Resident								 [NO]		 [ ]		[ ]|
+	  |		-Lecturer								 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	Staff:																   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  |		-PCoordinator							 [NO]		 [ ]		[ ]|
+	  |																		   |
+	  |	MEdTech:															   |
+	  |		-Staff									 [NO]		 [ ]		[ ]|
+	  |		-Admin									 [YES]		 [ ]		[ ]|
+	  +------------------------------------------------------------------------+
+
+********************************************************************************
+
+Completed By:	______________________
+
+Completed On:	______________________
+
+Version Tested:	______________________
+
+Reviewed By:	______________________

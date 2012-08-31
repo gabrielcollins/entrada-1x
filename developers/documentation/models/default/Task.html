@@ -1,0 +1,1108 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos -->
+			<title>Docs For Class Task</title>
+			<link rel="stylesheet" href="../media/stylesheet.css" />
+			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+		</head>
+		<body>
+			<div class="page-body">			
+<h2 class="class-name">Class Task</h2>
+
+<a name="sec-description"></a>
+<div class="info-box">
+	<div class="info-box-title">Description</div>
+	<div class="nav-bar">
+					<span class="disabled">Description</span> |
+															<a href="#sec-method-summary">Methods</a> (<a href="#sec-methods">details</a>)
+						
+											<a href="#sec-const-summary">Constants</a> (<a href="#sec-consts">details</a>)
+						
+			</div>
+	<div class="info-box-body">
+        		<!-- ========== Info from phpDoc block ========= -->
+		<p class="notes">
+			Located in <a class="field" href="_tasks---Task.class.php.html">/tasks/Task.class.php</a> (line <span class="field">3</span>)
+		</p>
+		
+				
+		<pre></pre>
+	
+			</div>
+</div>
+
+
+	<a name="sec-const-summary"></a>
+	<div class="info-box">
+		<div class="info-box-title">Class Constant Summary</span></div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+						<span class="disabled">Constants</span> (<a href="#sec-consts">details</a>)
+										| 
+									<a href="#sec-method-summary">Methods</a> (<a href="#sec-methods">details</a>)
+							
+					</div>
+		<div class="info-box-body">
+			<div class="const-summary">
+								<div class="const-title">
+					<img src="../media/images/Constant.png" alt=" " />
+					<a href="#DURATION_MAX" title="details" class="const-name">DURATION_MAX</a> = 					<span class="var-type"> 43200</span>
+
+				</div>
+								<div class="const-title">
+					<img src="../media/images/Constant.png" alt=" " />
+					<a href="#TITLE_MAX_LENGTH" title="details" class="const-name">TITLE_MAX_LENGTH</a> = 					<span class="var-type"> 255</span>
+
+				</div>
+							</div>
+		</div>
+	</div>
+
+
+	<a name="sec-method-summary"></a>
+	<div class="info-box">
+		<div class="info-box-title">Method Summary</span></div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+															<a href="#sec-const-summary">Constants</a> (<a href="#sec-consts">details</a>)
+							
+									<span class="disabled">Methods</span> (<a href="#sec-methods">details</a>)
+		</div>
+		<div class="info-box-body">			
+			<div class="method-summary">
+																																												<div class="method-definition">
+					static 						<span class="method-result">int</span>
+										<a href="#create" title="details" class="method-name">create</a>
+											(<span class="var-type"></span>&nbsp;<span class="var-name">$inputs</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$creator_id</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$title</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$deadline</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$duration</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$description</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$release_start</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$release_finish</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$organisation_id</span>, <span class="var-type">bool</span>&nbsp;<span class="var-name">$require_verification</span>)
+									</div>
+																								<div class="method-definition">
+					static 						<span class="method-result">void</span>
+										<a href="#fromArray" title="details" class="method-name">fromArray</a>
+											(<span class="var-type"></span>&nbsp;<span class="var-name">$arr</span>)
+									</div>
+																<div class="method-definition">
+					static 						<span class="method-result"><a href="../default/Task.html">Task</a></span>
+										<a href="#get" title="details" class="method-name">get</a>
+											(<span class="var-type">int</span>&nbsp;<span class="var-name">$task_id</span>)
+									</div>
+																																																																																																																																																																																																								
+												<div class="method-definition">
+											<span class="method-result">Task</span>
+										<a href="#__construct" title="details" class="method-name">__construct</a>
+											(<span class="var-type">int</span>&nbsp;<span class="var-name">$task_id</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$last_updated_date</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$last_updated_by</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$title</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$deadline</span>, [<span class="var-type">int</span>&nbsp;<span class="var-name">$duration</span> = <span class="var-default">0</span>], [<span class="var-type">string</span>&nbsp;<span class="var-name">$description</span> = <span class="var-default">&quot;&quot;</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$release_start</span> = <span class="var-default">null</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$release_finish</span> = <span class="var-default">null</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$organisation_id</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$verification_type</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$verification_notification_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$faculty_selection_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$completion_comment_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$rejection_comment_policy</span> = <span class="var-default">null</span>], <span class="var-type">bool</span>&nbsp;<span class="var-name">$require_verification</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#addOwner" title="details" class="method-name">addOwner</a>
+											(<span class="var-type">$obj</span>&nbsp;<span class="var-name">$obj</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#addVerifier" title="details" class="method-name">addVerifier</a>
+											(<span class="var-type">$obj</span>&nbsp;<span class="var-name">$obj</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#compare" title="details" class="method-name">compare</a>
+											(<span class="var-type"><a href="../default/Task.html">Task</a></span>&nbsp;<span class="var-name">$task</span>, [<span class="var-type"></span>&nbsp;<span class="var-name">$compare_by</span> = <span class="var-default">'title'</span>], <span class="var-type">string</span>&nbsp;<span class="var-name">$sort_by</span>)
+									</div>
+																								<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#delete" title="details" class="method-name">delete</a>
+										()
+									</div>
+																																<div class="method-definition">
+											<span class="method-result"><a href="../default/TaskAssociatedFaculty.html">TaskAssociatedFaculty</a></span>
+										<a href="#getAssociatedFaculty" title="details" class="method-name">getAssociatedFaculty</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getCompletionCommentPolicy" title="details" class="method-name">getCompletionCommentPolicy</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result"><a href="../default/Course.html">Course</a></span>
+										<a href="#getCourse" title="details" class="method-name">getCourse</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getDeadline" title="details" class="method-name">getDeadline</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getDescription" title="details" class="method-name">getDescription</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getDuration" title="details" class="method-name">getDuration</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getFacultySelectionPolicy" title="details" class="method-name">getFacultySelectionPolicy</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getID" title="details" class="method-name">getID</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getLastUpdate" title="details" class="method-name">getLastUpdate</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result"><a href="../default/User.html">User</a></span>
+										<a href="#getLastUpdateUser" title="details" class="method-name">getLastUpdateUser</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result"><a href="../default/Organisation.html">Organisation</a></span>
+										<a href="#getOrganisation" title="details" class="method-name">getOrganisation</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">mixed</span>
+										<a href="#getOwners" title="details" class="method-name">getOwners</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getRejectionCommentPolicy" title="details" class="method-name">getRejectionCommentPolicy</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getReleaseFinish" title="details" class="method-name">getReleaseFinish</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getReleaseStart" title="details" class="method-name">getReleaseStart</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getTitle" title="details" class="method-name">getTitle</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">int</span>
+										<a href="#getVerificationNotificationPolicy" title="details" class="method-name">getVerificationNotificationPolicy</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">string</span>
+										<a href="#getVerificationType" title="details" class="method-name">getVerificationType</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#getVerifiers" title="details" class="method-name">getVerifiers</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#isFacultySelectionRequired" title="details" class="method-name">isFacultySelectionRequired</a>
+										()
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#isOwner" title="details" class="method-name">isOwner</a>
+											(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#isRecipient" title="details" class="method-name">isRecipient</a>
+											(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>)
+									</div>
+																<div class="method-definition">
+											<span class="method-result">bool</span>
+										<a href="#isVerifier" title="details" class="method-name">isVerifier</a>
+											(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>, [<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$recipient</span> = <span class="var-default">null</span>])
+									</div>
+																<div class="method-definition">
+											<span class="method-result">void</span>
+										<a href="#update" title="details" class="method-name">update</a>
+											(<span class="var-type"></span>&nbsp;<span class="var-name">$inputs</span>)
+									</div>
+								</div>
+		</div>
+	</div>		
+
+	
+	<a name="sec-methods"></a>
+	<div class="info-box">
+		<div class="info-box-title">Methods</div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+																		<a href="#sec-const-summary">Constants</a> (<a href="#sec-consts">details</a>)
+							
+										<a href="#sec-method-summary">Methods</a> (<span class="disabled">details</span>)
+						
+		</div>
+		<div class="info-box-body">
+			<A NAME='method_detail'></A>
+<a name="methodcreate" id="create"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">static method create</span> (line <span class="line-number">390</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Creates a new task. Returns new task_id</p>
+	
+	<div class="method-signature">
+	    static
+		<span class="method-result">int</span>
+		<span class="method-name">
+			create
+		</span>
+					(<span class="var-type"></span>&nbsp;<span class="var-name">$inputs</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$creator_id</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$title</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$deadline</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$duration</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$description</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$release_start</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$release_finish</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$organisation_id</span>, <span class="var-type">bool</span>&nbsp;<span class="var-name">$require_verification</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$creator_id</span>			</li>
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$title</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$deadline</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$duration</span>			</li>
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$description</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$release_start</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$release_finish</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$organisation_id</span>			</li>
+					<li>
+				<span class="var-type">bool</span>
+				<span class="var-name">$require_verification</span>			</li>
+					<li>
+				<span class="var-type">array</span>
+				<span class="var-name">$inputs</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodfromArray" id="fromArray"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">static method fromArray</span> (line <span class="line-number">495</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+	    static
+		<span class="method-result">void</span>
+		<span class="method-name">
+			fromArray
+		</span>
+					(<span class="var-type"></span>&nbsp;<span class="var-name">$arr</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$arr</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodget" id="get"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">static method get</span> (line <span class="line-number">446</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+	    static
+		<span class="method-result"><a href="../default/Task.html">Task</a></span>
+		<span class="method-name">
+			get
+		</span>
+					(<span class="var-type">int</span>&nbsp;<span class="var-name">$task_id</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$task_id</span>			</li>
+				</ul>
+		
+			
+	</div>
+
+<a name="method__construct" id="__construct"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">Constructor __construct</span> (line <span class="line-number">474</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">Task</span>
+		<span class="method-name">
+			__construct
+		</span>
+					(<span class="var-type">int</span>&nbsp;<span class="var-name">$task_id</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$last_updated_date</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$last_updated_by</span>, <span class="var-type">string</span>&nbsp;<span class="var-name">$title</span>, <span class="var-type">int</span>&nbsp;<span class="var-name">$deadline</span>, [<span class="var-type">int</span>&nbsp;<span class="var-name">$duration</span> = <span class="var-default">0</span>], [<span class="var-type">string</span>&nbsp;<span class="var-name">$description</span> = <span class="var-default">&quot;&quot;</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$release_start</span> = <span class="var-default">null</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$release_finish</span> = <span class="var-default">null</span>], [<span class="var-type">int</span>&nbsp;<span class="var-name">$organisation_id</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$verification_type</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$verification_notification_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$faculty_selection_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$completion_comment_policy</span> = <span class="var-default">null</span>], [<span class="var-type"></span>&nbsp;<span class="var-name">$rejection_comment_policy</span> = <span class="var-default">null</span>], <span class="var-type">bool</span>&nbsp;<span class="var-name">$require_verification</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$task_id</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$last_updated_date</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$last_updated_by</span>			</li>
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$title</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$deadline</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$duration</span>			</li>
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$description</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$release_start</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$release_finish</span>			</li>
+					<li>
+				<span class="var-type">int</span>
+				<span class="var-name">$organisation_id</span>			</li>
+					<li>
+				<span class="var-type">bool</span>
+				<span class="var-name">$require_verification</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$verification_type</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$verification_notification_policy</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$faculty_selection_policy</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$completion_comment_policy</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$rejection_comment_policy</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodaddOwner" id="addOwner"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">addOwner</span> (line <span class="line-number">242</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			addOwner
+		</span>
+					(<span class="var-type">$obj</span>&nbsp;<span class="var-name">$obj</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">$obj</span>
+				<span class="var-name">$obj</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodaddVerifier" id="addVerifier"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">addVerifier</span> (line <span class="line-number">252</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			addVerifier
+		</span>
+					(<span class="var-type">$obj</span>&nbsp;<span class="var-name">$obj</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">$obj</span>
+				<span class="var-name">$obj</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodcompare" id="compare"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">compare</span> (line <span class="line-number">357</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Allows sorting by 'deadline', 'course', and 'title'</p>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			compare
+		</span>
+					(<span class="var-type"><a href="../default/Task.html">Task</a></span>&nbsp;<span class="var-name">$task</span>, [<span class="var-type"></span>&nbsp;<span class="var-name">$compare_by</span> = <span class="var-default">'title'</span>], <span class="var-type">string</span>&nbsp;<span class="var-name">$sort_by</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type"><a href="../default/Task.html">Task</a></span>
+				<span class="var-name">$task</span>			</li>
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$sort_by</span>			</li>
+					<li>
+				<span class="var-type"></span>
+				<span class="var-name">$compare_by</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methoddelete" id="delete"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">delete</span> (line <span class="line-number">424</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Deletes the task record AND associated audience, owners, and verification</p>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			delete
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetAssociatedFaculty" id="getAssociatedFaculty"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getAssociatedFaculty</span> (line <span class="line-number">146</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns a list of Users designated as faculty associated with this task</p>
+	
+	<div class="method-signature">
+		<span class="method-result"><a href="../default/TaskAssociatedFaculty.html">TaskAssociatedFaculty</a></span>
+		<span class="method-name">
+			getAssociatedFaculty
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetCompletionCommentPolicy" id="getCompletionCommentPolicy"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getCompletionCommentPolicy</span> (line <span class="line-number">116</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getCompletionCommentPolicy
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetCourse" id="getCourse"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getCourse</span> (line <span class="line-number">232</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result"><a href="../default/Course.html">Course</a></span>
+		<span class="method-name">
+			getCourse
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetDeadline" id="getDeadline"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getDeadline</span> (line <span class="line-number">178</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the Deadline set for this task as a timestamp.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getDeadline
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetDescription" id="getDescription"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getDescription</span> (line <span class="line-number">170</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the description of the task.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getDescription
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetDuration" id="getDuration"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getDuration</span> (line <span class="line-number">186</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the expected duration required for task completion in minutes</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getDuration
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetFacultySelectionPolicy" id="getFacultySelectionPolicy"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getFacultySelectionPolicy</span> (line <span class="line-number">109</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getFacultySelectionPolicy
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetID" id="getID"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getID</span> (line <span class="line-number">154</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the unique id of this task</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getID
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetLastUpdate" id="getLastUpdate"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getLastUpdate</span> (line <span class="line-number">194</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns a timestamp of the time this information was last updated</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getLastUpdate
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetLastUpdateUser" id="getLastUpdateUser"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getLastUpdateUser</span> (line <span class="line-number">202</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the User that last updated this information</p>
+	
+	<div class="method-signature">
+		<span class="method-result"><a href="../default/User.html">User</a></span>
+		<span class="method-name">
+			getLastUpdateUser
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetOrganisation" id="getOrganisation"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getOrganisation</span> (line <span class="line-number">225</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result"><a href="../default/Organisation.html">Organisation</a></span>
+		<span class="method-name">
+			getOrganisation
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetOwners" id="getOwners"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getOwners</span> (line <span class="line-number">138</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns a User, Course, or Event depending on the owner type</p>
+	
+	<div class="method-signature">
+		<span class="method-result">mixed</span>
+		<span class="method-name">
+			getOwners
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetRejectionCommentPolicy" id="getRejectionCommentPolicy"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getRejectionCommentPolicy</span> (line <span class="line-number">123</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getRejectionCommentPolicy
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetReleaseFinish" id="getReleaseFinish"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getReleaseFinish</span> (line <span class="line-number">218</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the timestamp for when this Task should no longer be available to the audience. 0 or null if not set.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getReleaseFinish
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetReleaseStart" id="getReleaseStart"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getReleaseStart</span> (line <span class="line-number">210</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the timestamp for when this Task should be made available to the audience. 0 or null if not set.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getReleaseStart
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetTitle" id="getTitle"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getTitle</span> (line <span class="line-number">162</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns the title of the task.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getTitle
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetVerificationNotificationPolicy" id="getVerificationNotificationPolicy"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getVerificationNotificationPolicy</span> (line <span class="line-number">130</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">int</span>
+		<span class="method-name">
+			getVerificationNotificationPolicy
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetVerificationType" id="getVerificationType"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">getVerificationType</span> (line <span class="line-number">102</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">string</span>
+		<span class="method-name">
+			getVerificationType
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodgetVerifiers" id="getVerifiers"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">getVerifiers</span> (line <span class="line-number">256</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			getVerifiers
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodisFacultySelectionRequired" id="isFacultySelectionRequired"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">isFacultySelectionRequired</span> (line <span class="line-number">348</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			isFacultySelectionRequired
+		</span>
+				()
+			</div>
+	
+		
+			
+	</div>
+<a name="methodisOwner" id="isOwner"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">isOwner</span> (line <span class="line-number">274</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			isOwner
+		</span>
+					(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type"><a href="../default/User.html">User</a></span>
+				<span class="var-name">$user</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodisRecipient" id="isRecipient"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">isRecipient</span> (line <span class="line-number">301</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			isRecipient
+		</span>
+					(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type"><a href="../default/User.html">User</a></span>
+				<span class="var-name">$user</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodisVerifier" id="isVerifier"><!-- --></a>
+<div class="evenrow">
+	
+	<div class="method-header">
+		<span class="method-title">isVerifier</span> (line <span class="line-number">326</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Returns true if the supplied user is a verifier for any of the recipients however  if the $recipient parameter is supplied, it will check if they are a verifier for *that* recipient.</p>
+	
+	<div class="method-signature">
+		<span class="method-result">bool</span>
+		<span class="method-name">
+			isVerifier
+		</span>
+					(<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$user</span>, [<span class="var-type"><a href="../default/User.html">User</a></span>&nbsp;<span class="var-name">$recipient</span> = <span class="var-default">null</span>])
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">$user</span>
+				<span class="var-name">$user</span>			</li>
+					<li>
+				<span class="var-type">$recipient</span>
+				<span class="var-name">$recipient</span>			</li>
+				</ul>
+		
+			
+	</div>
+<a name="methodupdate" id="update"><!-- --></a>
+<div class="oddrow">
+	
+	<div class="method-header">
+		<span class="method-title">update</span> (line <span class="line-number">408</span>)
+	</div> 
+	
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			update
+		</span>
+					(<span class="var-type"></span>&nbsp;<span class="var-name">$inputs</span>)
+			</div>
+	
+			<ul class="parameters">
+					<li>
+				<span class="var-type">array</span>
+				<span class="var-name">$inputs</span>			</li>
+				</ul>
+		
+			
+	</div>
+						
+		</div>
+	</div>
+
+	<a name="sec-consts"></a>
+	<div class="info-box">
+		<div class="info-box-title">Class Constants</div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+										<a href="#sec-var-summary">Constants</a> (<span class="disabled">details</span>)
+						
+			
+										| 
+									<a href="#sec-method-summary">Methods</a> (<a href="#sec-methods">details</a>)
+							
+					</div>
+		<div class="info-box-body">
+			<a name="constDURATION_MAX" id="DURATION_MAX"><!-- --></A>
+<div class="evenrow">
+
+	<div class="const-header">
+		<img src="../media/images/Variable.png" />
+		<span class="const-title">
+			<span class="const-name">DURATION_MAX</span>
+			 = <span class="const-default"> 43200</span>
+			(line <span class="line-number">6</span>)
+		</span>
+	</div>
+
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	
+</div>
+<a name="constTITLE_MAX_LENGTH" id="TITLE_MAX_LENGTH"><!-- --></A>
+<div class="oddrow">
+
+	<div class="const-header">
+		<img src="../media/images/Variable.png" />
+		<span class="const-title">
+			<span class="const-name">TITLE_MAX_LENGTH</span>
+			 = <span class="const-default"> 255</span>
+			(line <span class="line-number">5</span>)
+		</span>
+	</div>
+
+	<!-- ========== Info from phpDoc block ========= -->
+	
+	
+</div>
+						
+		</div>
+	</div>
+
+	<p class="notes" id="credit">
+		Documentation generated on Tue, 29 Mar 2011 12:36:55 -0400 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.3</a>
+	</p>
+	</div></body>
+</html>

@@ -1,0 +1,1178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<style type="text/css">
+		.subCategory {
+			background-color:silver;
+		}
+
+		.category {
+			background-color:#808080;
+		}
+		
+		#header {
+			font-weight:normal;
+		}
+
+		#subCat {
+			font-size:small;
+		}
+
+		td {
+			text-align:center;
+		}
+
+		.vis {
+			display:block;
+		}
+
+		/* Column Coloration */
+
+		.student {
+			background-color:#FF6666;
+		}
+
+		.alumni {
+			background-color:#3399FF;
+		}
+
+		.facultyLight {
+			background-color:#33FF66;
+		}
+
+		.facultyDark {
+			background-color:#33CC00;
+		}
+
+		.residentLight {
+			background-color:#9966CC;
+		}
+
+		.residentDark {
+			background-color:#9933CC;
+		}
+
+		.staffLight {
+			background-color:#FFCC66;
+		}
+
+		.staffDark {
+			background-color:#FF9933;
+		}
+
+		.medLight {
+			background-color:#CC66CC;
+		}
+
+		.medDark {
+			background-color:#CC00CC;
+		}
+	</style>
+	<script type="text/javascript">
+		function createArray(module,content)
+		{
+			var arrayName = module;
+			array = new Array();
+
+			array[0] = arrayName + "Create";
+			array[1] = arrayName + "Edit";
+			array[2] = arrayName + "Delete";
+
+			if (content == true)
+			{
+				array[3] = arrayName + "Content";
+				array[4] = arrayName + "Index";
+			}
+			else
+			{
+				array[3] = arrayName + "Index";
+			}
+			
+			return array;
+		}
+
+		function showHideSubCategory(module,span,content)
+		{
+			var blockArray = createArray(module,content);
+
+			for (i=0;i<blockArray.length;i++)
+			{
+				if (document.getElementById(blockArray[i]).style.display=="none")
+				{
+					document.getElementById(blockArray[i]).style.display="";
+					document.getElementById(span).innerHTML = " - ";
+				}
+				else if (document.getElementById(blockArray[i]).style.display=="")
+				{
+					document.getElementById(blockArray[i]).style.display="none";
+					document.getElementById(span).innerHTML = " + ";
+				}
+			}
+		}
+
+		function showHideCategory(block,span)
+		{
+			if (document.getElementById(block).style.display=="none")
+			{
+				document.getElementById(block).style.display="";
+				document.getElementById(span).innerHTML = " - "
+			}
+			else if (document.getElementById(block).style.display=="")
+			{
+				document.getElementById(block).style.display="none";
+				document.getElementById(span).innerHTML = " + "
+			}
+		}
+	</script>
+
+  </head>
+  <body>
+	  <table border="1">
+		  <thead>
+			  <tr>
+				  <th width="175"colspan="3">&nbsp;</th>
+				  <th class="student" id="header" width="50">Student</th>
+				  <th class="alumni" id="header" width="50">Alumni</th>
+				  <th class="facultyDark" id="header" width="200" colspan="4">Faculty</th>
+				  <th class="residentDark" id="header" width="100 "colspan="2">Resident</th>
+				  <th class="staffDark" id="header" width="150 "colspan="3">Staff</th>
+				  <th class="medDark" id="header" width="100 "colspan="2">MEdTech</th>
+			  </tr>
+		  </thead>
+		  <tbody>
+			  <tr>
+				  <td width="175"colspan="3">&nbsp;</td>
+				  <td class="student" id="subCat">N/A</td>
+				  <td class="alumni" id="subCat">N/A</td>
+				  <td class="facultyLight" id="subCat" width="50">Faculty</td>
+				  <td class="facultyDark" id="subCat" width="50">Lecturer</td>
+				  <td class="facultyLight" id="subCat" width="50">Director</td>
+				  <td class="facultyDark" id="subCat" width="50">Admin</td>
+				  <td class="residentLight" id="subCat" width="50">Resident</td>
+				  <td class="residentDark" id="subCat" width="50">Lecturer</td>
+				  <td class="staffLight" id="subCat" width="50">Staff</td>
+				  <td class="staffDark" id="subCat" width="50">Admin</td>
+				  <td class="staffLight" id="subCat" width="50">Pcoordinator</td>
+				  <td class="medDark" id="subCat" width="50">Staff</td>
+				  <td class="medLight" id="subCat" width="50">Admin</td>
+			  </tr>
+			  <tr class="category">
+				  <td style="text-align:left;" width="60"><a href="#" onclick="showHideCategory('adminBlock','adminSpan')"><span id="adminSpan"> - </span>Admin</a></td>
+				  <td width="65">&nbsp;</td>
+				  <td width="50">&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+		  </tbody>
+		  <tbody id="adminBlock">
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;" width="65"><a href="#" onclick="showHideSubCategory('adminEvents','adminEventsSpan',true)"><span id="adminEventsSpan"> - </span>Events</a></td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="adminEventsCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminEventsEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminEventsDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminEventsContent">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Content</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminEventsIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('adminCourses','adminCoursesSpan',true)"><span id="adminCoursesSpan"> - </span>Courses</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="adminCoursesCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminCoursesEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminCoursesDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminCoursesContent">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Content</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminCoursesIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('adminNotices','adminNoticesSpan',false)"><span id="adminNoticesSpan"> - </span>Notices</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="adminNoticesCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminNoticesEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminNoticesDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminNoticesIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('adminPolls','adminPollsSpan',false)"><span id="adminPollsSpan"> - </span>Polls</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="adminPollsCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminPollsEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminPollsDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminPollsIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('adminUsers','adminUsersSpan',false)"><span id="adminUsersSpan"> - </span>Users</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="adminUsersCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminUsersEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminUsersDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="adminUsersIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+		  </tbody>
+		  <tbody>
+			  <tr class="category">
+				  <td style="text-align:left;" width="50"><a href="#" onclick="showHideCategory('publicBlock','publicSpan')"><span id="publicSpan"> - </span>Public</a></td>
+				  <td width="50">&nbsp;</td>
+				  <td width="50">&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+		  </tbody>
+		  <tbody id="publicBlock">
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;" width="65"><a href="#" onclick="showHideSubCategory('publicEvents','publicEventsSpan',true)"><span id="publicEventsSpan"> - </span>Events</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="publicEventsCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicEventsEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicEventsDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicEventsContent">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Content</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicEventsIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('publicCourses','publicCoursesSpan',true)"><span id="publicCoursesSpan"> - </span>Courses</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="publicCoursesCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicCoursesEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicCoursesDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicCoursesContent">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Content</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicCoursesIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('publicNotices','publicNoticesSpan',false)"><span id="publicNoticesSpan"> - </span>Notices</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="publicNoticesCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicNoticesEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicNoticesDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicNoticesIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('publicPolls','publicPollsSpan',false)"><span id="publicPollsSpan"> - </span>Polls</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="publicPollsCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicPollsEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicPollsDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicPollsIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr class="subCategory">
+				  <td>&nbsp;</td>
+				  <td style="text-align:left;"><a href="#" onclick="showHideSubCategory('publicUsers','publicUsersSpan',false)"><span id="publicUsersSpan"> - </span>Users</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+			  </tr>
+			  <tr id="publicUsersCreate">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Create</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicUsersEdit">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Edit</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicUsersDelete">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Delete</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+			  <tr id="publicUsersIndex">
+				  <td>&nbsp;</td>
+				  <td>&nbsp;</td>
+				  <td style="text-align:right;">Index</td>
+				  <td class="student"><input type="checkbox" /></td>
+				  <td class="alumni"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="facultyLight"><input type="checkbox" /></td>
+				  <td class="facultyDark"><input type="checkbox" /></td>
+				  <td class="residentLight"><input type="checkbox" /></td>
+				  <td class="residentDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="staffDark"><input type="checkbox" /></td>
+				  <td class="staffLight"><input type="checkbox" /></td>
+				  <td class="medDark"><input type="checkbox" /></td>
+				  <td class="medLight"><input type="checkbox" /></td>
+			  </tr>
+		  </tbody>
+	  </table>
+  </body>
+</html>
