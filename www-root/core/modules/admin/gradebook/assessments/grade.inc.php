@@ -35,7 +35,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Add PlotKit to the beginning of the $HEAD array.
@@ -59,9 +59,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 		if ($course_details && $ENTRADA_ACL->amIAllowed(new GradebookResource($course_details["course_id"], $course_details["organisation_id"]), "read")) {
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assessments?".replace_query(array("section" => "grade", "id" => $COURSE_ID, "step" => false)), "title" => "Grading Assessment");
 
-			$query = "	SELECT `assessments`.*,`assessment_marking_schemes`.`id` as `marking_scheme_id`, `assessment_marking_schemes`.`handler`, `assessment_marking_schemes`.`description` as `marking_scheme_description`
+			$query = "	SELECT `assessments`.*,`assessment_marking_schemes`.`id` as `marking_scheme_id`, `assessment_marking_schemes`.`handler`, `assessment_marking_schemes`.`description` as `marking_scheme_description`, `assessments_lu_meta`.`type` as `assessment_type`
 						FROM `assessments`
 						LEFT JOIN `assessment_marking_schemes` ON `assessment_marking_schemes`.`id` = `assessments`.`marking_scheme_id`
+						LEFT JOIN `assessments_lu_meta` ON `assessments_lu_meta`.`id` = `assessments`.`characteristic_id`
 						WHERE `assessments`.`assessment_id` = ".$db->qstr($ASSESSMENT_ID);
 			$assessment = $db->GetRow($query);
 			if ($assessment) {
@@ -96,6 +97,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					<h2 style="border-bottom: none; margin-top: 0;">Weighting <?php echo $assessment["grade_weighting"]."%"; ?></h2>
 					<ul class="page-action">
 						<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE . "/assessments/?" . replace_query(array("section" => "edit", "step" => false)); ?>" class="strong-green">Edit Assessment</a></li>
+					</ul>
+					<ul style="list-style:none;">
+						<li><a href="#" style="background-image:url(<?php echo ENTRADA_URL."/images/reset.gif"; ?>);background-repeat:no-repeat;padding-left:20px;font-weight:700;" onclick="location.reload(true)" /> Refresh</a></li>
 					</ul>
 				</div>
 				<div style="clear: both;"></div>
@@ -180,19 +184,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								?>
 							</tbody>
 						</table>
-						<br/>
-						<h2>Import Grades</h2>
-						<div id="display-notice-box" class="display-notice" style="width:408px;">
-							<ul>
-							<li><strong>Important Notes:</strong>
-								<br/>Format for the CSV should be [Student Number, Grade] with each entry on a separate line (without the brackets). 
-								<br/>Any grades entered will be overwritten if present in the CSV.</li>
-							</ul>
-						</div>
-						<form enctype="multipart/form-data" action="<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "csv-upload", "assessment_id" => $ASSESSMENT_ID)); ?>" method="POST">
-							<input type="file" name ="file"/><br/><br/>
-							<input type="submit" value ="Import CSV"/>
-						</form>
 					</div>
 					<script type="text/javascript">
 						jQuery(document).ready(function(){
@@ -242,7 +233,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 										[data]
 									);
 								</script>
-								<br/>
+								<br />
 								<p>Unentered grades: <?php echo (int) $unentered; ?></p>
 								<?php
 							break;
@@ -298,7 +289,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 										[data]
 									);
 								</script>
-								<br/>
+								<br />
 								<p>Unentered grades: <?php echo (int) $unentered; ?></p>
 								<p>Mean grade: <?php echo number_format(($entered > 0 ? $sum / $entered : 0), 0); ?>%</p>
 								<p>Median grade: <?php echo $grade_values[floor(count($grade_values) / 2)]; ?>%</p>
@@ -309,9 +300,93 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							break;
 						}
 						?>
-						<button onclick="window.location='<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "io", "download" => "csv", "assessment_ids" => $ASSESSMENT_ID)); ?>'">Download CSV</button>
-						<button onclick="location.reload(true)">Refresh</button>
-						<div style="margin-top: 40px;">
+						<div id="import-csv" style="display:none;">
+							<h2>Import grades from CSV</h2>
+							<div id="display-notice-box" class="display-notice">
+								<ul>
+								<li><strong>Important Notes:</strong>
+									<br />Format for the CSV should be [Student Number, Grade] with each entry on a separate line (without the brackets). 
+									<br />Any grades entered will be overwritten if present in the CSV.</li>
+								</ul>
+							</div>
+							<form enctype="multipart/form-data" action="<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "csv-upload", "assessment_id" => $ASSESSMENT_ID)); ?>" method="POST">
+								<input type="file" name="file"/>
+							</form>
+						</div>
+						<?php 
+						if ($assessment["assessment_type"] == "quiz") { 
+							$query = "	SELECT * 
+										FROM `attached_quizzes` 
+										WHERE `content_type` = 'assessment' 
+										AND `content_id` = ".$db->qstr($ASSESSMENT_ID);
+							if ($attached_quiz = $db->GetRow($query)) {
+							?>
+						<div id="import-quiz" style="display:none;">
+							<h2>Import grades from attached quiz</h2>
+							<div id="display-notice-box" class="display-notice">
+								<ul>
+								<li><strong>Important Notes:</strong><br />
+									This will import the results from the quiz <strong><?php echo $attached_quiz["quiz_title"]; ?></strong>. Any existing grades will be overwritten during importation. Only students who have completed the quiz will be graded.</li>
+								</ul>
+							</div>
+							<form action="<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "import-quiz", "assessment_id" => $ASSESSMENT_ID)); ?>" method="POST">
+								<input type="hidden" name="course_id" value="<?php echo $assessment["course_id"]; ?>" />
+								<input type="hidden" name="assessment_id" value="<?php echo $assessment["assessment_id"]; ?>" />
+							</form>
+						</div>
+						<?php 
+							}
+						} ?>
+						<div style="margin-top: 20px;">
+							<script type="text/javascript">
+							jQuery(function(){
+								jQuery("#import-csv-button, #import-quiz-button").live("click", function(){
+									if (jQuery(this).attr("id") == "import-quiz-button") {
+										var target = jQuery("#import-quiz");
+										var title = "Import Quiz";
+										var height = 300;
+									} else if (jQuery(this).attr("id") == "import-csv-button") {
+										var target = jQuery("#import-csv");
+										var title = "Import CSV";
+										var height = 350;
+									}
+									var importResults = target.dialog({
+										modal:		true,
+										resizable:	false,
+										draggable:	false,
+										width: 500,
+										height: height,
+										title: title,
+										buttons: [
+											{
+												text: "Ok",
+												click: function() { 
+													importResults.children("form").submit();
+												}
+											},
+											{
+												text: "Cancel",
+												click: function() {
+													importResults.dialog("close");
+													importResults.dialog("destroy");
+												}
+											}
+										]
+									});
+									return false;
+								});
+							});
+							</script>
+							<h2>Import &amp; Export</h2>
+							<ul class="import-export-list" style="padding:0px;">
+							<?php if ($assessment["assessment_type"] == "quiz" && !empty($attached_quiz)) { ?>
+								<li class="up" style="display:block;"><a href="#" id="import-quiz-button">Import grades from attached Quiz</a></li>
+							<?php } ?>
+								<li class="up" style="display:block;"><a href="#" id="import-csv-button">Import grades from CSV file</a></li>
+								<li class="down" style="display:block;"><a href="#" onclick="window.location='<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "io", "download" => "csv", "assessment_ids" => $ASSESSMENT_ID)); ?>'; return false;">Export grades to CSV file</a></li>
+							</ul>
+						</div>
+						<div  style="margin-top: 20px;">
 							<h2>Grade Calculation Exceptions</h2>
 							<p>
 								You can use the following exception creator to modify the calculations used to create the students final grade in this course. 

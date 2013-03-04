@@ -23,8 +23,6 @@
  */
 require_once("init.inc.php");
 
-define("DEFAULT_ORGANIZATION_CATEGORY_ID", 49);
-
 if (isset($_POST["id"]) && $_SESSION["isAuthorized"]) {
 	$procedure_id = clean_input($_POST["id"], array("int"));
 	if (isset($_POST["level"]) && ((int)$_POST["level"])) {

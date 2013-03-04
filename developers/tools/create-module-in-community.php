@@ -1,4 +1,4 @@
-#!/usr/local/zend/bin/php
+#!/usr/bin/php
 <?php
 /**
  * Entrada Tools [ http://www.entrada-project.org ]

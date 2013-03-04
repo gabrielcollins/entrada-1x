@@ -60,7 +60,7 @@ class MetaDataValues extends Collection {
 		$query = "SELECT a.*, b.`group`, b.`role`, c.* from `".AUTH_DATABASE."`.`user_data` a 
 					LEFT JOIN `".AUTH_DATABASE."`.`user_access` b on a.`id`=b.`user_id` and b.`app_id`=?
 					LEFT JOIN `meta_values` c on c.`proxy_id`=a.`id`";
-		$conditions[] = generateAccessConditions($organisation, $group, $role, $proxy_id);
+		$conditions[] = generateAccessConditions($organisation, $group, $role, $proxy_id, 'b');
 		
 		if ($type) {
 			$type_id = $type->getID();

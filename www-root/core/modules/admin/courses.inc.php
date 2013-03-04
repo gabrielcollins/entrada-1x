@@ -36,7 +36,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_COURSES", true);
 
@@ -66,7 +66,7 @@ if(!defined("PARENT_INCLUDED")) {
 		 * and add the appropriate toggle sidebar item.
 		 */
 		if ($ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
-			switch ($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]) {
+			switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]) {
 				case "admin" :
 					$admin_wording = "Administrator View";
 				break;

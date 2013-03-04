@@ -117,6 +117,12 @@ function getControls($entity, $type) {
 				}
 				$controls[] = $control_template->getResult($control_bind, array("lang" => DEFAULT_LANGUAGE, "type" => "remove")); 
 			}
+			if ($entity instanceof Observership) {
+				if ($entity->getStart() >= time()) {
+					$controls[] = $control_template->getResult($control_bind, array("lang" => DEFAULT_LANGUAGE, "type" => "remove"));
+					$controls[] = $control_template->getResult($control_bind, array("lang" => DEFAULT_LANGUAGE, "type" => "edit"));
+				}
+			}
 			break;
 	}
 	$control_content = implode("\n", $controls);
@@ -135,6 +141,8 @@ function getStatus($entity) {
 	if ($entity instanceof Approvable) {
 		//student entered data
 		$status=($entity->isRejected() ? ($entity->getComment()?"rejected_reason":"rejected") : ($entity->isApproved()? "approved" : "unapproved"));
+	} else if ($entity instanceof Observership) {
+		$status = (($entity->getStatus() == "CONFIRMED") ? "approved" : (($entity->getStatus() == "REJECTED") ? "rejected" : "unapproved"));
 	} else {
 		//staff entered data/extracted
 		$status="default";
@@ -441,17 +449,19 @@ function display_observerships(Observerships $observerships,$type, $hide_control
 				$preceptor_proxy_id = $preceptor->getID();
 				$preceptor_firstname = "";
 				$preceptor_lastname = "";
+				$preceptor_prefix = $entity->getPreceptorPrefix();
+				$preceptor_email = $entity->getPreceptorEmail();
+				$preceptor_status = $entity->getStatus();
 			} else {
 				$preceptor_proxy_id = 0;
 				$preceptor_firstname = $entity->getPreceptorFirstname();
 				$preceptor_lastname = $entity->getPreceptorLastname();
+				$preceptor_prefix = $entity->getPreceptorPrefix();
+				$preceptor_email = $entity->getPreceptorEmail();
+				$preceptor_status = $entity->getStatus();
 			}
 			
-			
-			$preceptor_name = trim( $entity->getPreceptorFirstname() . " " . $entity->getPreceptorLastname());
-			if ((preg_match("/\b[Dd][Rr]\./", $preceptor_name) == 0) && ($preceptor_firstname != "Various") ) {
-				$preceptor_name = "Dr. ".$preceptor_name;
-			}
+			$preceptor_name = (!empty($preceptor_prefix) ? $preceptor_prefix." " : "").trim( $entity->getPreceptorFirstname() . " " . $entity->getPreceptorLastname());
 			
 			$start = $entity->getStartDate();
 			$end = $entity->getEndDate();
@@ -468,6 +478,9 @@ function display_observerships(Observerships $observerships,$type, $hide_control
 				"preceptor_proxy_id" => $preceptor_proxy_id,
 				"preceptor_firstname" => $preceptor_firstname,
 				"preceptor_lastname" => $preceptor_lastname,
+				"preceptor_prefix" => $preceptor_prefix,
+				"preceptor_email" => $preceptor_email,
+				"status" => $entity->getStatus(),
 				"start" => $start,
 				"end" => $end
 			); 
@@ -719,7 +732,9 @@ function get_mspr_inputs($type) {
 				'end'					=> FILTER_SANITIZE_STRING,
 				'preceptor_proxy_id'	=> FILTER_VALIDATE_INT,
 				'preceptor_firstname'	=> FILTER_SANITIZE_STRING,
-				'preceptor_lastname'	=> FILTER_SANITIZE_STRING
+				'preceptor_lastname'	=> FILTER_SANITIZE_STRING,
+				'preceptor_prefix'		=> FILTER_SANITIZE_STRING,
+				'preceptor_email'		=> FILTER_SANITIZE_STRING
 			);
 			break;
 		case 'int_acts':

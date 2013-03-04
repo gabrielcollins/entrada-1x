@@ -22,9 +22,14 @@ class Observership implements Editable {
 	private $location;
 	private $preceptor_firstname;
 	private $preceptor_lastname;
+	private $preceptor_prefix;
 	private $preceptor_proxy_id;
+	private $preceptor_email;
+	private $status;
+	private $unique_id;
+	private $notice_sent;
 	
-	function __construct($id, $student_id, $title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end) {
+	function __construct($id, $student_id, $title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end, $preceptor_prefix, $preceptor_email, $status, $unique_id, $notice_sent) {
 		$this->id = $id;
 		$this->student_id = $student_id;
 		$this->title = $title;
@@ -34,11 +39,16 @@ class Observership implements Editable {
 		$this->end = $end;
 		$this->preceptor_firstname = $preceptor_firstname;
 		$this->preceptor_lastname = $preceptor_lastname;
+		$this->preceptor_prefix = $preceptor_prefix;
 		$this->preceptor_proxy_id = $preceptor_proxy_id;
+		$this->preceptor_email = $preceptor_email;
+		$this->status = $status;
+		$this->unique_id = $unique_id;
+		$this->notice_sent = $notice_sent;
 	}
 	
 	public static function fromArray(array $arr) {
-		return new Observership($arr['id'], $arr['student_id'], $arr['title'], $arr['site'], $arr['location'], $arr['preceptor_proxy_id'], $arr['preceptor_firstname'], $arr['preceptor_lastname'], $arr['start'], $arr['end']);
+		return new Observership($arr['id'], $arr['student_id'], $arr['title'], $arr['site'], $arr['location'], $arr['preceptor_proxy_id'], $arr['preceptor_firstname'], $arr['preceptor_lastname'], $arr['start'], $arr['end'], $arr['preceptor_prefix'], $arr['preceptor_email'], $arr['status'], $arr['unique_id'], $arr['notice_sent']);
 	}
 	
 	public function getID() {
@@ -87,18 +97,36 @@ class Observership implements Editable {
 		}
 	}
 	
+	public function getPreceptorPrefix() {
+		if ($this->preceptor_proxy_id) {
+			$preceptor = $this->getPreceptor();
+			if ($preceptor) {
+				return $preceptor->getPrefix();
+			}
+		} else {
+			return $this->preceptor_prefix;
+		}
+	}
+	
 	public function getPreceptor() {
 		if ($this->preceptor_proxy_id) {
 			return User::get($this->preceptor_proxy_id);
 		}
 	}
 	
-	public function getDetails() {
-		$preceptor = trim($this->getPreceptorFirstname() . " " . $this->getPreceptorLastname());
-		if (preg_match("/\b[Dd][Rr]\./", $preceptor) == 0) {
-			$preceptor = "Dr. ".$preceptor;
+	public function getPreceptorEmail() {
+		if ($this->preceptor_email) {
+			return $this->preceptor_email;
+		} else {
+			$preceptor = $this->getPreceptor();
+			if ($preceptor) {
+				return $preceptor->getEmail();
+			}
 		}
-		
+	}
+	
+	public function getDetails() {
+		$preceptor = trim(($this->getPreceptorPrefix() ? $this->getPreceptorPrefix() . " " : "") . $this->getPreceptorFirstname() . " " . $this->getPreceptorLastname());
 		
 		$elements = array();
 		$elements[] = $this->title;
@@ -144,6 +172,18 @@ class Observership implements Editable {
 		return formatDateRange($this->getStartDate(), $this->getEndDate()); 
 	}
 	
+	public function getStatus() {
+		return $this->status;
+	}
+	
+	public function getNoticeSent() {
+		return $this->notice_sent;
+	}
+	
+	public function getUniqueID() {
+		return $this->unique_id;
+	}
+	
 	public static function get($id) {
 		global $db;
 		$query		= "SELECT * FROM `student_observerships` WHERE `id` = ".$db->qstr($id);
@@ -153,13 +193,23 @@ class Observership implements Editable {
 			$obs = Observership::fromArray($result);
 			return $obs;
 		}
-	} 
+	}
+	
+	public static function getByUniqueID($unique_id) {
+		global $db;
+		$query		= "SELECT * FROM `student_observerships` WHERE `unique_id` = ".$db->qstr($unique_id);
+		$result = $db->getRow($query);
+		if ($result) {
+			$obs = Observership::fromArray($result);
+			return $obs;
+		}
+	}
 
 	public static function create(array $input_arr) {
 		extract($input_arr);
 		global $db;
-		$query = "insert into `student_observerships` (`student_id`, `title`,`site`,`location`,`preceptor_proxy_id`,`preceptor_firstname`, `preceptor_lastname`, `start`, `end`) value (?,?,?,?,?,?,?,?,?)";
-		if(!$db->Execute($query, array($user_id, $title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end))) {
+		$query = "insert into `student_observerships` (`student_id`, `title`,`site`,`location`,`preceptor_proxy_id`,`preceptor_firstname`, `preceptor_lastname`, `start`, `end`, `preceptor_prefix`, `preceptor_email`, `status`, `unique_id`, `notice_sent`) value (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		if(!$db->Execute($query, array($user_id, $title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end, $preceptor_prefix, $preceptor_email, 'CONFIRMED', hash("sha256", uniqid("obs-", true)), uniqid()))) {
 			add_error("Failed to create new Observership.");
 			application_log("error", "Unable to update a student_observerships record. Database said: ".$db->ErrorMsg());
 		} else {
@@ -183,8 +233,8 @@ class Observership implements Editable {
 	public function update(array $input_arr) {
 		extract($input_arr);
 		global $db;
-		$query = "update `student_observerships` set `title`=?, `site`=?,`location`=?,`preceptor_proxy_id`=?,`preceptor_firstname`=?, `preceptor_lastname`=?, `start`=?, `end`=? where `id`=?";
-		if(!$db->Execute($query, array($title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end, $this->id))) {
+		$query = "update `student_observerships` set `title`=?, `site`=?,`location`=?,`preceptor_proxy_id`=?,`preceptor_firstname`=?, `preceptor_lastname`=?, `start`=?, `end`=?, `preceptor_prefix`=?, `preceptor_email`=?, `status`=?, `notice_sent`=? where `id`=?";
+		if(!$db->Execute($query, array($title, $site, $location, $preceptor_proxy_id, $preceptor_firstname, $preceptor_lastname, $start, $end, $preceptor_prefix, $preceptor_email, $status, $notice_sent, $this->id))) {
 			add_error("Failed to update Observership.");
 			application_log("error", "Unable to update a student_observerships record. Database said: ".$db->ErrorMsg());
 		} else {

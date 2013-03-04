@@ -7,7 +7,6 @@
  * @version 3.0
  * @copyright Copyright 2006 Queen's University, MEdTech Unit
  *
- * $Id: help.inc.php 1043 2010-02-12 21:19:55Z simpson $
 */
 
 if(!defined("PARENT_INCLUDED")) exit;

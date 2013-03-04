@@ -24,7 +24,7 @@ if ($RECORD_ID) {
 	$discussion_record	= $db->GetRow($query);
 	if ($discussion_record) {
 		if ((int) $discussion_record["forum_active"]) {
-			if ($db->AutoExecute("community_discussions", array("forum_active" => 0, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cdiscussion_id` = ".$db->qstr($RECORD_ID))) {
+			if ($db->AutoExecute("community_discussions", array("forum_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cdiscussion_id` = ".$db->qstr($RECORD_ID))) {
 			communities_deactivate_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID);
 			add_statistic("community:".$COMMUNITY_ID.":discussions", "forum_delete", "cdiscussion_id", $RECORD_ID);
 			} else {

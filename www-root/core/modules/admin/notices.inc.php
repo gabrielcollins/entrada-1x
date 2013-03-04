@@ -37,7 +37,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_NOTICES", true);
 
@@ -75,7 +75,12 @@ if(!defined("PARENT_INCLUDED")) {
 		}
 
 		if ((is_array($NOTICE_TARGETS)) && (count($NOTICE_TARGETS))) {
-			$query = "SELECT `organisation_id`, `organisation_title` FROM `".AUTH_DATABASE."`.`organisations`";
+			$query = "	SELECT a.* FROM `".AUTH_DATABASE."`.`organisations` AS a
+						JOIN `".AUTH_DATABASE."`.`user_access` AS b
+						ON a.`organisation_id` = b.`organisation_id`
+						WHERE b.`user_id` = ".$db->qstr($ENTRADA_USER->getID())."
+						GROUP BY a.`organisation_id`
+						ORDER BY `organisation_title` ASC";
 			$organisations = $db->GetAll($query);
 
 			$sidebar_html = '';

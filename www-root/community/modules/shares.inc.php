@@ -177,7 +177,7 @@ function shares_module_access($cshare_id = 0, $section = "") {
  * @return bool
  */
 function shares_file_module_access($csfile_id = 0, $section = "") {
-	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR;
+	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR, $ENTRADA_USER;
 
 	$allow_to_load = false;
 
@@ -192,13 +192,13 @@ function shares_file_module_access($csfile_id = 0, $section = "") {
 					switch($section) {
 						case "delete-file" :
 						case "edit-file" :
-							if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+							if ($ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 								$allow_to_load = false;
 							}
 						break;
 						case "add-revision" :
 							if ($LOGGED_IN) {
-								if ($result["proxy_id"] != $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]){
+								if ($result["proxy_id"] != $ENTRADA_USER->getActiveId()){
 									if ($COMMUNITY_MEMBER) {
 										if (!(int) $result["allow_member_revision"]) {
 											$allow_to_load = false;	
@@ -236,7 +236,7 @@ function shares_file_module_access($csfile_id = 0, $section = "") {
 				 * Don't worry about checking the release dates if the person viewing
 				 * the photo is the photo uploader.
 				 */
-				if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+				if (!$LOGGED_IN || $ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 					if ((!$release_date = (int) $result["release_date"]) || ($release_date <= time())) {
 						if ((!$release_until = (int) $result["release_until"]) || ($release_until > time())) {
 							/**
@@ -282,7 +282,7 @@ function shares_file_module_access($csfile_id = 0, $section = "") {
  * @return bool
  */
 function shares_comment_module_access($cscomment_id = 0, $section = "") {
-	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR;
+	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR, $ENTRADA_USER;
 
 	$allow_to_load = false;
 
@@ -298,7 +298,7 @@ function shares_comment_module_access($cscomment_id = 0, $section = "") {
 					switch($section) {
 						case "delete-comment" :
 						case "edit-comment" :
-							if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+							if ($ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 								$allow_to_load = false;
 							}
 						break;
@@ -341,7 +341,7 @@ function shares_comment_module_access($cscomment_id = 0, $section = "") {
  * @return bool
  */
 function shares_file_version_module_access($csfversion_id = 0, $section = "") {
-	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR;
+	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR, $ENTRADA_USER;
 
 	$allow_to_load = false;
 
@@ -356,7 +356,7 @@ function shares_file_version_module_access($csfversion_id = 0, $section = "") {
 				if ($allow_to_load = shares_module_access($result["cshare_id"], $section)) {
 					switch($section) {
 						case "delete-revision" :
-							if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+							if ($ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 								$allow_to_load = false;
 							}
 						break;
@@ -391,7 +391,7 @@ function shares_file_version_module_access($csfversion_id = 0, $section = "") {
 }
 
 function shares_file_navigation($cshare_id = 0, $csfile_id = 0) {
-	global $db, $COMMUNITY_ID, $PAGE_URL, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN;
+	global $db, $COMMUNITY_ID, $PAGE_URL, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $ENTRADA_USER;
 
 	$output = false;
 	if (($cshare_id = (int) $cshare_id) && ($csfile_id = (int) $csfile_id)) {
@@ -421,7 +421,7 @@ function shares_file_navigation($cshare_id = 0, $csfile_id = 0) {
 					AND a.`community_id` = ".$db->qstr($COMMUNITY_ID)."
 					AND a.`file_active` = '1'
 					".((!$LOGGED_IN) ? " AND c.`allow_public_read` = '1'" : (($COMMUNITY_MEMBER) ? ((!$COMMUNITY_ADMIN) ? " AND c.`allow_member_read` = '1'" : "") : " AND c.`allow_troll_read` = '1'"))."
-					".((!$COMMUNITY_ADMIN) ? " AND ((a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]).") OR (a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
+					".((!$COMMUNITY_ADMIN) ? ($LOGGED_IN ? " AND ((a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId()).") OR " : " AND (")."(a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
 					ORDER BY ".$SORT_BY;
 		$results	= $db->GetAll($query);
 		if ($results) {

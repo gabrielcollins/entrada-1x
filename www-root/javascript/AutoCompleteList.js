@@ -142,7 +142,7 @@ var AutoCompleteList = function() {
 			return true;
 		}
 		
-		new Ajax.Autocompleter(	type + '_name', 
+		var autocompleteObject = new Ajax.Autocompleter(	type + '_name', 
 				type + '_name_auto_complete', 
 				url, 
 				{	frequency: 0.2, 
@@ -152,6 +152,22 @@ var AutoCompleteList = function() {
 						copyInput();
 					}
 				});
+
+		this.setUrl = function(newUrl) {
+			autocompleteObject.element = null;
+			autocompleteObject.update = null;
+			autocompleteObject = new Ajax.Autocompleter(	type + '_name', 
+				type + '_name_auto_complete', 
+				newUrl, 
+				{	frequency: 0.2, 
+					minChars: 2, 
+					afterUpdateElement: function (text, li) {
+						selectInput(li.id); 
+						copyInput();
+					}
+				});
+			return true;
+		}
 
 		$(type + '_name').observe('keyup', checkInput);
 		$(type + '_name').observe('blur', self.addItemNoError);

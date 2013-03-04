@@ -1,16 +1,16 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Used to view all available posts within a particular discussion forum in
  * a community.
- * 
+ *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
  * @author Developer: James Ellis <james.ellis@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
- * 
+ *
 */
 
 if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_DISCUSSIONS"))) {
@@ -104,7 +104,7 @@ if ($RECORD_ID) {
 					AND `community_id` = ".$db->qstr($COMMUNITY_ID)."
 					AND `topic_active` = '1'
 					AND `cdtopic_parent` = '0'
-					".((!$COMMUNITY_ADMIN) ? " AND ((`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]).") OR (`release_date` = '0' OR `release_date` <= ".$db->qstr(time()).") AND (`release_until` = '0' OR `release_until` > ".$db->qstr(time())."))" : "");
+					".((!$COMMUNITY_ADMIN) ? ($LOGGED_IN ? " AND ((`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId()).") OR " : " AND (")."(`release_date` = '0' OR `release_date` <= ".$db->qstr(time()).") AND (`release_until` = '0' OR `release_until` > ".$db->qstr(time())."))" : "");
 			$result	= $db->GetRow($query);
 			if ($result) {
 				$total_rows	= $result["total_rows"];
@@ -152,9 +152,9 @@ if ($RECORD_ID) {
 					echo "Pages: ".$pagination->GetPageLinks();
 					echo "</div>\n";
 				}
-				?>
+					?>
 				<a href="<?php echo COMMUNITY_URL."/feeds".$COMMUNITY_URL.":".$PAGE_URL."/rss?id=".$RECORD_ID; ?>" class="feeds rss">Subscribe to RSS</a>
-				<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
+				<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $LOGGED_IN && $_SESSION["details"]["notifications"]) { ?>
 					<div id="notifications-toggle" style="display: inline;"></div>
 					<script type="text/javascript">
 					function promptNotifications(enabled) {
@@ -196,14 +196,14 @@ if ($RECORD_ID) {
 							}
 						);
 					}
-					
+
 					</script>
 					<?php
 					$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID."&type=post&action=view')";
 				}
 				?>
 			</div>
-			
+
 			<div style="padding-top: 10px; clear: both">
 				<?php
 				if (discussions_module_access($RECORD_ID, "add-post")) {
@@ -216,8 +216,8 @@ if ($RECORD_ID) {
 					<div style="clear: both"></div>
 					<?php
 				}
-				
-				$query		= "	SELECT a.*, COUNT(b.`cdtopic_id`) AS `total_replies`, IF(MAX(b.`updated_date`) IS NOT NULL, MAX(b.`updated_date`), a.`updated_date`) AS `latest_activity`, CONCAT_WS(' ', c.`firstname`, c.`lastname`) AS `original_poster_fullname`, c.`username` AS `original_poster_username`, CONCAT_WS(' ', d.`firstname`, d.`lastname`) AS `latest_poster_fullname`, d.`username` AS `latest_poster_username`
+
+				$query		= "	SELECT a.*, COUNT(b.`cdtopic_id`) AS `total_replies`, IF(MAX(b.`updated_date`) IS NOT NULL, MAX(b.`updated_date`), a.`updated_date`) AS `latest_activity`, CONCAT_WS(' ', c.`firstname`, c.`lastname`) AS `original_poster_fullname`, c.`username` AS `original_poster_username`, CONCAT_WS(' ', d.`firstname`, d.`lastname`) AS `latest_poster_fullname`, d.`username` AS `latest_poster_username`, b.`anonymous` AS `latest_poster_anonymous`
 								FROM `community_discussion_topics` AS a
 								LEFT JOIN `community_discussion_topics` AS b
 								ON a.`cdtopic_id` = b.`cdtopic_parent`
@@ -232,7 +232,7 @@ if ($RECORD_ID) {
 								AND a.`topic_active` = '1'
 								AND (b.`topic_active` IS NULL OR b.`topic_active` = '1')
 								AND a.`cdtopic_parent` = '0'
-								".((!$COMMUNITY_ADMIN) ? " AND ((a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]).") OR (a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
+								".((!$COMMUNITY_ADMIN) ? ($LOGGED_IN ? " AND ((a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId()).") OR " : " AND (")."(a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
 								GROUP BY a.`cdtopic_id`
 								ORDER BY %s, b.`updated_date` DESC
 								LIMIT %s, %s";
@@ -264,21 +264,33 @@ if ($RECORD_ID) {
 							$accessible = false;
 						}
 
+						if(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && !$COMMUNITY_ADMIN && isset($result["anonymous"]) && $result["anonymous"]){
+							$original_display = "Anonymous";
+						} else {
+							$original_display = '<a href="'.ENTRADA_URL.'/people?profile='.html_encode($result["original_poster_username"]).'" style="font-size: 10px">'.html_encode($result["original_poster_fullname"]).'</a>';
+						}
 						if ((!$latest_activity = trim($result["latest_activity"])) || (!$latest_poster_username = trim($result["latest_poster_username"])) || (!$latest_poster_fullname = trim($result["latest_poster_fullname"]))) {
 							$latest_poster_username = $result["original_poster_username"];
 							$latest_poster_fullname = $result["original_poster_fullname"];
 							$latest_activity		= $result["updated_date"];
+							$latest_poster_display = $original_display;
+						}elseif(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && !$COMMUNITY_ADMIN && isset($result["latest_poster_anonymous"]) && $result["latest_poster_anonymous"]){
+							$latest_poster_display = "Anonymous";
+						} else {
+							$latest_poster_display = '<a href="'.ENTRADA_URL.'/people?profile='.html_encode($result["latest_poster_username"]).'" style="font-size: 10px">'.html_encode($result["latest_poster_fullname"]).'</a>';
 						}
+
+
 
 						echo "<tr".((!$accessible) ? " class=\"na\"" : "").">\n";
 						echo "	<td>\n";
 						echo "		<a id=\"topic-".(int) $result["cdtopic_id"]."-title\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-post&amp;id=".$result["cdtopic_id"]."\" style=\"font-weight: bold\">".limit_chars(html_encode($result["topic_title"]), 65, true)."</a>\n";
 						echo "	</td>\n";
 						echo "	<td>".(int) $result["total_replies"]."</td>\n";
-						echo "	<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\"><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["original_poster_username"])."\" style=\"font-size: 10px\">".html_encode($result["original_poster_fullname"])."</a></td>\n";
+						echo "	<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">".$original_display."</a></td>\n";
 						echo "	<td style=\"font-size: 10px; white-space: nowrap; overflow: hidden\">\n";
 						echo "		".date(DEFAULT_DATE_FORMAT, $latest_activity)."<br />\n";
-						echo "		<strong>By:</strong> <a href=\"".ENTRADA_URL."/people?profile=".html_encode($latest_poster_username)."\" style=\"font-size: 10px\">".html_encode($latest_poster_fullname)."</a>\n";
+						echo "		<strong>By:</strong> ".$latest_poster_display."\n";
 						echo "	</td>\n";
 						echo "</tr>\n";
 
@@ -304,9 +316,10 @@ if ($RECORD_ID) {
 				echo display_notice();
 			}
 		}
-		
-		add_statistic("community:".$COMMUNITY_ID.":discussions", "forum_view", "cdiscussion_id", $RECORD_ID);
-		
+		if ($LOGGED_IN) {
+			add_statistic("community:".$COMMUNITY_ID.":discussions", "forum_view", "cdiscussion_id", $RECORD_ID);
+		}
+
 	} else {
 		application_log("error", "The provided discussion forum id was invalid [".$RECORD_ID."] (View Forum).");
 

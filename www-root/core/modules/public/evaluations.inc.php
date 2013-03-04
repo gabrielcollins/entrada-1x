@@ -32,6 +32,17 @@ if(!defined("PARENT_INCLUDED")) {
 } else {
 	define("IN_PUBLIC_EVALUATIONS", true);
 
+	if (isset($_GET["view_type"]) && in_array($_GET["view_type"], array("all", "complete", "available", "overdue"))) {
+		$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["view_type"] = $_GET["view_type"];
+		if (isset($_GET["ajax"]) && $_GET["ajax"]) {
+			ob_clear_open_buffers();
+			echo "200";
+			exit;
+		}
+	} elseif (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["view_type"]) || !$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["view_type"]) {
+		$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["view_type"] = "all";
+	}
+
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => "My Evaluations");
 
 	if (($router) && ($router->initRoute())) {

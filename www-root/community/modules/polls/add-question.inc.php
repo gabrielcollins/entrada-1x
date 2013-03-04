@@ -80,9 +80,9 @@ if ($RECORD_ID) {
 	
 			if (!$ERROR) {
 				$PROCESSED["community_id"]			= $COMMUNITY_ID;
-				$PROCESSED["proxy_id"]				= $_SESSION["details"]["id"];
+				$PROCESSED["proxy_id"]				= $ENTRADA_USER->getID();
 				$PROCESSED["updated_date"]			= time();
-				$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 				$PROCESSED["cpage_id"]				= $PAGE_ID;
 				$PROCESSED["cpolls_id"]				= $RECORD_ID;
 				$PROCESSED["question_order"]		= ((int)$db->GetOne("SELECT MAX(`question_order`) FROM `community_polls_questions` WHERE `cpolls_id` = ".$db->qstr($RECORD_ID)) + 1);
@@ -103,7 +103,7 @@ if ($RECORD_ID) {
 							$RESPONSES["response"] 				= $respValue;
 							$RESPONSES["response_index"] 		= $respKey + 1;
 							$RESPONSES["updated_date"]			= time();
-							$RESPONSES["updated_by"]			= $_SESSION["details"]["id"];
+							$RESPONSES["updated_by"]			= $ENTRADA_USER->getID();
 							if ($db->AutoExecute("community_polls_responses", $RESPONSES, "INSERT")) {
 								$SUCCESS = TRUE;
 							}

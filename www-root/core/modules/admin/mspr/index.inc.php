@@ -21,7 +21,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MSPR_ADMIN"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 
 	require_once("Entrada/mspr/functions.inc.php");
@@ -363,7 +363,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MSPR_ADMIN"))) {
 				<form method="get">
 					<input type="hidden" name="mode" value="year" />
 					Choose Class to manage: 
-					<br /><br/>
+					<br /><br />
 					<div style="margin-left:2em;">
 						<select name="year">
 						<?php 
@@ -376,7 +376,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MSPR_ADMIN"))) {
 							echo build_option($year, $year, $year == $cur_year);	
 						}
 						?>
-						</select><br/><br/>
+						</select><br /><br />
 						<input type="submit"  value="Go"></input>
 					</div>
 				</form>

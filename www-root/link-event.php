@@ -47,23 +47,20 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	}
 
 	if($ELINK_ID) {
-		$query	= "SELECT * FROM `event_links` WHERE `elink_id` = ".$db->qstr($ELINK_ID);
-		$result	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
-		if($result) {
-			$accesses = $result["accesses"];
-			if(($result["release_date"]) && ($result["release_date"] > time())) {
-				$TITLE	= "Not Available";
-				$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_date"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
-
-				$template_html = fetch_template("global/external");
-				if ($template_html) {
-					echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
-				}
-				exit;
-			} else {
-				if(($result["release_until"]) && ($result["release_until"] < time())) {
+		$query	= "	SELECT el.*, c.`course_id`, c.`organisation_id` 
+					FROM `event_links` el
+					JOIN `events` e
+					ON el.`event_id` = e.`event_id`
+					JOIN `courses` c
+					ON e.`course_id` = c.`course_id`
+					WHERE `elink_id` = ".$db->qstr($ELINK_ID);
+		$result	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));		
+		if($result) {			
+			if ($ENTRADA_ACL->amIAllowed(new EventResource($result["event_id"], $result['course_id'], $result['organisation_id']), 'read')) {
+				$accesses = $result["accesses"];
+				if(($result["release_date"]) && ($result["release_date"] > time())) {
 					$TITLE	= "Not Available";
-					$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
+					$BODY	= display_notice(array("The link that you are trying to access is not available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_date"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
 
 					$template_html = fetch_template("global/external");
 					if ($template_html) {
@@ -71,17 +68,37 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					}
 					exit;
 				} else {
-					$db->Execute("UPDATE `event_links` SET `accesses` = '".($accesses + 1)."' WHERE `elink_id` = ".$db->qstr($ELINK_ID));
+					if(($result["release_until"]) && ($result["release_until"] < time())) {
+						$TITLE	= "Not Available";
+						$BODY	= display_notice(array("The link that you are trying to access was only available until <strong>".date(DEFAULT_DATE_FORMAT, $result["release_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">event page</a>."));
 
-					add_statistic("events", "link_access", "link_id", $ELINK_ID);
-
-					if(($result["proxify"] == "1") && (check_proxy("default")) && (isset($PROXY_URLS["default"]["active"])) && ($PROXY_URLS["default"]["active"] != "")) {
-						header("Location: ".$PROXY_URLS["default"]["active"].$result["link"]);
+						$template_html = fetch_template("global/external");
+						if ($template_html) {
+							echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
+						}
+						exit;
 					} else {
-						header("Location: ".$result["link"]);
+						$db->Execute("UPDATE `event_links` SET `accesses` = '".($accesses + 1)."' WHERE `elink_id` = ".$db->qstr($ELINK_ID));
+
+						add_statistic("events", "link_access", "link_id", $ELINK_ID);
+
+						if(($result["proxify"] == "1") && (check_proxy("default")) && (isset($PROXY_URLS["default"]["active"])) && ($PROXY_URLS["default"]["active"] != "")) {
+							header("Location: ".$PROXY_URLS["default"]["active"].$result["link"]);
+						} else {
+							header("Location: ".$result["link"]);
+						}
+						exit;
 					}
-					exit;
 				}
+			} else {				
+				$TITLE	= "Not Authorized";
+				$BODY	= display_notice(array("The link that you are trying to access is only accessible by authorized users."));
+
+				$template_html = fetch_template("global/external");
+				if ($template_html) {
+					echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
+				}
+				exit;
 			}
 		} else {
 			$TITLE	= "Not Found";

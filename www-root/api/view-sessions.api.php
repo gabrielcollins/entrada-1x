@@ -35,7 +35,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	
 	if (isset($_POST["event_id"]) && $_POST["event_id"]) {
@@ -90,10 +90,10 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		$parent_info = false; 
 	}
 	
-	if ($ENTRADA_ACL->amIAllowed(new EventContentResource($event_info["event_id"], $parent_info["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update') || $ENTRADA_ACL->amIAllowed(new EventContentResource($parent_info["event_id"], $parent_info["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+	if ($ENTRADA_ACL->amIAllowed(new EventContentResource($event_info["event_id"], $parent_info["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update') || $ENTRADA_ACL->amIAllowed(new EventContentResource($parent_info["event_id"], $parent_info["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 		if (isset($_POST["step"]) && $_POST["step"] && $_POST["step"] == 2) {
 			
-			if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+			if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 				/**
 				 * Required field "event_start" / Event Date & Time Start (validated through validate_calendars function).
 				 */
@@ -227,9 +227,9 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			
 			if (!$ERROR) {
 				$PROCESSED["updated_date"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 				$PROCESSED["parent_id"] = $parent_id;
-				if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+				if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 					$PROCESSED["event_finish"] = $PROCESSED["event_start"];
 					$PROCESSED["event_duration"] = 0;
 				
@@ -265,12 +265,12 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if (!$event_info) {
 						$event_id = $db->Insert_Id();
 					}
-					if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+					if ($ENTRADA_ACL->amIAllowed(new EventResource($event_info["event_id"], $event_info["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 						$query = "DELETE FROM `event_audience` WHERE `event_id` = ".$db->qstr($event_id);
 						if ($db->Execute($query)) {
 							if (count($PROCESSED["associated_course_ids"])) {
 								if ($PROCESSED["associated_course_ids"]) {
-									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "course_id", "audience_value" => (int) $course_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "course_id", "audience_value" => (int) $course_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 										$ERROR++;
 										$ERRORSTR[] = "There was an error while trying to attach the selected <strong>Course List</strong> to this event.<br /><br />The system administrator was informed of this error; please try again later.";
 		
@@ -280,7 +280,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							}
 							if (count($PROCESSED["associated_group_ids"])) {
 								foreach($PROCESSED["associated_group_ids"] as $group_id) {
-									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "group_id", "audience_value" => (int) $group_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "group_id", "audience_value" => (int) $group_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 										$ERROR++;
 										$ERRORSTR[] = "There was an error while trying to attach the selected <strong>Group</strong> to this event.<br /><br />The system administrator was informed of this error; please try again later.";
 		
@@ -290,7 +290,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							}
 							if (isset($PROCESSED["associated_proxy_ids"]) && count($PROCESSED["associated_proxy_ids"])) {
 								foreach($PROCESSED["associated_proxy_ids"] as $proxy_id) {
-									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "proxy_id", "audience_value" => (int) $proxy_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+									if (!$db->AutoExecute("event_audience", array("event_id" => $event_id, "audience_type" => "proxy_id", "audience_value" => (int) $proxy_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 										$ERROR++;
 										$ERRORSTR[] = "There was an error while trying to attach the selected <strong>Proxy ID</strong> to this event.<br /><br />The system administrator was informed of this error; please try again later.";
 		
@@ -313,7 +313,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						if ($db->Execute($query)) {
 							if (isset($PROCESSED["associated_faculty"]) && (is_array($PROCESSED["associated_faculty"])) && (count($PROCESSED["associated_faculty"]))) {
 								foreach($PROCESSED["associated_faculty"] as $contact_order => $proxy_id) {
-									if (!$db->AutoExecute("event_contacts", array("event_id" => $event_id, "proxy_id" => $proxy_id, "contact_order" => (int) $contact_order, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+									if (!$db->AutoExecute("event_contacts", array("event_id" => $event_id, "proxy_id" => $proxy_id, "contact_order" => (int) $contact_order, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 										$ERROR++;
 										$ERRORSTR[] = "There was an error while trying to attach an <strong>Associated Faculty</strong> to this event.<br /><br />The system administrator was informed of this error; please try again later.";
 		
@@ -517,7 +517,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					<col style="width: 75%" />
 				</colgroup>
 				<?php
-				if ($ENTRADA_ACL->amIAllowed(new EventResource($PROCESSED["event_id"], $PROCESSED["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+				if ($ENTRADA_ACL->amIAllowed(new EventResource($PROCESSED["event_id"], $PROCESSED["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 					echo generate_calendar("event_start", "Date and Time", true, $PROCESSED["event_start"]);
 				?>
 				<tr>
@@ -620,7 +620,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</td>
 				</tr>
 				<?php
-				if ($ENTRADA_ACL->amIAllowed(new EventResource($PROCESSED["event_id"], $PROCESSED["course_id"], $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"]), 'update')) {
+				if ($ENTRADA_ACL->amIAllowed(new EventResource($PROCESSED["event_id"], $PROCESSED["course_id"], $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"]), 'update')) {
 				?>
 				<tr>
 					<td colspan="3">&nbsp;</td>

@@ -14,7 +14,7 @@
  *
  * @category   Zend
  * @package    Zend_Form
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -36,9 +36,9 @@ require_once 'Zend/Validate/Abstract.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Element.php 24198 2011-07-05 16:04:15Z matthew $
+ * @version    $Id: Element.php 25075 2012-11-06 19:44:47Z rob $
  */
 class Zend_Form_Element implements Zend_Validate_Interface
 {
@@ -315,17 +315,29 @@ class Zend_Form_Element implements Zend_Validate_Interface
 
         $decorators = $this->getDecorators();
         if (empty($decorators)) {
-            $getId = create_function('$decorator',
-                                     'return $decorator->getElement()->getId()
-                                             . "-element";');
             $this->addDecorator('ViewHelper')
                  ->addDecorator('Errors')
                  ->addDecorator('Description', array('tag' => 'p', 'class' => 'description'))
-                 ->addDecorator('HtmlTag', array('tag' => 'dd',
-                                                 'id'  => array('callback' => $getId)))
+                 ->addDecorator('HtmlTag', array(
+                     'tag' => 'dd',
+                     'id'  => array('callback' => array(get_class($this), 'resolveElementId'))
+                 ))
                  ->addDecorator('Label', array('tag' => 'dt'));
         }
         return $this;
+    }
+
+    /**
+     * Used to resolve and return an element ID
+     *
+     * Passed to the HtmlTag decorator as a callback in order to provide an ID.
+     * 
+     * @param  Zend_Form_Decorator_Interface $decorator 
+     * @return string
+     */
+    public static function resolveElementId(Zend_Form_Decorator_Interface $decorator)
+    {
+        return $decorator->getElement()->getId() . '-element';
     }
 
     /**
@@ -892,6 +904,7 @@ class Zend_Form_Element implements Zend_Validate_Interface
     public function getAttribs()
     {
         $attribs = get_object_vars($this);
+        unset($attribs['helper']);
         foreach ($attribs as $key => $value) {
             if ('_' == substr($key, 0, 1)) {
                 unset($attribs[$key]);
@@ -1058,14 +1071,13 @@ class Zend_Form_Element implements Zend_Validate_Interface
                 $loader->addPrefixPath($prefix, $path);
                 return $this;
             case null:
-                $prefix = rtrim($prefix, '_');
-                $path   = rtrim($path, DIRECTORY_SEPARATOR);
+                $nsSeparator = (false !== strpos($prefix, '\\'))?'\\':'_';
+                $prefix = rtrim($prefix, $nsSeparator) . $nsSeparator;
+                $path   = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
                 foreach (array(self::DECORATOR, self::FILTER, self::VALIDATE) as $type) {
                     $cType        = ucfirst(strtolower($type));
-                    $pluginPath   = $path . DIRECTORY_SEPARATOR . $cType . DIRECTORY_SEPARATOR;
-                    $pluginPrefix = $prefix . '_' . $cType;
                     $loader       = $this->getPluginLoader($type);
-                    $loader->addPrefixPath($pluginPrefix, $pluginPath);
+                    $loader->addPrefixPath($prefix . $cType, $path . $cType . DIRECTORY_SEPARATOR);
                 }
                 return $this;
             default:
@@ -1381,19 +1393,18 @@ class Zend_Form_Element implements Zend_Validate_Interface
                     if ($this->isRequired()
                         || (!$this->isRequired() && !$this->getAllowEmpty())
                     ) {
-                        $result = false;
+                        $value = '';
                     }
-                } else {
-                    foreach ($value as $val) {
-                        if (!$validator->isValid($val, $context)) {
-                            $result = false;
-                            if ($this->_hasErrorMessages()) {
-                                $messages = $this->_getErrorMessages();
-                                $errors   = $messages;
-                            } else {
-                                $messages = array_merge($messages, $validator->getMessages());
-                                $errors   = array_merge($errors,   $validator->getErrors());
-                            }
+                }
+                foreach ((array)$value as $val) {
+                    if (!$validator->isValid($val, $context)) {
+                        $result = false;
+                        if ($this->_hasErrorMessages()) {
+                            $messages = $this->_getErrorMessages();
+                            $errors   = $messages;
+                        } else {
+                            $messages = array_merge($messages, $validator->getMessages());
+                            $errors   = array_merge($errors,   $validator->getErrors());
                         }
                     }
                 }

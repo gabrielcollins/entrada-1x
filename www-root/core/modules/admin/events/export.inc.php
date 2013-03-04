@@ -33,7 +33,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Process any sorting or pagination requests.
@@ -64,6 +64,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 		"event_title" => "Event Title",
 		"event_location" => "Location",
 		"audience_cohorts" => "Audience (Cohorts)",
+		"audience_groups" => "Audience (Groups)",
 		"audience_students" => "Audience (Students)",
 		"staff_numbers" => "Teacher Numbers",
 		"staff_names" => "Teacher Names"
@@ -76,9 +77,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 	 * Fetch all of the events that apply to the current filter set.
 	 */
 	$learning_events = events_fetch_filtered_events(
-			$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"],
-			$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"],
-			$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"],
+			$ENTRADA_USER->getActiveId(),
+			$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"],
+			$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"],
 			$ENTRADA_USER->getActiveOrganisation(),
 			$_SESSION[APPLICATION_IDENTIFIER]["events"]["sb"],
 			$_SESSION[APPLICATION_IDENTIFIER]["events"]["so"],
@@ -113,6 +114,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			$event_type_durations = array();
 			$event_types = array();
 			$audience_cohorts = array();
+			$audience_groups = array();
 			$audience_students = array();
 			$staff_numbers = array();
 			$staff_names = array();
@@ -124,8 +126,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						JOIN `events_lu_eventtypes` AS b
 						ON b.`eventtype_id` = a.`eventtype_id`
 						WHERE a.`event_id` = ".$db->qstr($event["event_id"]);
-			$results = $db->GetAll($query);
-			if ($results) {
+			if ($results = $db->GetAll($query)) {
 				foreach ($results as $key => $result) {
 					$event_type_durations[$key] = $result["duration"];
 					$event_types[$key] = $result["eventtype_title"];
@@ -136,24 +137,26 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			$query = "	SELECT a.`audience_type`, a.`audience_value`
 						FROM `event_audience` AS a
 						WHERE a.`event_id` = ".$db->qstr($event["event_id"]);
-			$results = $db->GetAll($query);
-			if ($results) {
+			if ($results = $db->GetAll($query)) {
 				foreach ($results as $result) {
 					switch ($result["audience_type"]) {
 						case "cohort" :
 							$query = "SELECT `group_name` FROM `groups` WHERE `group_id` = ".$db->qstr($result["audience_value"]);
-							$audience = $db->GetRow($query);
-							if ($audience) {
+							if ($audience = $db->GetRow($query)) {
 								$audience_cohorts[] = $audience["group_name"];
 							}
 						break;
 						case "proxy_id" :
 							$query = "SELECT `number` FROM `".AUTH_DATABASE."`.`user_data` WHERE `id` = ".$db->qstr($result["audience_value"]);
-							$audience = $db->GetRow($query);
-							if ($audience) {
+							if ($audience = $db->GetRow($query)) {
 								$audience_students[] = (int) $audience["number"];
 							}
 						break;
+						case "group_id" :
+							$query = "SELECT `group_name` FROM `course_groups` WHERE `cgroup_id` = ".$db->qstr($result["audience_value"]);
+							if ($audience = $db->GetRow($query)) {
+								$audience_groups[] = $audience["group_name"];
+							}
 						default :
 							continue;
 						break;
@@ -169,8 +172,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 						WHERE a.`event_id` = ".$db->qstr($event["event_id"])."
 						AND `contact_role` = 'teacher'
 						ORDER BY `contact_order` ASC";
-			$results = $db->GetAll($query);
-			if ($results) {
+			if ($results = $db->GetAll($query)) {
 				foreach ($results as $key => $result) {
 					$staff_numbers[$key] = (int) $result["number"];
 					$staff_names[$key] = $result["fullname"];
@@ -191,6 +193,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 				"event_title" => $event["event_title"],
 				"event_location" => $event["event_location"],
 				"audience_cohorts" => implode("; ", $audience_cohorts),
+				"audience_groups" => implode("; ", $audience_groups),
 				"audience_students" => implode("; ", $audience_students),
 				"staff_numbers" => implode("; ", $staff_numbers),
 				"staff_names" => implode("; ", $staff_names)

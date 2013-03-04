@@ -54,6 +54,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				$query .= "	AND (b.`group` = 'staff' OR b.`group` = 'medtech')";
 			break;
 			case "faculty" :
+			case "evalfaculty" :
 				$query .= "	AND (b.`group` = 'faculty' OR (b.`group` = 'resident' AND b.`role` = 'lecturer'))";
 			break;
 			case "resident" :
@@ -73,6 +74,19 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			break;
 			case "coordinator" :
 				$query .= "	AND b.`group` = 'staff' AND b.`role` = 'admin'";
+			break;
+			case "evaluators" :
+				$evaluator_ids_string = "";
+				if (isset($_GET["id"]) && ($evaluation_id = clean_input($_GET["id"], "int"))) {
+					require_once("Models/evaluation/Evaluation.class.php");
+					$evaluators = Evaluation::getEvaluators($evaluation_id);
+					if ($evaluators) {
+						foreach ($evaluators as $evaluator) {
+							$evaluator_ids_string .= ($evaluator_ids_string ? ", " : "").$db->qstr($evaluator["proxy_id"]);
+						}
+					}
+				}
+				$query .= " AND a.`id` IN (".$evaluator_ids_string.")";
 			break;
 		}
 		$query .= "	AND b.`app_id` = ".$db->qstr(AUTH_APP_ID)."

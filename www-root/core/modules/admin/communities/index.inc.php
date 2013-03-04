@@ -377,9 +377,14 @@ if (!defined("IN_COMMUNITIES")) {
 		endif;
 	} else {
 		?>
+		<div style="overflow:hidden;">
+			<ul class="page-action" style="float: right;">
+				<li><a href="<?php echo ENTRADA_URL; ?>/communities?section=create">Add New Community</a></li>
+			</ul>
+		</div>
 		<div class="display-notice">
 			<h3>No Available communities</h3>
-			There are currently no available communities in the system. To begin click the <strong>Add New Evaluation</strong> link above.
+			There are currently no available communities in the system. To begin click the <strong>Add New Community</strong> link above.
 		</div>
 		<?php
 	}

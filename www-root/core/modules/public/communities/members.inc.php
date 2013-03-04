@@ -165,7 +165,7 @@ if ($COMMUNITY_ID) {
 									$PROCESSED["province"]			= "";
 									$PROCESSED["postcode"]			= "";
 									$PROCESSED["country"]			= "";
-									$PROCESSED["notes"]				= "Guest created by proxy id ".$_SESSION["details"]["id"];
+									$PROCESSED["notes"]				= "Guest created by proxy id ".$ENTRADA_USER->getID();
 
 									if (($db->AutoExecute(AUTH_DATABASE.".user_data", $PROCESSED, "INSERT")) && ($PROCESSED_ACCESS["user_id"] = $db->Insert_Id())) {
 										$GUEST_PROXY_ID = $PROCESSED_ACCESS["user_id"];
@@ -204,7 +204,7 @@ if ($COMMUNITY_ID) {
 										$PROCESSED_ACCESS["role"]				= "communityinvite";
 										$PROCESSED_ACCESS["group"]				= "guest";
 										$PROCESSED_ACCESS["extras"]				= "";
-										$PROCESSED_ACCESS["notes"]				= "Guest created by proxy id ".$_SESSION["details"]["id"];
+										$PROCESSED_ACCESS["notes"]				= "Guest created by proxy id ".$ENTRADA_USER->getID();
 
 										if ($db->AutoExecute(AUTH_DATABASE.".user_access", $PROCESSED_ACCESS, "INSERT")) {
 											$GUEST_ACCESS = true;
@@ -636,128 +636,79 @@ if ($COMMUNITY_ID) {
 				 * Update requested sort column.
 				 * Valid: date, title
 				 */
-					if (isset($_GET["sb"])) {
-						if (@in_array(trim($_GET["sb"]), array("date", "name", "type"))) {
-							$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] = trim($_GET["sb"]);
-						}
-
-						$_SERVER["QUERY_STRING"]	= replace_query(array("sb" => false));
-					} else {
-						if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"])) {
-							$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] = "date";
-						}
+				$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min.js\"></script>";
+				if (isset($_GET["sb"])) {
+					if (@in_array(trim($_GET["sb"]), array("date", "name", "type"))) {
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] = trim($_GET["sb"]);
 					}
 
-					/**
-					 * Update requested order to sort by.
-					 * Valid: asc, desc
-					 */
-					if (isset($_GET["so"])) {
-						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] = ((strtolower($_GET["so"]) == "desc") ? "desc" : "asc");
+					$_SERVER["QUERY_STRING"]	= replace_query(array("sb" => false));
+				} else {
+					if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"])) {
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] = "date";
+					}
+				}
 
-						$_SERVER["QUERY_STRING"]	= replace_query(array("so" => false));
-					} else {
-						if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"])) {
-							$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] = "asc";
-						}
+				/**
+				 * Update requested order to sort by.
+				 * Valid: asc, desc
+				 */
+				if (isset($_GET["so"])) {
+					$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] = ((strtolower($_GET["so"]) == "desc") ? "desc" : "asc");
+
+					$_SERVER["QUERY_STRING"]	= replace_query(array("so" => false));
+				} else {
+					if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"])) {
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"] = "asc";
+					}
+				}
+
+				/**
+				 * Update requsted number of rows per page.
+				 * Valid: any integer really.
+				 */
+				if ((isset($_GET["pp"])) && ((int) trim($_GET["pp"]))) {
+					$integer = (int) trim($_GET["pp"]);
+
+					if (($integer > 0) && ($integer <= 250)) {
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] = $integer;
 					}
 
-					/**
-					 * Update requsted number of rows per page.
-					 * Valid: any integer really.
-					 */
-					if ((isset($_GET["pp"])) && ((int) trim($_GET["pp"]))) {
-						$integer = (int) trim($_GET["pp"]);
-
-						if (($integer > 0) && ($integer <= 250)) {
-							$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] = $integer;
-						}
-
-						$_SERVER["QUERY_STRING"] = replace_query(array("pp" => false));
-					} else {
-						if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"])) {
-							$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] = 15;
-						}
+					$_SERVER["QUERY_STRING"] = replace_query(array("pp" => false));
+				} else {
+					if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"])) {
+						$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] = 15;
 					}
+				}
 
-					/**
-					 * Provide the queries with the columns to order by.
-					 */
-					switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) {
-						case "name" :
-							$SORT_BY	= "CONCAT_WS(', ', b.`lastname`, b.`firstname`) ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
-							break;
-						case "type" :
-							$SORT_BY	= "CASE c.`group` WHEN 'guest' THEN 1 WHEN '%' THEN 2 END ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
-							break;
-						case "date" :
-						default :
-							$SORT_BY	= "a.`member_joined` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
-							break;
-					}
+				/**
+				 * Provide the queries with the columns to order by.
+				 */
+				switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) {
+					case "name" :
+						$SORT_BY	= "CONCAT_WS(', ', b.`lastname`, b.`firstname`) ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+						break;
+					case "type" :
+						$SORT_BY	= "CASE c.`group` WHEN 'guest' THEN 1 WHEN '%' THEN 2 END ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+						break;
+					case "date" :
+					default :
+						$SORT_BY	= "a.`member_joined` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+						break;
+				}
 
-					if ($NOTICE) {
-						echo display_notice();
-					}
-					if ($ERROR) {
-						echo display_error();
-					}
-					?>
+				if ($NOTICE) {
+					echo display_notice();
+				}
+				if ($ERROR) {
+					echo display_error();
+				}
+				?>
 <div class="tab-pane" id="community_members_div">
 	<div class="tab-page members">
 		<h2 class="tab">Members</h2>
 		<h2 style="margin-top: 0px">Community Members</h2>
 							<?php
-							/**
-							 * Get the total number of results using the generated queries above and calculate the total number
-							 * of pages that are available based on the results per page preferences.
-							 */
-							$query	= "SELECT COUNT(*) AS `total_rows` FROM `community_members` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `member_active` = '1' AND `member_acl` = '0'";
-							$result	= $db->GetRow($query);
-							if ($result) {
-								$TOTAL_ROWS	= $result["total_rows"];
-
-								if ($TOTAL_ROWS <= $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) {
-									$TOTAL_PAGES = 1;
-								} elseif (($TOTAL_ROWS % $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) == 0) {
-									$TOTAL_PAGES = (int) ($TOTAL_ROWS / $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
-								} else {
-									$TOTAL_PAGES = (int) ($TOTAL_ROWS / $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) + 1;
-								}
-								
-								if (isset($_GET["mpv"])) {
-									$PAGE_CURRENT = (int) trim($_GET["mpv"]);
-	
-									if (($PAGE_CURRENT < 1) || ($PAGE_CURRENT > $TOTAL_PAGES)) {
-										$PAGE_CURRENT = 1;
-									}
-								} else {
-									$PAGE_CURRENT = 1;
-								}
-
-								if ($TOTAL_PAGES > 1) {
-									$member_pagination = new Pagination($PAGE_CURRENT, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"], $TOTAL_ROWS, ENTRADA_URL."/".$MODULE, replace_query(), "mpv");
-								} else {
-									$member_pagination = false;
-								}
-							} else {
-								$TOTAL_ROWS		= 0;
-								$TOTAL_PAGES	= 1;
-							}
-							if (!isset($PAGE_CURRENT) || !$PAGE_CURRENT) {
-								if (isset($_GET["mpv"])) {
-									$PAGE_CURRENT = (int) trim($_GET["mpv"]);
-	
-									if (($PAGE_CURRENT < 1) || ($PAGE_CURRENT > $TOTAL_PAGES)) {
-										$PAGE_CURRENT = 1;
-									}
-								} else {
-									$PAGE_CURRENT = 1;
-								}
-							}
-							
-							$PAGE_PREVIOUS	= (($PAGE_CURRENT > 1) ? ($PAGE_CURRENT - 1) : false);
-							$PAGE_NEXT		= (($PAGE_CURRENT < $TOTAL_PAGES) ? ($PAGE_CURRENT + 1) : false);
 							if ($MAILING_LISTS["active"]) {
 								$mail_list = new MailingList($COMMUNITY_ID);
 							}
@@ -765,7 +716,6 @@ if ($COMMUNITY_ID) {
 							/**
 							 * Provides the first parameter of MySQLs LIMIT statement by calculating which row to start results from.
 							 */
-							$limit_parameter = (int) (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] * $PAGE_CURRENT) - $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 							$query		= "
 										SELECT a.*, b.`username`, b.`firstname`, b.`lastname`, b.`email`, c.`group`
 										FROM `community_members` AS a
@@ -778,21 +728,33 @@ if ($COMMUNITY_ID) {
 										AND a.`member_active` = '1'
 										AND a.`member_acl` = '0'
 										GROUP BY b.`id`
-										ORDER BY %s
-										LIMIT %s, %s";
+										ORDER BY %s";
 
-							$query		= sprintf($query, $SORT_BY, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
+							$query		= sprintf($query, $SORT_BY);
 							$results	= $db->GetAll($query);
 							
 							if ($results) {
-								if (($TOTAL_PAGES > 1) && ($member_pagination)) {
-									echo "<div id=\"pagination-links\">\n";
-									echo "Pages: ".$member_pagination->GetPageLinks();
-									echo "</div>\n";
-								}
+								
+								$HEAD[] = "
+								<script type=\"text/javascript\">
+								jQuery(document).ready(function() {
+									jQuery('#membersTable').dataTable(
+										{
+											'sPaginationType': 'full_numbers',
+											'aoColumns': [
+												null,
+												null,
+												null,
+												null,
+												{'sType': 'alt-string'}
+											]
+										}
+									);
+								});
+								</script>";
 								?>
 								<form action="<?php echo ENTRADA_URL."/".$MODULE."?".replace_query(array("section" => "members", "type" => "members", "step" => 2)); ?>" method="post">
-								<table class="tableList" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Community Members">
+								<table class="tableList membersTableList" id="membersTable" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Community Members">
 								<colgroup>
 									<col class="modified" />
 									<col class="date" />
@@ -803,10 +765,10 @@ if ($COMMUNITY_ID) {
 								<thead>
 									<tr>
 										<td class="modified">&nbsp;</td>
-										<td class="date<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "date") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("date", "Member Since"); ?></td>
-										<td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("name", "Member Name"); ?></td>
-										<td class="type<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("type", "Member Type"); ?></td>
-										<td class="list-status<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "list-status") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>">Mail List Status</td>
+										<td class="date"><div class="noLink">Member Since</div></td>
+										<td class="title"><div class="noLink">Member Name</div></td>
+										<td class="type"><div class="noLink">Member Type</div></td>
+										<td class="list-status"><div class="noLink">Mail List Status</div></td>
 									</tr>
 								</thead>
 								<tfoot>
@@ -829,9 +791,9 @@ if ($COMMUNITY_ID) {
 									echo "<tr>\n";
 									echo "	<td><input type=\"checkbox\" name=\"member_proxy_ids[]\" value=\"".(int) $result["proxy_id"]."\" /></td>\n";
 									echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["member_joined"])."</td>\n";
-									echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
+									echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
 									echo "	<td>".($result["group"] == "guest" ? "Guest" : "Member" )."</td>\n";
-									echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif" : "list-status-offline.gif")."\" /></td>\n";
+									echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif\" alt=\"Enabled\"" : "list-status-offline.gif\" alt=\"Disabled\"")." /></td>\n";
 									echo "</tr>\n";
 								}
 								?>
@@ -924,9 +886,25 @@ if ($COMMUNITY_ID) {
 									echo "Pages: ".$admin_pagination->GetPageLinks();
 									echo "</div>\n";
 								}
+								$HEAD[] = "
+										<script type=\"text/javascript\">
+											jQuery(document).ready(function() {
+												jQuery('#adminsTable').dataTable(
+													{
+														'sPaginationType': 'full_numbers',
+														'aoColumns': [
+															null,
+															null,
+															null,
+															{'sType': 'alt-string'}
+														]
+													}
+												);
+											});
+										</script>";
 								?>
 		<form action="<?php echo ENTRADA_URL."/".$MODULE."?".replace_query(array("section" => "members", "type" => "admins", "step" => 2)); ?>" method="post">
-			<table class="tableList" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Community Administrators">
+			<table class="tableList membersTableList" id="adminsTable" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Community Administrators">
 				<colgroup>
 					<col class="modified" />
 					<col class="date" />
@@ -936,9 +914,9 @@ if ($COMMUNITY_ID) {
 				<thead>
 					<tr>
 						<td class="modified">&nbsp;</td>
-						<td class="date<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "date") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("date", "Member Since"); ?></td>
-						<td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("name", "Member Name"); ?></td>
-						<td class="list-status<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "list-status") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo public_order_link("list-status", "Mail List Status"); ?></td>
+						<td class="date"><div class="noLink">Member Since</div></td>
+						<td class="title"><div class="noLink">Member Name</div></td>
+						<td class="list-status"><div class="noLink">Mail List Status</div></td>
 					</tr>
 				</thead>
 				<tfoot>
@@ -959,10 +937,10 @@ if ($COMMUNITY_ID) {
 											<?php
 											foreach ($results as $result) {
 												echo "<tr>\n";
-												echo "	<td><input type=\"checkbox\" name=\"admin_proxy_ids[]\" value=\"".(int) $result["proxy_id"]."\"".(($result["proxy_id"] == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]) ? " onclick=\"this.checked = false\" disabled=\"disabled\"" : "")." /></td>\n";
+												echo "	<td><input type=\"checkbox\" name=\"admin_proxy_ids[]\" value=\"".(int) $result["proxy_id"]."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " onclick=\"this.checked = false\" disabled=\"disabled\"" : "")." /></td>\n";
 												echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["member_joined"])."</td>\n";
-												echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
-												echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif" : "list-status-offline.gif")."\" /></td>\n";
+												echo "	<td><a href=\"".ENTRADA_URL."/people?profile=".html_encode($result["username"])."\"".(($result["proxy_id"] == $ENTRADA_USER->getActiveId()) ? " style=\"font-weight: bold" : "")."\">".html_encode($result["firstname"]." ".$result["lastname"])."</a></td>\n";
+												echo "	<td class=\"list-status\"><img src=\"images/".(($MAILING_LISTS["active"]) && $mail_list->users[($result["proxy_id"])]["member_active"] ? "list-status-online.gif\" alt=\"Active\"" : "list-status-offline.gif\" alt=\"Disabled\"")." /></td>\n";
 												echo "</tr>\n";
 											}
 											?>
@@ -973,7 +951,7 @@ if ($COMMUNITY_ID) {
 							} else {
 								echo display_notice(array("Your community has no administrators at this time; the MEdTech Unit has been informed of this error, please try again later."));
 
-								application_log("error", "Someone [".$_SESSION["details"]["id"]."] accessed the Manage Members page in a community [".$COMMUNITY_ID."] with no administrators present.");
+								application_log("error", "Someone [".$ENTRADA_USER->getID()."] accessed the Manage Members page in a community [".$COMMUNITY_ID."] with no administrators present.");
 							}
 							?>
 	</div>

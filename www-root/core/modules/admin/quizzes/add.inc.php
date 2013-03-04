@@ -38,11 +38,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "add")), "title" => "Adding Quiz");
 	
-	$PROCESSED["associated_proxy_ids"] = array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+	$PROCESSED["associated_proxy_ids"] = array($ENTRADA_USER->getActiveId());
 	
 	echo "<h1>Adding Quiz</h1>\n";
 
@@ -84,13 +84,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 			/**
 			 * The current quiz author must be in the quiz author list.
 			 */
-			if (!in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $PROCESSED["associated_proxy_ids"])) {
-				array_unshift($PROCESSED["associated_proxy_ids"], $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+			if (!in_array($ENTRADA_USER->getActiveId(), $PROCESSED["associated_proxy_ids"])) {
+				array_unshift($PROCESSED["associated_proxy_ids"], $ENTRADA_USER->getActiveId());
 			}
 
 			if (!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
 				if ($db->AutoExecute("quizzes", $PROCESSED, "INSERT")) {
 					if ($quiz_id = $db->Insert_Id()) {
@@ -100,7 +100,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 						 */
 						if ((is_array($PROCESSED["associated_proxy_ids"])) && (count($PROCESSED["associated_proxy_ids"]))) {						
 							foreach ($PROCESSED["associated_proxy_ids"] as $proxy_id) {
-								if (!$db->AutoExecute("quiz_contacts", array("quiz_id" => $quiz_id, "proxy_id" => $proxy_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+								if (!$db->AutoExecute("quiz_contacts", array("quiz_id" => $quiz_id, "proxy_id" => $proxy_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 									$ERROR++;
 									$ERRORSTR[] = "There was an error while trying to attach a <strong>Quiz Author</strong> to this quiz.<br /><br />The system administrator was informed of this error; please try again later.";
 

@@ -23,7 +23,7 @@ $HEAD[] = "<script type=\"text/javascript\" src=\"".COMMUNITY_URL."/javascript/s
 echo "<h1>Submit Assignment</h1>\n";
 
 if ($RECORD_ID) {
-	$query			= "SELECT * FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId())." AND `file_active` = '1'";
+	$query			= "SELECT * FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." AND `file_active` = '1'";
 	if (!$submission	= $db->GetRow($query)) {
 		header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$RECORD_ID);
 	}
@@ -39,7 +39,7 @@ if ($RECORD_ID) {
 						JOIN `group_members` AS c 
 						ON b.`group_id` = c.`group_id` 
 						WHERE a.`assessment_id` = ".$db->qstr($folder_record["assessment_id"])."
-						AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+						AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 			$permitted = $db->GetRow($query);
 		}
 		if ($permitted) {
@@ -92,7 +92,7 @@ if ($RECORD_ID) {
 										JOIN `assignment_files` AS b 
 										ON a.`afile_id` = b.`afile_id` 
 										WHERE b.`assignment_id` = ".$db->qstr($RECORD_ID)."
-										AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId())."
+										AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										AND b.`file_type` = 'submission'
 										ORDER BY a.`file_version` DESC
 										LIMIT 0,1";
@@ -104,10 +104,10 @@ if ($RECORD_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["assignment_id"]		= $RECORD_ID;
-							$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+							$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 							$PROCESSED["file_active"]	= 1;
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 							$PROCESSED["file_version"] = $original_file["file_version"]+1;
 							$PROCESSED["afile_id"]	= $original_file["afile_id"];
 							
@@ -183,7 +183,7 @@ if ($RECORD_ID) {
 						echo display_notice();
 					}
 					
-					$query = "	SELECT *  FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+					$query = "	SELECT *  FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 					$original_file = $db->GetRow($query);					
 					?>
 

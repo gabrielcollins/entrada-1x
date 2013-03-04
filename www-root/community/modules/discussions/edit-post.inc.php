@@ -39,12 +39,12 @@ if ($RECORD_ID) {
 					ON a.`cdtopic_id` = d.`record_id`
 					AND d.`community_id` = a.`community_id`
 					AND d.`notify_type` = 'reply'
-					AND d.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND d.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					LEFT JOIN `community_notify_members` AS e
 					ON a.`cdtopic_parent` = e.`record_id`
 					AND e.`community_id` = a.`community_id`
 					AND e.`notify_type` = 'reply'
-					AND e.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND e.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					WHERE a.`proxy_id` = c.`id`
 					AND b.`cpage_id` = ".$db->qstr($PAGE_ID)." 
 					AND a.`community_id` = ".$db->qstr($COMMUNITY_ID)."
@@ -111,7 +111,16 @@ if ($RECORD_ID) {
 							$ERROR++;
 							$ERRORSTR[] = "The <strong>Post Body</strong> field is required, this is the body of your post.";
 						}
-
+						
+						/**
+						 * Non-required field "anonymous" / Should posts be displayed anonymously to non-admins
+						 */
+						if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && (isset($_POST["anonymous"])) && ((int) $_POST["anonymous"])) {
+							$PROCESSED["anonymous"]	= 1;
+						} else {
+							$PROCESSED["anonymous"]	= 0;
+						}	
+						
 						/**
 						 * Email Notificaions.
 						 */
@@ -140,7 +149,7 @@ if ($RECORD_ID) {
 						if (!$ERROR) {
 							$PROCESSED["cdtopic_parent"]	= 0;
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 							
 							if ($db->AutoExecute("community_discussion_topics", $PROCESSED, "UPDATE", "`cdtopic_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 								if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
@@ -152,9 +161,9 @@ if ($RECORD_ID) {
 										}
 									}
 									if (isset($notifications) && $notify_record_exists && $_SESSION["details"]["notifications"] && COMMUNITY_NOTIFICATIONS_ACTIVE) {
-										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])." AND `record_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'reply'");
+										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." AND `record_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'reply'");
 									} elseif (isset($notifications) && !$notify_record_exists && COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) {
-										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($_SESSION["details"]["id"]).", ".$db->qstr($RECORD_ID).", ".$db->qstr($COMMUNITY_ID).", 'reply', '".($notifications ? "1" : "0")."')");
+										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($ENTRADA_USER->getID()).", ".$db->qstr($RECORD_ID).", ".$db->qstr($COMMUNITY_ID).", 'reply', '".($notifications ? "1" : "0")."')");
 									}
 								}
 								$url			= COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-post&id=".$RECORD_ID;
@@ -234,6 +243,15 @@ if ($RECORD_ID) {
 									<textarea id="topic_description" name="topic_description" style="width: 100%; height: 200px" cols="68" rows="12"><?php echo ((isset($PROCESSED["topic_description"])) ? html_encode($PROCESSED["topic_description"]) : ""); ?></textarea>
 								</td>
 							</tr>
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+							<?php if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON) { ?>
+							<tr>
+								<td><input type="checkbox" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/></td>
+								<td colspan="2"><label for="anonymous" class="form-nrequired">Hide name from non-administrator users</label></td>
+							</tr>									
+							<?php } ?>
 							<?php
 							if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) {
 								?>
@@ -274,6 +292,15 @@ if ($RECORD_ID) {
 							$ERRORSTR[] = "The <strong>Post Body</strong> field is required, this is your reply to the post.";
 						}
 
+						/**
+						 * Non-required field "anonymous" / Should posts be displayed anonymously to non-admins
+						 */
+						if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && (isset($_POST["anonymous"])) && ((int) $_POST["anonymous"])) {
+							$PROCESSED["anonymous"]	= 1;
+						} else {
+							$PROCESSED["anonymous"]	= 0;
+						}							
+
 						if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"] && isset($_POST["enable_notifications"])) {
 							$notifications = $_POST["enable_notifications"];
 						} else {
@@ -282,7 +309,7 @@ if ($RECORD_ID) {
 						
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("community_discussion_topics", $PROCESSED, "UPDATE", "`cdtopic_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 								if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
@@ -294,9 +321,9 @@ if ($RECORD_ID) {
 										}
 									}
 									if (isset($notifications) && $notify_record_exists && COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"] && COMMUNITY_NOTIFICATIONS_ACTIVE) {
-										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])." AND `record_id` = ".$db->qstr($topic_record["cdtopic_parent"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'reply'");
+										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." AND `record_id` = ".$db->qstr($topic_record["cdtopic_parent"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'reply'");
 									} elseif (isset($notifications) && !$notify_record_exists && COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) {
-										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($_SESSION["details"]["id"]).", ".$db->qstr($topic_record["cdtopic_parent"]).", ".$db->qstr($COMMUNITY_ID).", 'reply', '".($notifications ? "1" : "0")."')");
+										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($ENTRADA_USER->getID()).", ".$db->qstr($topic_record["cdtopic_parent"]).", ".$db->qstr($COMMUNITY_ID).", 'reply', '".($notifications ? "1" : "0")."')");
 									}
 								}
 								$url			= COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-post&id=".$topic_record["cdtopic_parent"]."#post-".$RECORD_ID;
@@ -364,6 +391,14 @@ if ($RECORD_ID) {
 									<textarea id="topic_description" name="topic_description" style="width: 100%; height: 200px" cols="68" rows="12"><?php echo ((isset($PROCESSED["topic_description"])) ? html_encode($PROCESSED["topic_description"]) : ""); ?></textarea>
 								</td>
 							</tr>
+							<?php if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON) { ?>
+							<tr>
+								<td>&nbsp;</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/><label for="anonymous" class="form-nrequired">Hide name from non-administrator users</label></td>
+							</tr>		
+							<?php } ?>
 							<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
 							<tr>
 								<td>&nbsp;</td>

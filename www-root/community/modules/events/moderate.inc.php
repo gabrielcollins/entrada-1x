@@ -234,7 +234,7 @@ if ($RECORD_ID) {
 						echo date("H:i", $result["event_start"])." - ".date("H:i", $result["event_finish"]);
 					}
 					if (isset($result["event_location"]) && trim($result["event_location"]) != "") {
-						echo "\n<br/><br/>Location: ".$result["event_location"];
+						echo "\n<br /><br />Location: ".$result["event_location"];
 					}
 				$RECORD_AUTHOR = $result["proxy_id"];
 				echo "	</td>\n";

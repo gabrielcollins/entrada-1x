@@ -34,7 +34,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/notices?".replace_query(array("section" => "add")), "title" => "Adding Notice");
 
@@ -168,7 +168,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 
 			if (!$ERROR) {
 				$PROCESSED["updated_date"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 				if ($db->AutoExecute("notices", $PROCESSED, "INSERT")) {
 					if ($NOTICE_ID = $db->Insert_Id()) {
@@ -176,7 +176,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 
 						if (isset($PROCESSED["associated_audience"]) && is_array($PROCESSED["associated_audience"]) && !empty($PROCESSED["associated_audience"])) {
 							foreach ($PROCESSED["associated_audience"] as $audience_member) {
-								$audience_member["updated_by"] = $ENTRADA_USER->getProxyId();
+								$audience_member["updated_by"] = $ENTRADA_USER->getID();
 								$audience_member["updated_date"] = time();
 								$audience_member["notice_id"] = $NOTICE_ID;
 								if ($db->AutoExecute("notice_audience", $audience_member, "INSERT")) {
@@ -229,15 +229,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 			$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/elementresizer.js\"></script>\n";
 			$ONLOAD[] = "updateAudienceOptions()";
 
-			$buttons	= array();
-			$buttons[1] = array("link", "separator", "undo", "redo", "pasteword", "cleanup", "save");
-			$buttons[2] = array();
-			$buttons[3] = array();
-
 			/**
 			 * Load the rich text editor.
 			 */
-			load_rte($buttons);
+			load_rte("minimal");
 
 			if ($ERROR) {
 				echo display_error();

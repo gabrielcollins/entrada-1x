@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$NON_PEER_REVIEWED_PAPERS_ID = $_GET["rid"];
 	
@@ -42,7 +42,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 	$_SESSION["research_expand_grid"] = "non_peer_reviewed_grid";
 	
 	if($NON_PEER_REVIEWED_PAPERS_ID) {
-		$query	= "SELECT * FROM `ar_non_peer_reviewed_papers` WHERE `non_peer_reviewed_papers_id`=".$db->qstr($NON_PEER_REVIEWED_PAPERS_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_non_peer_reviewed_papers` WHERE `non_peer_reviewed_papers_id`=".$db->qstr($NON_PEER_REVIEWED_PAPERS_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/research?section=edit_non_peer_reviewed", "title" => "Edit Non-Peer-Reviewed Publication");
@@ -88,34 +88,25 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						$ERRORSTR[] = "The <strong>Author List</strong> field is required.";
 					}
 					/**
+					 * Required field "category" / Category
+					 */
+					if((isset($_POST["category"])) && ($category = clean_input($_POST["category"], array("notags", "trim")))) {
+						$PROCESSED["category"] = $category;
+					} else {
+						$ERROR++;
+						$ERRORSTR[] = "The <strong>Category</strong> field is required.";
+					}
+					/**
 					 * Non-Required field "epub_url" / URL			 
 					 */
-					if((isset($_POST["epub_url"])) && ($epub_url = clean_input($_POST["epub_url"], array("url", "trim")))) {
-						$PROCESSED["epub_url"] = $epub_url;
+					if($PROCESSED["category"] != "Paper") {
+						if((isset($_POST["epub_url"])) && ($epub_url = clean_input($_POST["epub_url"], array("url", "trim")))) {
+							$PROCESSED["epub_url"] = $epub_url;
+						} else {
+							$PROCESSED["epub_url"] = "";	
+						}
 					} else {
-						$PROCESSED["epub_url"] = "";	
-					}
-					/**
-					 * Non-Required field "emonth" / Date E-Published		 
-					 */
-					if((isset($_POST["emonth"])) && ($emonth= clean_input($_POST["emonth"], array("int")))) {				
-						$PROCESSED["emonth"] = $emonth;
-					} else {
-						$PROCESSED["emonth"] = "";	
-					}
-					/**
-					 * Non-Required field "eyear" / Date E-Published			 
-					 */
-					if((isset($_POST["eyear"])) && ($eyear= clean_input($_POST["eyear"], array("int")))) {
-						$PROCESSED["eyear"] = $eyear;
-					} else {
-						$PROCESSED["eyear"] = "";	
-					}
-					// If this was epublished then allow blanks for volume and pages
-					if(isset($emonth) && isset ($eyear) && $emonth != "" && $eyear != "") {
-						$PROCESSED["epub_date"]	= $emonth.$eyear;
-					} else {
-						$PROCESSED["epub_date"] = "";
+						$PROCESSED["epub_url"] = "";
 					}
 					/**
 					 * Required field "status" / Status
@@ -126,7 +117,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						$ERROR++;
 						$ERRORSTR[] = "The <strong>Status</strong> field is required.";
 					}
-					if((isset($PROCESSED["status"]) && $PROCESSED["status"] == "Published") && $PROCESSED["epub_date"] == "") {
+					if(isset($PROCESSED["status"]) && $PROCESSED["status"] == "Published") {
 						/**
 						 * Required field "month" / Date			 
 						 */
@@ -150,23 +141,28 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						if(!($STARTERROR)) {
 							$PROCESSED["status_date"] = $month.$year;
 						}
-						/**
-						 * Required field "volume" / Volume
-						 */
-						if((isset($_POST["volume"])) && ($volume = clean_input($_POST["volume"], array("notags", "trim", "utf8")))) {
-							$PROCESSED["volume"] = $volume;
+						if($PROCESSED["category"] == "Paper") {
+							/**
+							 * Required field "volume" / Volume
+							 */
+							if((isset($_POST["volume"])) && ($volume = clean_input($_POST["volume"], array("notags", "trim", "utf8"))) && $_POST["volume"] != "") {
+								$PROCESSED["volume"] = $volume;
+							} else {
+								$ERROR++;
+								$ERRORSTR[] = "The <strong>Volume</strong> field is required.";
+							}
+							/**
+							 * Required field "pages" / Pages
+							 */
+							if((isset($_POST["pages"])) && ($pages = clean_input($_POST["pages"], array("notags", "trim", "utf8")))) {
+								$PROCESSED["pages"] = $pages;
+							} else {
+								$ERROR++;
+								$ERRORSTR[] = "The <strong>Pages</strong> field is required.";
+							}
 						} else {
-							$ERROR++;
-							$ERRORSTR[] = "The <strong>Volume</strong> field is required.";
-						}
-						/**
-						 * Required field "pages" / Pages
-						 */
-						if((isset($_POST["pages"])) && ($pages = clean_input($_POST["pages"], array("notags", "trim", "utf8")))) {
-							$PROCESSED["pages"] = $pages;
-						} else {
-							$ERROR++;
-							$ERRORSTR[] = "The <strong>Pages</strong> field is required.";
+							$PROCESSED["volume"] = "";
+							$PROCESSED["pages"] = "";
 						}
 					} else {
 						/**
@@ -182,33 +178,38 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						 */
 						if((isset($_POST["year"])) && ($year= clean_input($_POST["year"], array("int")))) {
 							$PROCESSED["year"] = $year;
-						} else if(!$STARTERROR){
+						} else {
 							$PROCESSED["year"] = "";
 						}
 						if(isset($month) && isset($year)) {
 							$PROCESSED["status_date"] = $month.$year;
 						}
-						/**
-						 * Required field "volume" / Volume
-						 */
-						if((isset($_POST["volume"])) && ($volume = clean_input($_POST["volume"], array("notags", "trim", "utf8")))) {
-							$PROCESSED["volume"] = $volume;
+						if($PROCESSED["category"] == "Paper") {
+							/**
+							 * Required field "volume" / Volume
+							 */
+							if((isset($_POST["volume"])) && ($volume = clean_input($_POST["volume"], array("notags", "trim", "utf8")))) {
+								$PROCESSED["volume"] = $volume;
+							} else {
+								$PROCESSED["volume"] = "";
+							}
+							/**
+							 * Required field "pages" / Pages
+							 */
+							if((isset($_POST["pages"])) && ($pages = clean_input($_POST["pages"], array("notags", "trim", "utf8")))) {
+								$PROCESSED["pages"] = $pages;
+							} else {
+								$PROCESSED["pages"] = "";
+							}
 						} else {
 							$PROCESSED["volume"] = "";
-						}
-						/**
-						 * Required field "pages" / Pages
-						 */
-						if((isset($_POST["pages"])) && ($pages = clean_input($_POST["pages"], array("notags", "trim", "utf8")))) {
-							$PROCESSED["pages"] = $pages;
-						} else {
 							$PROCESSED["pages"] = "";
 						}
 					}
 					/**
 					 * Non-Required field "edition" / Edition
 					 */
-					if((isset($_POST["edition"])) && ($edition = clean_input($_POST["edition"], array("notags", "trim", "utf8")))) {
+					if((isset($_POST["edition"])) && ($edition = clean_input($_POST["edition"], array("notags", "trim", "utf8"))) && $PROCESSED["category"] == "Paper") {
 						$PROCESSED["edition"] = $edition;
 					} else {
 						$PROCESSED["edition"] = "";
@@ -273,8 +274,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						$PROCESSED["status_date"]		= $month.$year;
 
 						if($db->AutoExecute("ar_non_peer_reviewed_papers", $PROCESSED, "UPDATE", "`non_peer_reviewed_papers_id`=".$db->qstr($NON_PEER_REVIEWED_PAPERS_ID))) {
@@ -368,9 +369,46 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						<td><input type="text" id="author_list" name="author_list" value="<?php echo (isset($PROCESSED["author_list"]) ? utf8_decode($PROCESSED["author_list"]) : ""); ?>" maxlength="255" style="width: 95%" /></td>
 					</tr>
 					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					<tr>
 						<td></td>
-						<td style="vertical-align: top"><label for="epub_url" class="form-nrequired">URL</label></td>
-						<td><input type="text" id="epub_url" name="epub_url" value="<?php echo (isset($PROCESSED["epub_url"]) ? html_encode($PROCESSED["epub_url"]) : ""); ?>" maxlength="255" style="width: 95%" /></td>
+						<td><label for="category" class="form-required">Publication Category</label></td>
+						<td>
+						<?php
+						if($PROCESSED["category"] == "E-Pub")
+						{
+							$display = "none;";
+							$urldisplay = "table-row;";
+							echo "<input type=\"radio\" id=\"category_paper\" name=\"category\" value=\"Paper\"/><label for=\"category_paper\" class=\"form-nrequired\"> Paper</label><br>
+							<input type=\"radio\" id=\"category_epub\" name=\"category\" value=\"E-Pub\" CHECKED/><label for=\"category_epub\" class=\"form-nrequired\"> E-Pub</label>";
+						}
+						else
+						{
+							$display = "table-row;";
+							$urldisplay = "none;";
+							echo "<input type=\"radio\" id=\"category_paper\" name=\"category\" value=\"Paper\"/ CHECKED><label for=\"category_paper\" class=\"form-nrequired\"> Paper</label><br>
+							<input type=\"radio\" id=\"category_epub\" name=\"category\" value=\"E-Pub\"/><label for=\"category_epub\" class=\"form-nrequired\"> E-Pub</label>";
+						}
+						?>
+						<script>
+					    	jQuery(function($) {
+									jQuery("input[name=category]:radio").change(function () {
+										if(jQuery('#category_paper').attr("checked")) {
+											jQuery('#volume').show();
+											jQuery('#edition').show();
+											jQuery('#pages').show();
+											jQuery('#puburl').hide();
+										} else {
+											jQuery('#volume').hide();
+											jQuery('#edition').hide();
+											jQuery('#pages').hide();
+											jQuery('#puburl').show();
+										}
+									}).trigger('change');
+					    	});
+						</script>
+						</td>
 					</tr>
 					<tr>
 						<td colspan="3">&nbsp;</td>
@@ -408,56 +446,28 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						?>
 						</td>
 					</tr>
-					<tr>
+					<tr id="puburl" style="display: <?php echo $urldisplay; ?>">
 						<td></td>
-						<td><label for="emonth" class="form-nrequired">Date E-Published</label></td>
-						<td><select name="emonth" id="emonth" style="vertical-align: middle">
-						<option value = ""></option>
-						<?php
-							if (isset($PROCESSED["epub_date"]) && strlen($PROCESSED["epub_date"]) == 5) {
-								$epubmonth 	= substr($PROCESSED["epub_date"], 0, 1);
-								$epubyear 	= substr($PROCESSED["epub_date"], 1, 4);
-							} else if(isset($PROCESSED["epub_date"]) && strlen($PROCESSED["epub_date"]) == 6) {
-								$epubmonth 	= substr($PROCESSED["epub_date"], 0, 2);
-								$epubyear 	= substr($PROCESSED["epub_date"], 2, 4);
-							} else {
-								$epubmonth 	= "";
-								$epubyear 	= "";
-							}
-							
-							for($i=1; $i<13; $i++)
-							{
-								echo "<option value=\"".$i."\"".(($epubmonth == $i) ? " selected=\"selected\"" : "").">".$i."</option>\n";
-							}
-							echo "</select> /&nbsp
-							<select name=\"eyear\" id=\"eyear\" style=\"vertical-align: middle\">
-							<option value = \"\"></option>";
-							
-							for($i=$AR_PAST_YEARS; $i<$AR_FUTURE_YEARS; $i++)
-							{
-								echo "<option value=\"".$i."\"".(($epubyear == $i) ? " selected=\"selected\"" : "").">".$i."</option>\n";
-							}
-							echo "</select>";
-						?>
-						</td>
+						<td style="vertical-align: top"><label for="epub_url" class="form-nrequired">URL</label></td>
+						<td><input type="text" id="epub_url" name="epub_url" value="<?php echo (isset($PROCESSED["epub_url"]) ? html_encode($PROCESSED["epub_url"]) : ""); ?>" maxlength="255" style="width: 95%" /></td>
 					</tr>
-					<tr>
-						<td colspan="3">&nbsp;</td>
-					</tr>
-					<tr>
+					<tr id="volume" style="display: <?php echo $display; ?>">
 						<td></td>
 						<td style="vertical-align: top"><label for="volume" class="form-required">Volume</label></td>
 						<td><input type="text" id="volume" name="volume" value="<?php echo (isset($PROCESSED["volume"]) ? utf8_decode($PROCESSED["volume"]) : ""); ?>" maxlength="10" style="width: 15%" /></td>
 					</tr>
-					<tr>
+					<tr id="edition" style="display: <?php echo $display; ?>">
 						<td></td>
 						<td style="vertical-align: top"><label for="edition" class="form-nrequired">Edition</label></td>
 						<td><input type="text" id="edition" name="edition" value="<?php echo (isset($PROCESSED["edition"]) ? utf8_decode($PROCESSED["edition"]) : ""); ?>" maxlength="10" style="width: 15%" /></td>
 					</tr>
-					<tr>
+					<tr id="pages" style="display: <?php echo $display; ?>">
 						<td></td>
 						<td style="vertical-align: top"><label for="pages" class="form-required">Pages</label></td>
 						<td><input type="text" id="pages" name="pages" value="<?php echo (isset($PROCESSED["pages"]) ? utf8_decode($PROCESSED["pages"]) : ""); ?>" maxlength="10" style="width: 15%" /></td>
+					</tr>
+					<tr>
+						<td colspan="3">&nbsp;</td>
 					</tr>
 					<tr>
 						<td></td>
@@ -518,7 +528,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						?>
 						</td>
 					</tr>
-					<?php if($_SESSION["details"]["clinical_member"]) { ?>
+					<?php if($ENTRADA_USER->getClinical()) { ?>
 					<tr>
 						<td colspan="3">&nbsp;</td>
 					</tr>

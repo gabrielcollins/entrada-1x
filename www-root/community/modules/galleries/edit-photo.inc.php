@@ -36,7 +36,7 @@ if ($RECORD_ID) {
 					ON a.`cgphoto_id` = c.`record_id`
 					AND c.`community_id` = a.`community_id`
 					AND c.`notify_type` = 'photo-comment'
-					AND c.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					WHERE a.`community_id` = ".$db->qstr($COMMUNITY_ID)."
 					AND a.`cgphoto_id` = ".$db->qstr($RECORD_ID)."
 					AND a.`photo_active` = '1'
@@ -168,7 +168,7 @@ if ($RECORD_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("community_gallery_photos", $PROCESSED, "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cgphoto_id` = ".$db->qstr($RECORD_ID))) {
 								if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
@@ -180,9 +180,9 @@ if ($RECORD_ID) {
 										}
 									}
 									if (isset($notifications) && $notify_record_exists) {
-										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])." AND `record_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'photo-comment'");
+										$db->Execute("UPDATE `community_notify_members` SET `notify_active` = '".($notifications ? "1" : "0")."' WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." AND `record_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `notify_type` = 'photo-comment'");
 									} elseif (isset($notifications) && !$notify_record_exists) {
-										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($_SESSION["details"]["id"]).", ".$db->qstr($RECORD_ID).", ".$db->qstr($COMMUNITY_ID).", 'photo-comment', '".($notifications ? "1" : "0")."')");
+										$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($ENTRADA_USER->getID()).", ".$db->qstr($RECORD_ID).", ".$db->qstr($COMMUNITY_ID).", 'photo-comment', '".($notifications ? "1" : "0")."')");
 									}
 								}
 								/**
@@ -386,7 +386,7 @@ if ($RECORD_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The photo record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to edit it.");
+			application_log("error", "The photo record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;

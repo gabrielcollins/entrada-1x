@@ -111,10 +111,10 @@ if ($RECORD_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["assignment_id"]		= $RECORD_ID;
-							$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+							$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 							$PROCESSED["file_active"]	= 1;
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 							$PROCESSED["file_type"]	= "response";
 							$PROCESSED["parent_id"] = $FILE_ID;
 

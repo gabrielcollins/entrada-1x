@@ -30,6 +30,11 @@ $options_for = false;
 if (isset($_GET["options_for"])) {
     $options_for = clean_input($_GET["options_for"], array("trim"));
 }
+if (isset($_GET["community_id"])) {
+    $community_id = clean_input($_GET["community_id"], array("int"));
+}else{
+	exit;
+}
 if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
     $query = "SELECT `organisation_id`,`organisation_title` FROM `".AUTH_DATABASE."`.`organisations` ORDER BY `organisation_title` ASC";
     $organisation_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
@@ -66,7 +71,7 @@ if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["i
 					WHERE `id` IN (
 					SELECT `proxy_id` 
 					FROM `statistics` 
-					WHERE `module` LIKE 'community:2:%')";
+                    WHERE `module` LIKE 'community:".$community_id.":%')";
         $student_results = $db->GetAll($query);
         if ($student_results) {
             $students = $organisation_categories;
@@ -85,7 +90,7 @@ if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["i
         // Get the possible courses filters
         $query = "	SELECT DISTINCT `module` 
 					FROM `statistics` 
-					WHERE `module` LIKE 'community:2:%'";
+					WHERE `module` LIKE 'community:".$community_id.":%'";
         $module_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
         if ($module_results) {
             $modules = array();
@@ -109,7 +114,7 @@ if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["i
 
 		$query = "SELECT DISTINCT `action_field` 
 				FROM `statistics` 
-				WHERE `module` LIKE 'community:2:%'";
+                WHERE `module` LIKE 'community:".$community_id.":%'";
 		$page_type_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 		//$organisation_ids_string = "";
 		if ($page_type_results) {
@@ -168,7 +173,7 @@ if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["i
 		
         $query = "	SELECT DISTINCT `action_field`,`action_value` 
 					FROM `statistics` 
-					WHERE `module` LIKE 'community:2:%'";
+                    WHERE `module` LIKE 'community:".$community_id.":%'";
         $stat_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 		
 		if ($stat_results){
@@ -269,7 +274,7 @@ if (($options_for) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["i
         // Get the possible event type filters
         $query = "	SELECT DISTINCT `action` 
 					FROM `statistics` 
-					WHERE `module` LIKE 'community:2:%'";
+                    WHERE `module` LIKE 'community:".$community_id.":%'";
         $action_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
         if ($action_results) {
             $actions = array();

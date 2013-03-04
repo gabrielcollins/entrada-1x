@@ -73,7 +73,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 						echo "<li><a href=\"".ENTRADA_URL."/courses/objectives?section=course-competency-objectives&id=".$COMPETENCY_ID."&cid=".$course["course_id"]."\" style=\"text-decoration: none;\">".$course["course_name"]."</a></li>\n";
 					}
 				}
-				echo "\n</ul><br/>\n";
+				echo "\n</ul><br />\n";
 			}
 			if ($show_secondary) {
 				echo "<h2>Objectives linked as Secondary</h2>\n";;
@@ -83,7 +83,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 						echo "<li><a href=\"".ENTRADA_URL."/courses/objectives?section=course-competency-objectives&id=".$COMPETENCY_ID."&cid=".$course["course_id"]."\" style=\"text-decoration: none;\">".$course["course_name"]."</a></li>\n";
 					}
 				}
-				echo "\n</ul><br/>\n";
+				echo "\n</ul><br />\n";
 			}
 			if ($show_tertiary) {
 				echo "<h2>Objectives linked as Tertiary</h2>\n";;

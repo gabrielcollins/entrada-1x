@@ -41,8 +41,8 @@ class Tasks extends Collection {
 	 * @return Tasks
 	 */
 	static public function getAll($options = null) {
-		global $db;
-		$ORGANISATION_ID	= $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"];
+		global $db, $ENTRADA_USER;
+		$ORGANISATION_ID	= $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"];
 		
 		if (isset($options['dir'])){
 			$direction = $options['dir'];

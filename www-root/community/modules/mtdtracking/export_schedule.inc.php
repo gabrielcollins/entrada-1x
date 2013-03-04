@@ -37,7 +37,7 @@ if (!defined("IN_MTDTRACKING")) {
 
 	require_once("functions.inc.php");
 
-	$usersId = $_SESSION["details"]["id"];
+	$usersId = $ENTRADA_USER->getID();
 	$PROCESSED["service_id"] = validate_integer_field($_GET["service_id"]);
 
 	$year = clean_input($_GET["year"], array("notags", "trim", "nows"));

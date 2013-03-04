@@ -30,7 +30,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		ob_clear_open_buffers();
 		require_once(dirname(__FILE__)."/includes/functions.inc.php");
 		
-		$user = User::get($_SESSION["details"]["id"]);
+		$user = User::get($ENTRADA_USER->getID());
 		$controller = new MSPRPublicController($translate, $user);
 		$controller->process();	
 	}

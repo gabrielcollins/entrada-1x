@@ -69,7 +69,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 
 			$query	= "	SELECT * FROM `community_members`
 						WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)."
-						AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+						AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 						AND `member_active` = '1'
 						AND `member_acl` = '1'";
 			$result	= $db->GetRow($query);
@@ -278,7 +278,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 							 * visible
 							 * updated
 							 */
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 							$PROCESSED["updated_date"]	= time();
 							$PROCESSED["community_id"]	= $COMMUNITY_ID;
 							

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<section name="Workbench">
-	<section name="com.qnx.tools.ide.bbt.internal.ui.wizards.BBTProjectNewWizard">
-		<item value="com.qnx.tools.ide.bbt.core.app.OpenGLES1_1" key="template"/>
-		<item value="managed" key="build-style"/>
-		<item value="c" key="language"/>
-	</section>
-</section>

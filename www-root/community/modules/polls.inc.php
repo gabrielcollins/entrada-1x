@@ -144,7 +144,7 @@ function polls_module_access($cpolls_id = 0, $section = "") {
  * @return bool
  */
 function results_module_access($cpresults_id = 0, $section = "") {
-	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR;
+	global $db, $COMMUNITY_ID, $LOGGED_IN, $COMMUNITY_MEMBER, $COMMUNITY_ADMIN, $NOTICE, $NOTICESTR, $ERROR, $ERRORSTR, $ENTRADA_USER;
 
 	$allow_to_load = false;
 
@@ -160,7 +160,7 @@ function results_module_access($cpresults_id = 0, $section = "") {
 					switch($section) {
 						case "delete-post" :
 						case "edit-post" :
-							if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+							if ($ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 								$allow_to_load = false;
 							}
 						break;
@@ -177,7 +177,7 @@ function results_module_access($cpresults_id = 0, $section = "") {
 				 * Don't worry about checking the release dates if the person viewing
 				 * the post is the post author.
 				 */
-				if ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] != (int) $result["proxy_id"]) {
+				if ($ENTRADA_USER->getActiveId() != (int) $result["proxy_id"]) {
 					if ((!$release_date = (int) $result["release_date"]) || ($release_date <= time())) {
 						if ((!$release_until = (int) $result["release_until"]) || ($release_until > time())) {
 							/**

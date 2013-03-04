@@ -59,6 +59,9 @@ class AuthSystem {
 		if (($url != "") && ($url_parsed = @parse_url($url))) {
 			$this->connection["url"] = $url_parsed["host"];
 			$this->connection["uri"] = $url_parsed["path"];
+			if (isset($url_parsed["port"]) && $url_parsed["port"]) {
+				$this->connection["port"] = $url_parsed["port"];
+			}
 
 			if ((isset($url_parsed["scheme"])) && ($url_parsed["scheme"] == "https")) {
 				$this->connection["protocol"] = "https";
@@ -279,8 +282,8 @@ class AuthSystem {
 		xml_parser_free($parser);
 
 		for ($n = 0; $n <= count($vals)-1; $n++) {
-			if (trim($vals[$n]["value"])) {
-				$element[$vals[$n]["tag"]][count($element[$vals[$n]["tag"]])] = $vals[$n]["value"];
+			if (isset($vals[$n]["value"]) && trim($vals[$n]["value"])) {
+				$element[$vals[$n]["tag"]][(isset($element[$vals[$n]["tag"]]) && is_array($element[$vals[$n]["tag"]]) ? count($element[$vals[$n]["tag"]]) : 0)] = $vals[$n]["value"];
 			}
 		}
 

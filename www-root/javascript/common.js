@@ -89,18 +89,18 @@ function updateTime(type) {
 
 	// If it's not past 12 don't bother.
 	if(hour >= 12) {
-		hour		= hour % 12;
+		hour	= hour % 12;
 		suffix	= 'PM';
 	} else {
 		suffix	= 'AM';
 	}
 
 	// Crude adjustments for silly 12 hour format.
-	if(hour == '0') {
+	if(parseInt(hour) == 0) {
 		hour = '12';
 	}
 	// Crude adjustments for the zeros.
-	if(minute == '0') {
+	if(parseInt(minute) == 0) {
 		minute = '00';
 	}
 
@@ -443,7 +443,7 @@ document.observe("dom:loaded", function() {
 		new CollapseHeadings(el);
 	});
 
-	$$('ul.page-action li:last').each(function (el) {
+	$$('ul.page-action > li:last-child').each(function (el) {
 		el.addClassName('last');
 	});
 });
@@ -712,4 +712,16 @@ function hasConsole() {
  */
 function clog() {
 	return false;
+}
+
+/**
+ * Capitalize the first letter of a string (i.e. word).
+ */
+function capitalizeFirstLetter(word)
+{
+   if (typeof word == "string") {
+     return word.charAt(0).toUpperCase() + word.slice(1);
+   } else {
+     return word;
+   }
 }

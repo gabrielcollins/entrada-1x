@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if ($RECORD_ID) {
 		$query			= "	SELECT a.*
@@ -273,7 +273,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 								$ERROR++;
 								$ERRORSTR[] = "You do not have permission to create this quiz question. The system administrator was informed of this error; please try again later.";
 
-								application_log("error", "There was an error inserting a quiz question to quiz_id [".$RECORD_ID."] because the user [".$_SESSION["details"]["id"]."] didn't have permission to create a quiz question.");
+								application_log("error", "There was an error inserting a quiz question to quiz_id [".$RECORD_ID."] because the user [".$ENTRADA_USER->getID()."] didn't have permission to create a quiz question.");
 							}
 						}
 

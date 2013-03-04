@@ -35,14 +35,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Update requested column to sort by.
 	 * Valid: director, name
 	 */
 	if (isset($_GET["sb"])) {
-		if (@in_array(trim($_GET["sb"]), array("type", "name", "director", "notices"))) {
+		if (@in_array(trim($_GET["sb"]), array("type", "code", "name"))) {
 			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]	= trim($_GET["sb"]);
 		}
 
@@ -86,31 +86,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	}
 
 	/**
-	 * Update requsted organisation filter
-	 * Valid: any integer really.
-	 */
-	/*
-	if(isset($_GET['organisation_id'])) {
-		if($_GET['organisation_id'] == 'all') {
-			$organisation_id = null;
-		} else if((int) trim($_GET["organisation_id"])) {
-				$organisation_id = (int) trim($_GET["organisation_id"]);
-				$organisation_where = '`organisation_id` = '.$organisation_id;
-			}
-
-		$_SERVER["QUERY_STRING"] = replace_query(array("organisation_id" => false));
-		$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] = $organisation_id;
-	} else {
-		if (!isset($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"])) {
-			$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"] = $_SESSION['details']['organisation_id'];
-			$organisation_id = $_SESSION['details']['organisation_id'];
-		} else {
-			$organisation_id = $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["organisation_id"];
-		}
-		$organisation_where = '`organisation_id` = '.$organisation_id;
-	}*/
-
-	/**
 	 * Check if preferences need to be updated on the server at this point.
 	 */
 	preferences_update($MODULE, $PREFERENCES);
@@ -119,14 +94,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	 * Provide the queries with the columns to order by.
 	 */
 	switch($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) {
-		case "director" :
-			$SORT_BY	= "`fullname` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]).", `courses`.`course_name` ASC";
-			break;
-		case "notices" :
-			$SORT_BY	= "`courses`.`notifications` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
-			break;
 		case "type" :
 			$SORT_BY	= "`curriculum_lu_types`.`curriculum_type_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+		break;
+		case "code" :
+			$SORT_BY	= "`courses`.`course_code` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
 		break;
 		case "name" :
 		default :
@@ -134,8 +106,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		break;
 	}
 
-	$organisation_where ="`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation());
-	
+	$organisation_where = "`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation());
+
 	/**
 	 * Get the total number of results using the generated queries above and calculate the total number
 	 * of pages that are available based on the results per page preferences.
@@ -147,17 +119,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					FROM `courses` AS a
 					LEFT JOIN `course_contacts` AS b
 					ON b.`course_id` = a.`course_id`
-					AND b.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+					AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 					AND b.`contact_type` = 'director'
 					LEFT JOIN `community_courses` AS c
 					ON c.`course_id` = a.`course_id`
 					LEFT JOIN `community_members` AS d
 					ON d.`community_id` = c.`community_id`
-					AND d.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-					WHERE 
+					AND d.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
+					WHERE
 					(
-						a.`pcoord_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-						OR b.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+						a.`pcoord_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
+						OR b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 						OR d.`member_acl` = '1'
 					)
 					".(isset($organisation_where) ? ' AND `a`.'.$organisation_where : '')."
@@ -209,9 +181,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	}
 	?>
 	<table style="clear: both; width: 100%; margin-bottom: 10px" cellspacing="0" cellpadding="0" border="0">
-	<tr>
-		<td style="width: 100%; text-align: right">
-			<div style="white-space: nowrap">
+        <tr>
+            <td style="width: 100%; text-align: right">
+                <div style="white-space: nowrap">
 					<?php
 					if ($TOTAL_PAGES > 1) {
 						echo "<form action=\"".ENTRADA_URL."/admin/".$MODULE."\" method=\"get\" id=\"pageSelector\" style=\"display:inline;\">\n";
@@ -238,19 +210,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						echo "</span>\n";
 						echo "</form>\n";
 					}
-					echo "</div>\n";
 					?>
-		</td>
-	</tr>
-</table>
+                </div>
+            </td>
+        </tr>
+    </table>
 	<?php
 	/**
 	 * Provides the first parameter of MySQLs LIMIT statement by calculating which row to start results from.
 	 */
 	$limit_parameter = (int) (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] * $PAGE_CURRENT) - $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
-	
+
 	if ($ENTRADA_ACL->amIAllowed("course", "update", false)) {
-		$query	= "	SELECT `courses`.`course_id`,  `courses`.`organisation_id`, `courses`.`course_name`, `courses`.`course_code`, `courses`.`course_url`, `courses`.`notifications`, `curriculum_lu_types`.`curriculum_type_name`, CONCAT_WS(', ', `".AUTH_DATABASE."`.`user_data`.`lastname`, `".AUTH_DATABASE."`.`user_data`.`firstname`) AS `fullname`
+		$query	= "	SELECT `courses`.`course_id`, `courses`.`organisation_id`, `courses`.`course_name`, `courses`.`course_code`, `courses`.`course_url`, `courses`.`notifications`, `curriculum_lu_types`.`curriculum_type_name`, CONCAT_WS(', ', `".AUTH_DATABASE."`.`user_data`.`lastname`, `".AUTH_DATABASE."`.`user_data`.`firstname`) AS `fullname`
 					FROM `courses`
 					LEFT JOIN `curriculum_lu_types`
 					ON `curriculum_lu_types`.`curriculum_type_id` = `courses`.`curriculum_type_id`
@@ -277,11 +249,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					ON `community_courses`.`course_id` = `courses`.`course_id`
 					LEFT JOIN `community_members`
 					ON `community_members`.`community_id` = `community_courses`.`community_id`
-					AND `community_members`.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-					WHERE 
+					AND `community_members`.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
+					WHERE
 					(
-						`courses`.`pcoord_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-						OR `course_contacts`.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+						`courses`.`pcoord_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
+						OR `course_contacts`.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 						OR `community_members`.`member_acl` = '1'
 					)
 					AND `courses`.`course_active` = '1'
@@ -300,26 +272,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		<colgroup>
 			<col class="modified" />
 			<col class="general" />
+			<col class="general" />
 			<col class="title" />
-			<col class="teacher" />
-			<col class="notices" />
-			<col class="grades" />
+			<col class="actions" />
 		</colgroup>
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
 				<td class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "type") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("type", "Category"); ?></td>
-				<td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("name", $module_singular_name . " Name"); ?></td>
-				<td class="teacher<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "director") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("director", $module_singular_name . " Director"); ?></td>
-				<td class="notices<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "notices") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("notices", "Notices"); ?></td>
-				<td class="grades">&nbsp;</td>
+				<td class="general<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "code") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("code", "Code"); ?></td>
+				<td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "name") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("name", "Name"); ?></td>
+                <td class="actions">Actions</td>
 			</tr>
 		</thead>
 		<?php if ($ENTRADA_ACL->amIAllowed('course', 'delete', false)) : ?>
 		<tfoot>
 			<tr>
-				<td></td>
-				<td colspan="5" style="padding-top: 10px">
+				<td>&nbsp;</td>
+				<td colspan="4" style="padding-top: 10px">
 					<input type="submit" class="button" value="Delete Selected" />
 				</td>
 			</tr>
@@ -332,12 +302,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			exit;
 		}
 
+		/**
+		 * Used to appropriately set the width for the last column
+		 */
+		$second_icon = 0;
+		$third_icon = 0;
 		foreach ($results as $result) {
 			$url			= "";
 			$administrator	= false;
 
 			if ($ENTRADA_ACL->amIAllowed(new CourseResource($result["course_id"], $result["organisation_id"]), 'update')) {
-				$allowed_ids	= array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+				$allowed_ids	= array($ENTRADA_USER->getActiveId());
 				$administrator	= true;
 				$url			= ENTRADA_URL."/admin/".$MODULE."?section=edit&amp;id=".$result["course_id"];
 			} else if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($result["course_id"], $result["organisation_id"]), 'update')) {
@@ -346,20 +321,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 			echo "<tr id=\"course-".$result["course_id"]."\" class=\"course".((!$url) ? " np" : "")."\">\n";
 			echo "	<td class=\"modified\">".(($administrator) ? "<input type=\"checkbox\" name=\"delete[]\" value=\"".$result["course_id"]."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"19\" height=\"19\" alt=\"\" title=\"\" />")."</td>\n";
-			echo "	<td class=\"general".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Course Name: ".html_encode($result["course_name"])."\">" : "").html_encode($result["curriculum_type_name"]).(($url) ? "</a>" : "")."</td>\n";
-			echo "	<td class=\"title".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."&amp;org_id=".$result["organisation_id"]."\" title=\"Course Name: ".html_encode($result["course_name"])."\">" : "").html_encode($result["course_name"].(($result["course_code"]) ? ": ".$result["course_code"] : "")).(($url) ? "</a>" : "")."</td>\n";
-			echo "	<td class=\"teacher".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"Course Director: ".html_encode($result["fullname"])."\">" : "").html_encode($result["fullname"]).(($url) ? "</a>" : "")."</td>\n";
-			echo "	<td class=\"notices\">".(((int) $result["notifications"]) ? "Yes" : "<strong>No</strong>")."</td>\n";
-			echo "	<td class=\"grades\">".(($url) ? "<a href=\"".ENTRADA_URL."/admin/".$MODULE."?section=content&amp;id=".$result["course_id"]."\"><img src=\"".ENTRADA_URL."/images/event-contents.gif\" width=\"16\" height=\"16\" alt=\"Manage " . $module_singular_name . " Content\" title=\"Manage ". $module_singular_name . " Content\" border=\"0\" /></a>" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" />");
+			echo "	<td class=\"general".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\">" : "").html_encode($result["curriculum_type_name"]).(($url) ? "</a>" : "")."</td>\n";
+			echo "	<td class=\"general".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\">" : "").html_encode($result["course_code"]).(($url) ? "</a>" : "")."</td>\n";
+			echo "	<td class=\"title".((!$url) ? " np" : "")."\">".(($url) ? "<a href=\"".$url."\" title=\"".html_encode($result["course_name"])."\">" : "").html_encode($result["course_name"]).(($url) ? "</a>" : "")."</td>\n";
+			echo "	<td class=\"actions\">".(($url) ? "<a href=\"".ENTRADA_URL."/admin/".$MODULE."?section=content&amp;id=".$result["course_id"]."\"><img src=\"".ENTRADA_URL."/images/event-contents.gif\" width=\"16\" height=\"16\" alt=\"Manage " . $module_singular_name . " Content\" title=\"Manage ". $module_singular_name . " Content\" border=\"0\" /></a>" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" />");
 			if ($ENTRADA_ACL->amIAllowed(new GradebookResource($result["course_id"], $result["organisation_id"]), "read")) {
-				echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/gradebook?section=view&amp;id=".$result["course_id"]."\"><img src=\"".ENTRADA_URL."/images/book_go.png\" width=\"16\" height=\"16\" alt=\"View Gradebook\" title=\"View Gradebook\" border=\"0\" /></a>";				
+				$second_icon = 1;
+				echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/gradebook?section=view&amp;id=".$result["course_id"]."\"><img src=\"".ENTRADA_URL."/images/book_go.png\" width=\"16\" height=\"16\" alt=\"View Gradebook\" title=\"View Gradebook\" border=\"0\" /></a>";
 			}
+			if ($ENTRADA_ACL->amIAllowed(new CourseResource($result["course_id"], $result["organisation_id"]), "update", false)) {
+				$third_icon = 1;
+				echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/courses/groups?id=".$result["course_id"]."\"><img src=\"".ENTRADA_URL."/images/list-community.gif\" width=\"16\" height=\"16\" alt=\"Manage Course Groups\" title=\"Manage Course Groups\" border=\"0\" /></a>";
+			}
+
 			echo "	</td>\n";
 			echo "</tr>\n";
 		}
 		?>
 		</tbody>
 		</table>
+		<style type="text/css">
+			.actions{
+				width:<?php echo ($second_icon*20)+($third_icon*20)+20;?>px;
+			}
+		</style>
 		<?php if ($ENTRADA_ACL->amIAllowed('course', 'delete', false)) : ?>
 		</form>
 		<?php
@@ -387,9 +372,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	 */
 	$sidebar_html  = "Sort columns:\n";
 	$sidebar_html .= "<ul class=\"menu\">\n";
-	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "name") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "name"))."\" title=\"Sort by ". $module_singular_name . " Name\">by course name</a></li>\n";
-	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "director") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "director"))."\" title=\"Sort by ". $module_singular_name . " Director\">by course director</a></li>\n";
-	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "notices") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "notices"))."\" title=\"Sort by Notices\">by notices</a></li>\n";
+	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "type") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "type"))."\" title=\"Sort by Category\">by category</a></li>\n";
+	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "code") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "code"))."\" title=\"Sort by Code\">by code</a></li>\n";
+	$sidebar_html .= "	<li class=\"".((strtolower($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) == "name") ? "on" : "off")."\"><a href=\"".ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("sb" => "name"))."\" title=\"Sort by Name\">by name</a></li>\n";
 	$sidebar_html .= "</ul>\n";
 	$sidebar_html .= "Order columns:\n";
 	$sidebar_html .= "<ul class=\"menu\">\n";

@@ -1,16 +1,16 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
  *
- * 
+ *
+ *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Jonathan Fingland <jonathan.fingland@queensu.ca>
  * @copyright Copyright 2011 Queen's University. All Rights Reserved.
 */
 
- 
+
 
 if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MANAGE_USER"))) {
 	exit;
@@ -27,12 +27,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MANAGE_USER"))) {
 } else {
 	define("IN_MANAGE_USER_DATA", true);
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage/metadata?id=".$PROXY_ID, "title" => "Manage User Data");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage/metadata?id=".$PROXY_ID, "title" => "Edit Meta Data");
 
 	if (($router) && ($router->initRoute())) {
 		$module_file = $router->getRoute();
 		if ($module_file) {
-			
+
 			require_once($module_file);
 		}
 	} else {

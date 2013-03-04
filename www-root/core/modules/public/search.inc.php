@@ -61,9 +61,11 @@ if (!defined("PARENT_INCLUDED")) {
 	if ((isset($_GET["q"])) && ($tmp_input = clean_input($_GET["q"]))) {
 		$SEARCH_QUERY	= $tmp_input;
 
+/*
 		if (strlen($SEARCH_QUERY) < 4) {
 			$SEARCH_QUERY = str_pad($SEARCH_QUERY, 4, "*");
 		}
+*/
 	}
 
 	/**

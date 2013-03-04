@@ -63,7 +63,8 @@ abstract class Award {
 	}
 	
 	/**
-	 * Compares the target award against the provided award using the supplied property name.<br/>Currently only supports comparison by 'title'
+	 * Compares the target award against the provided award using the supplied property name.
+	 * Currently only supports comparison by 'title'
 	 * @param Award $award
 	 * @param string $compare_by
 	 * @return number

@@ -79,10 +79,13 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-folder")) {
 		<ul class="shares">
 		<?php
 			foreach($results as $progress => $result) {
-				
-				$query = "SELECT * FROM `community_share_files` WHERE `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cshare_id` = ".$db->qstr($result["cshare_id"])." AND `file_active` = 1 ORDER BY updated_date LIMIT 1";
-				$file_uploaded = $db->GetRow($query);
 
+				if ($LOGGED_IN) {
+					$query = "SELECT * FROM `community_share_files` WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cshare_id` = ".$db->qstr($result["cshare_id"])." AND `file_active` = 1 ORDER BY updated_date LIMIT 1";
+					$file_uploaded = $db->GetRow($query);
+				} else {
+					$file_uploaded = false;
+				}
 				$accessible	= true;
 				$files		= communities_shares_latest($result["cshare_id"]);
 

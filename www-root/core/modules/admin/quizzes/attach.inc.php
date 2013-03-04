@@ -38,7 +38,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if ($QUIZ_TYPE == "event") {
 		if ($RECORD_ID) {
@@ -180,6 +180,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							$PROCESSED["required"] = 0;
 						}
 
+                        /**
+                         * Non-required field "random_order" / Should quiz question order be shuffled?
+                         */
+                        if ((isset($_POST["random_order"])) && ($_POST["random_order"] == 1)) {
+                            $PROCESSED["random_order"] = 1;
+                        } else {
+                            $PROCESSED["random_order"] = 0;
+                        }
+
 						/**
 						 * Required field "quiztype_id" / When should learners be allowed to view the results of the quiz?
 						 */
@@ -222,15 +231,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							$PROCESSED["quiz_attempts"] = 0;
 						}
 
-						/**
-						 * Required field "timeframe" / When should this quiz be taken in relation to the event?
-						 */
-						if ((isset($_POST["timeframe"])) && ($tmp_input = clean_input($_POST["timeframe"], "trim")) && (array_key_exists($tmp_input, $RESOURCE_TIMEFRAMES["event"]))) {
-							$PROCESSED["timeframe"] = $tmp_input;
-						} else {
-							$ERROR++;
-							$ERRORSTR[] = "Please select a proper option when asked when the quiz should be taken in relation to the event.";
-						}
+                        /**
+                         * Required field "timeframe" / When should this quiz be taken in relation to the event?
+                         */
+                        if ((isset($_POST["timeframe"])) && ($tmp_input = clean_input($_POST["timeframe"], "trim")) && (array_key_exists($tmp_input, $RESOURCE_TIMEFRAMES["event"]))) {
+                            $PROCESSED["timeframe"] = $tmp_input;
+                        } else {
+                            $PROCESSED["timeframe"] = "";
+                        }
+
+                        /**
+                         * Non-required field "require_attendance" / Should completion of this quiz be limited by the learner's event attendance?
+                         */
+                        if ((isset($_POST["require_attendance"])) && ($_POST["require_attendance"] == 1)) {
+                            $PROCESSED["require_attendance"] = 1;
+                        } else {
+                            $PROCESSED["require_attendance"] = 0;
+                        }
 
 						/**
 						 * Non-required field "release_date" / Accessible Start (validated through validate_calendars function).
@@ -255,6 +272,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							break;
 						}
 
+                        if (isset($PROCESSED["quiztype_id"]) && $PROCESSED["quiztype_id"]) {
+                            $query = "SELECT `quiztype_code` FROM `quizzes_lu_quiztypes` WHERE `quiztype_id` = ".$db->qstr($PROCESSED["quiztype_id"]);
+                            $quiztype = $db->GetOne($query);
+                            if ($quiztype == "delayed") {
+                                $require_finish = true;
+                            }
+                        }
+
 						$viewable_date = validate_calendars("accessible", $require_start, $require_finish);
 						if ((isset($viewable_date["start"])) && ((int) $viewable_date["start"])) {
 							$PROCESSED["release_date"] = (int) $viewable_date["start"];
@@ -270,7 +295,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
 							/**
 							 * Adding this quiz to each of the selected events.
@@ -305,8 +330,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 						} else {
 							$STEP = 2;
 						}
-
-
 					break;
 					case 2 :
 						/**
@@ -461,6 +484,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							<tr>
 								<td></td>
 								<td colspan="2">
+									Should the order of the questions be shuffled for this quiz?
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2"></td>
+								<td>
+                                    <input type="radio" id="random_order_no" name="random_order" value="0"<?php echo (((!isset($PROCESSED["random_order"])) || (!$PROCESSED["random_order"])) ? " checked=\"checked\"" : ""); ?> /> <label for="random_order_no">Not Shuffled</label><br />
+                                    <input type="radio" id="random_order_yes" name="random_order" value="1"<?php echo (($PROCESSED["random_order"] == 1) ? " checked=\"checked\"" : ""); ?> /> <label for="random_order_yes">Shuffled</label><br />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+							<tr>
+								<td></td>
+								<td colspan="2">
 									How much time (in minutes) can the learner spend taking this quiz?
 								</td>
 							</tr>
@@ -510,6 +549,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 								</td>
 							</tr>
 							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+							<tr>
+								<td></td>
+								<td colspan="2">
+									Is attendance required for this quiz to be completed?
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2"></td>
+								<td>
+                                    <input type="radio" id="require_attendance_no" name="require_attendance" value="0"<?php echo (((!isset($PROCESSED["require_attendance"])) || (!$PROCESSED["require_attendance"])) ? " checked=\"checked\"" : ""); ?> /> <label for="require_attendance_no">Not Required</label><br />
+                                    <input type="radio" id="require_attendance_yes" name="require_attendance" value="1"<?php echo (($PROCESSED["require_attendance"] == 1) ? " checked=\"checked\"" : ""); ?> /> <label for="require_attendance_yes">Required</label><br />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+							<tr>
 								<td></td>
 								<td colspan="2">
 									When should this quiz be taken in relation to the event?
@@ -553,7 +611,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 									$('accessible_finish_date').value	= '<?php echo date("Y-m-d", $default_event_start); ?>';
 									$('accessible_finish_hour').value	= '<?php echo date("H", $default_event_start); ?>';
-									$('accessible_finish_min').value	= '<?php echo (int) date("i", $default_event_start); ?>';
+									$('accessible_finish_min').value	= '<?php echo date("i", $default_event_start); ?>';
 								break;
 								case 'during' :
 									$('accessible_start').checked	= true;
@@ -564,11 +622,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 									$('accessible_start_date').value	= '<?php echo date("Y-m-d", $default_event_start); ?>';
 									$('accessible_start_hour').value	= '<?php echo date("H", $default_event_start); ?>';
-									$('accessible_start_min').value		= '<?php echo (int) date("i", $default_event_start); ?>';
+									$('accessible_start_min').value		= '<?php echo date("i", $default_event_start); ?>';
 
 									$('accessible_finish_date').value	= '<?php echo date("Y-m-d", $default_event_finish); ?>';
 									$('accessible_finish_hour').value	= '<?php echo date("H", $default_event_finish); ?>';
-									$('accessible_finish_min').value	= '<?php echo (int) date("i", $default_event_finish); ?>';
+									$('accessible_finish_min').value	= '<?php echo date("i", $default_event_finish); ?>';
 								break;
 								case 'post' :
 									$('accessible_start').checked	= true;
@@ -579,7 +637,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 									$('accessible_start_date').value	= '<?php echo date("Y-m-d", $default_event_finish); ?>';
 									$('accessible_start_hour').value	= '<?php echo date("H", $default_event_finish); ?>';
-									$('accessible_start_min').value		= '<?php echo (int) date("i", $default_event_finish); ?>';
+									$('accessible_start_min').value		= '<?php echo date("i", $default_event_finish); ?>';
 
 									$('accessible_finish_date').value	= '';
 									$('accessible_finish_hour').value	= '00';
@@ -694,7 +752,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
 										ON c.`id` = b.`proxy_id`
 										WHERE (a.`event_start` BETWEEN ".$db->qstr($display_duration["start"])." AND ".$db->qstr($display_duration["end"]).")
-										AND b.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+										AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 										ORDER BY a.`event_start` ASC";
 						$results	= $db->GetAll($query);
 						if($results) {
@@ -710,7 +768,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							<colgroup>
 								<col class="modified" />
 								<col class="date" />
-								<col class="phase" />
 								<col class="title" />
 								<col class="attachment" />
 							</colgroup>
@@ -718,7 +775,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 								<tr>
 									<td class="modified">&nbsp;</td>
 									<td class="date sortedASC"><div class="noLink">Date &amp; Time</div></td>
-									<td class="phase">Phase</td>
 									<td class="title">Event Title</td>
 									<td class="attachment">&nbsp;</td>
 								</tr>
@@ -726,7 +782,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							<tfoot>
 								<tr>
 									<td></td>
-									<td colspan="4" style="padding-top: 10px">
+									<td colspan="3" style="padding-top: 10px">
 										<input type="submit" class="button" value="Attach Selected" />
 									</td>
 								</tr>
@@ -738,14 +794,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 									$url			= ENTRADA_URL."/admin/events?section=content&id=".$result["event_id"];
 
 									$allow_attachment = true;
-	//								if (in_array($result["event_id"], $existing_event_relationship)){
-	//									$allow_attachment = false;
-	//								}
 
 									echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".((!$allow_attachment) ? " disabled" : "")."\">\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><input type=\"checkbox\" name=\"event_ids[]\" value=\"".$result["event_id"]."\"".((!$allow_attachment) ? " disabled=\"disabled\"" : "")." /></td>\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
-									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\" title=\"Intended For Phase ".html_encode($result["event_phase"])."\">".html_encode($result["event_phase"])."</a></td>\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "")."><a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">".html_encode($result["event_title"])."</a></td>\n";
 									echo "	<td".((!$allow_attachment) ? " class=\"disabled\"" : "").">".(($attachments) ? "<img src=\"".ENTRADA_URL."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" title=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
 									echo "</tr>\n";
@@ -799,6 +851,139 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 			application_log("notice", "Failed to provide a quiz identifier to attach a quiz to a learning event.");
 		}
+	} else if ($QUIZ_TYPE == "assessment") {
+		$query			= "	SELECT a.*
+							FROM `quizzes` AS a
+							WHERE a.`quiz_id` = ".$db->qstr($RECORD_ID)."
+							AND a.`quiz_active` = '1'";
+		$quiz_record	= $db->GetRow($query);
+
+		/*
+		 * Fetch all quiz assessments that do not have the quiz attached
+		 */
+		$query = "	SELECT a.*, b.`type` AS `characteristic_type`, c.`course_name`, c.`course_code`, d.`group_name`, e.`aquiz_id`
+					FROM `assessments` AS a
+					LEFT JOIN `assessments_lu_meta` AS b
+					ON a.`characteristic_id` = b.`id`
+					LEFT JOIN `courses` AS c
+					ON a.`course_id` = c.`course_id`
+					LEFT JOIN `groups` AS d
+					ON a.`cohort` = d.`group_id`
+					LEFT JOIN `attached_quizzes` AS e
+					ON a.`assessment_id` = e.`content_id`
+					WHERE b.`type` = 'quiz'
+					AND (e.`content_type` = 'assessment' OR e.`content_type` IS NULL)
+					AND e.`aquiz_id` IS NULL";
+		$assessments = $db->GetAssoc($query);
+
+		if ($quiz_record && $ENTRADA_ACL->amIAllowed(new QuizResource($quiz_record["quiz_id"]), 'update')) {
+			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/".$MODULE."?section=edit&id=".$RECORD_ID, "title" => limit_chars($quiz_record["quiz_title"], 32));
+			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/".$MODULE."?section=attach&id=".$RECORD_ID, "title" => "Attach To Gradebook Assessment");
+
+			echo "<h1>Attach Quiz to Gradebook Assessment</h1>";
+
+			switch ($STEP) {
+				case 2 :
+
+					$PROCESSED["quiz_id"]			= $RECORD_ID;
+					$PROCESSED["quiz_title"]		= $quiz_record["quiz_title"];
+
+					if (!$ERROR) {
+						$PROCESSED["updated_date"]	= time();
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["content_id"]	= (int) $_POST["assessment_id"];
+						$PROCESSED["content_type"]  = "assessment";
+						/**
+						* Adding this quiz to the selected assessment.
+						*/
+						if ($db->AutoExecute("attached_quizzes", $PROCESSED, "INSERT")) {
+							$url = ENTRADA_URL."/admin/".$MODULE."?section=edit&id=".$RECORD_ID;
+							$SUCCESS++;
+							$SUCCESSSTR[]	= "You have successfully attached <strong>".html_encode($quiz_record["quiz_title"])."</strong> to <strong>".$assessments[$PROCESSED["content_id"]]["name"]."</strong>.";
+
+							application_log("success", "Quiz [".$RECORD_ID."] was successfully attached to assessment [".$PROCESSED["content_id"]."].");
+
+						} else {
+							$url = ENTRADA_URL."/admin/".$MODULE."?section=edit&id=".$RECORD_ID;
+							$ERROR++;
+							$ERRORSTR[] = "There was a problem attaching this quiz to <strong>".html_encode($assessments[$PROCESSED["content_id"]]["name"])."</strong>. The system administrator was informed of this error; please try again later.";
+
+							application_log("error", "There was an error attaching quiz [".$RECORD_ID."] to assessment [".$PROCESSED["content_id"]."]. Database said: ".$db->ErrorMsg());
+						}
+
+					}
+
+				break;
+				default:
+				continue;
+			}
+
+			switch ($STEP) {
+				case 2:
+					if ($NOTICE) {
+						echo display_notice();
+					}
+					if ($ERROR) {
+						echo display_error();
+					}
+					if ($SUCCESS) {
+						echo display_success();
+					}
+
+                    $ONLOAD[] = "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."?section=edit&id=".$RECORD_ID."\\'', 5000)";
+				break;
+				case 1 :
+				default:
+
+					if ($assessments) { ?>
+						<form action="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?section=attach&amp;assessment=true&amp;id=<?php echo $RECORD_ID; ?>" method="post">
+						<input type="hidden" name="step" value="2" />
+						<table class="tableList" cellspacing="0" summary="My Teaching Events">
+						<colgroup>
+							<col class="modified" />
+							<col class="date" />
+							<col class="phase" />
+							<col class="title" />
+						</colgroup>
+						<thead>
+							<tr>
+								<td class="modified">&nbsp;</td>
+								<td class="date sortedASC"><div class="noLink">Course</div></td>
+								<td class="phase">Cohort</td>
+								<td class="title">Assessment Name</td>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td></td>
+								<td colspan="3" style="padding-top: 10px">
+									<input type="submit" class="button" value="Attach Selected" />
+								</td>
+							</tr>
+						</tfoot>
+						<tbody>
+							<?php
+							foreach ($assessments as $assessment_id => $result) {
+								echo "<tr id=\"assessment-".$assessment_id."\">\n";
+								echo "	<td><input type=\"radio\" name=\"assessment_id\" value=\"".$assessment_id."\" /></td>\n";
+								echo "	<td><a href=\"".$url."\">".$result["course_name"]." - ".$result["course_code"]."</a></td>\n";
+								echo "	<td><a href=\"".$url."\" title=\"Intended For Phase ".$result["course_id"]."\">".$result["group_name"]."</a></td>\n";
+								echo "	<td><a href=\"".$url."\" title=\"Event Title: ".$result["course_id"]."\">".$result["name"]."</a></td>\n";
+								echo "</tr>\n";
+							}
+							?>
+						</tbody>
+						</table>
+						</form>
+							<?php
+					} else {
+						$url = ENTRADA_URL."/admin/".$MODULE."?section=edit&id=".$RECORD_ID;
+						add_error("This quiz can not be attached to any assessments.<br /><br />You will now be redirected to the <strong>Edit Quiz</strong> page for <strong>".$quiz_record["quiz_title"]."</strong>. This will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue now.");
+						echo display_error();
+					}
+				continue;
+			}
+		}
 	} else {
 		if ($RECORD_ID) {
 			$query			= "	SELECT a.*
@@ -839,7 +1024,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 											ON b.`community_id` = a.`community_id`
 											JOIN `community_members` AS c
 											ON c.`community_id` = a.`community_id`
-											AND c.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+											AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 											AND c.`member_acl` = '1'
 											WHERE b.`cpage_id` = ".$db->qstr($tmp_input)."
 											AND a.`community_active` = '1'
@@ -932,6 +1117,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							$PROCESSED["required"] = 0;
 						}
 
+                        /**
+                         * Non-required field "random_order" / Should quiz question order be shuffled?
+                         */
+                        if ((isset($_POST["random_order"])) && ($_POST["random_order"] == 1)) {
+                            $PROCESSED["random_order"] = 1;
+                        } else {
+                            $PROCESSED["random_order"] = 0;
+                        }
+
 						/**
 						 * Required field "quiztype_id" / When should learners be allowed to view the results of the quiz?
 						 */
@@ -974,7 +1168,23 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							$PROCESSED["quiz_attempts"] = 0;
 						}
 
-						$PROCESSED["timeframe"] = "none";
+                        /**
+                         * Required field "timeframe" / When should this quiz be taken in relation to the event?
+                         */
+                        if ((isset($_POST["timeframe"])) && ($tmp_input = clean_input($_POST["timeframe"], "trim")) && (array_key_exists($tmp_input, $RESOURCE_TIMEFRAMES["event"]))) {
+                            $PROCESSED["timeframe"] = $tmp_input;
+                        } else {
+                            $PROCESSED["timeframe"] = "";
+                        }
+
+                        /**
+                         * Non-required field "require_attendance" / Should completion of this quiz be limited by the learner's event attendance?
+                         */
+                        if ((isset($_POST["require_attendance"])) && ($_POST["require_attendance"] == 1)) {
+                            $PROCESSED["require_attendance"] = 1;
+                        } else {
+                            $PROCESSED["require_attendance"] = 0;
+                        }
 
 						/**
 						 * Non-required field "release_date" / Accessible Start (validated through validate_calendars function).
@@ -999,6 +1209,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							break;
 						}
 
+                        if (isset($PROCESSED["quiztype_id"]) && $PROCESSED["quiztype_id"]) {
+                            $query = "SELECT `quiztype_code` FROM `quizzes_lu_quiztypes` WHERE `quiztype_id` = ".$db->qstr($PROCESSED["quiztype_id"]);
+                            $quiztype = $db->GetOne($query);
+                            if ($quiztype == "delayed") {
+                                $require_finish = true;
+                            }
+                        }
+
 						$viewable_date = validate_calendars("accessible", $require_start, $require_finish);
 						if ((isset($viewable_date["start"])) && ((int) $viewable_date["start"])) {
 							$PROCESSED["release_date"] = (int) $viewable_date["start"];
@@ -1014,7 +1232,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
 							/**
 							 * Adding this quiz to each of the selected events.
@@ -1203,6 +1421,22 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							<tr>
 								<td></td>
 								<td colspan="2">
+									Should the order of the questions be shuffled for this quiz?
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2"></td>
+								<td>
+                                    <input type="radio" id="random_order_no" name="random_order" value="0"<?php echo (((!isset($PROCESSED["random_order"])) || (!$PROCESSED["random_order"])) ? " checked=\"checked\"" : ""); ?> /> <label for="random_order_no">Not Shuffled</label><br />
+                                    <input type="radio" id="random_order_yes" name="random_order" value="1"<?php echo (($PROCESSED["random_order"] == 1) ? " checked=\"checked\"" : ""); ?> /> <label for="random_order_yes">Shuffled</label><br />
+								</td>
+							</tr>
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+							<tr>
+								<td></td>
+								<td colspan="2">
 									How much time (in minutes) can the learner spend taking this quiz?
 								</td>
 							</tr>
@@ -1360,7 +1594,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										ON bp.`community_id` = b.`community_id`
 										JOIN `community_members` AS c
 										ON c.`community_id` = b.`community_id`
-										AND c.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+										AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										AND c.`member_acl` = '1'
 										JOIN `".AUTH_DATABASE."`.`user_data` AS d
 										ON d.`id` = c.`proxy_id`

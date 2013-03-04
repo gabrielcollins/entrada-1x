@@ -6,8 +6,7 @@
  * @author Developer: Matt Simpson <simpson@post.queensu.ca>
  * @version 3.0
  * @copyright Copyright 2006 Queen's University, MEdTech Unit
- * 
- * $Id: 404.inc.php 1111 2010-04-08 17:58:36Z simpson $
+ *
 */
 
 if(!defined("PARENT_INCLUDED")) exit;

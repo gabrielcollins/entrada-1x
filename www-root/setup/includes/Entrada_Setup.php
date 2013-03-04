@@ -3,7 +3,7 @@
 /**
  * Entrada [ http://www.entrada-project.org ]
  *
- * This file represents Entrada_Setup class. 
+ * This file represents Entrada_Setup class.
  *
  * @author Organisation: University of Calgary
  * @author Unit: Faculty of Medicine
@@ -13,38 +13,40 @@
 */
 
 class Entrada_Setup
-{	
+{
 	public $sql_dump_entrada 	= "install/sql/entrada.sql";
 	public $sql_dump_auth 	    = "install/sql/entrada_auth.sql";
 	public $sql_dump_clerkship 	= "install/sql/entrada_clerkship.sql";
 	public $htaccess_file 	    = "/setup/install/dist-htaccess.txt";
-	
+
 	public $entrada_url;
 	public $entrada_relative;
 	public $entrada_absolute;
 	public $entrada_storage;
-	
+
 	public $database_adapter;
 	public $database_host;
 	public $database_username;
 	public $database_password;
 	public $entrada_database;
-	
+
 	public $auth_database;
 
 	public $clerkship_database;
-	
+
 	public $admin_username;
 	public $admin_password_hash;
-	
+
 	public $admin_firstname;
 	public $admin_lastname;
 	public $admin_email;
-	
+
 	public $auth_username;
 	public $auth_password;
 
 	public $config_file_path;
+
+	public $database_error;
 
 	public function __construct($processed_array)
 	{
@@ -52,7 +54,7 @@ class Entrada_Setup
 		$this->entrada_relative = (isset($processed_array["entrada_relative"]) ? $processed_array["entrada_relative"] : "");
 		$this->entrada_absolute = (isset($processed_array["entrada_absolute"]) ? $processed_array["entrada_absolute"] : "");
 		$this->entrada_storage = (isset($processed_array["entrada_storage"]) ? $processed_array["entrada_storage"] : "");
-		
+
 		$this->database_adapter = (isset($processed_array["database_adapter"]) ? $processed_array["database_adapter"] : "mysql");
 		$this->database_host = (isset($processed_array["database_host"]) ? $processed_array["database_host"] : "");
 		$this->database_username = (isset($processed_array["database_username"]) ? $processed_array["database_username"] : "");
@@ -60,17 +62,17 @@ class Entrada_Setup
 		$this->entrada_database = (isset($processed_array["entrada_database"]) ? $processed_array["entrada_database"] : "");
 		$this->auth_database = (isset($processed_array["auth_database"]) ? $processed_array["auth_database"] : "");
 		$this->clerkship_database = (isset($processed_array["clerkship_database"]) ? $processed_array["clerkship_database"] : "");
-		
+
 		$this->admin_username = (isset($processed_array["admin_username"]) ? $processed_array["admin_username"] : "");
 		$this->admin_password_hash = (isset($processed_array["admin_password_hash"]) ? $processed_array["admin_password_hash"] : "");
-		
+
 		$this->admin_firstname = (isset($processed_array["admin_firstname"]) ? $processed_array["admin_firstname"] : "");
 		$this->admin_lastname = (isset($processed_array["admin_lastname"]) ? $processed_array["admin_lastname"] : "");
 		$this->admin_email = (isset($processed_array["admin_email"]) ? $processed_array["admin_email"] : "");
 
 		$this->auth_username = (isset($processed_array["auth_username"]) ? $processed_array["auth_username"] : generate_hash());
 		$this->auth_password = (isset($processed_array["auth_password"]) ? $processed_array["auth_password"] : generate_hash());
-		
+
 		$this->config_file_path = $this->entrada_absolute . "/core/config/config.inc.php";
 	}
 
@@ -108,17 +110,17 @@ class Entrada_Setup
 			return false;
 		}
 	}
-		
+
 	public function writeHTAccess() {
-		try {			
+		try {
 
 			$htaccess_text = @file_get_contents($this->entrada_absolute . $this->htaccess_file);
 			$htaccess_text = str_replace("ENTRADA_RELATIVE", (($this->entrada_relative != "") ? $this->entrada_relative : "/"), $htaccess_text);
-		
+
 			if (!@file_put_contents($this->entrada_absolute."/.htaccess", $htaccess_text)) {
 				return false;
 			}
-			
+
 			if (!@file_exists($this->entrada_absolute."/.htaccess")) {
 				return false;
 			}
@@ -126,10 +128,10 @@ class Entrada_Setup
 			echo $e->getMessage();
 			return false;
 		}
-		
+
 		return true;
 	}
-    
+
 	public function writeConfigData() {
 		try
 		{
@@ -161,10 +163,10 @@ class Entrada_Setup
 		}
 		catch(Zend_Config_Exception $e)
 		{
-			
+
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -203,35 +205,36 @@ CONFIGTEXT;
 		{
 			return false;
 		}
-		
+
 		return true;
 	}
 
 	public function loadDumpData()
 	{
-		
+
 		$db_dump_files = array(
 			$this->entrada_database => $this->sql_dump_entrada,
 			$this->auth_database => $this->sql_dump_auth,
 			$this->clerkship_database => $this->sql_dump_clerkship
 		);
-		try
-		{
-			foreach($db_dump_files as $database_name => $dump_file)
-			{
+
+		try {
+			foreach ($db_dump_files as $database_name => $dump_file) {
 				$db = NewADOConnection($this->database_adapter);
 				$db->Connect($this->database_host, $this->database_username, $this->database_password, $database_name);
 				$queries = $this->parseDatabaseDump($dump_file);
-				foreach ($queries as $query)
-				{
-					$db->Execute($query);
+				foreach ($queries as $key => $query) {
+					if (!$db->Execute($query)) {
+						throw new Exception("Unable to execute query #".($key + 1)." in the ".$database_name." database file. Please review the following: <div style=\"font-family: monospace; font-size: 10px\">".$db->ErrorMsg()."</div>");
+					}
 				}
 			}
-		}
-		catch(Exception $e)
-		{
+		} catch(Exception $e) {
+			$this->database_error = $e->getMessage();
+
 			return false;
 		}
+
 		return true;
 	}
 
@@ -243,7 +246,7 @@ CONFIGTEXT;
 	 * @return array
 	 */
 	public function parseDatabaseDump($dump_file)
-	{		
+	{
 		$dump_file = $dump_file;
 		$sql_dump = array();
 		$query = "";
@@ -262,7 +265,7 @@ CONFIGTEXT;
 		} while (!@feof($handle));
 		return $sql_dump;
 	}
-	
+
 	/**
 	 * Removes all data and tables from the three databases
 	 * @return boolean Success of truncation
@@ -287,7 +290,7 @@ CONFIGTEXT;
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Removes all data and tables from the three databases and loads the class specified dumps back in
 	 * @return boolean Success of reset

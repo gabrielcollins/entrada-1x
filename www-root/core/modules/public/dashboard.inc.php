@@ -1,7 +1,7 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,14 +27,14 @@
 */
 
 if (!defined("PARENT_INCLUDED")) exit;
+
 if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	add_error("Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$DISPLAY_DURATION		= array();
 	$notice_where_clause	= "";
@@ -79,7 +79,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					FROM `community_members` AS a
 					LEFT JOIN `communities` AS b
 					ON b.`community_id` = a.`community_id`
-					WHERE a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+					WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 					AND a.`member_active` = '1'
 					AND b.`community_active` = '1'
 					AND b.`community_template` <> 'course'
@@ -115,7 +115,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					}
 				}
 			}
-			
+
 			$_SERVER["QUERY_STRING"] = replace_query(array("action" => false));
 		break;
 		default :
@@ -126,39 +126,39 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 	switch ($_SESSION["details"]["group"]) {
 		case "alumni" :
 			$rss_feed_name = "alumni";
-			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'alumni' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'alumni' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target` = 'all' OR a.`poll_target` = 'alumni')";;
 			$corrected_role = "students";
 		break;
 		case "faculty" :
 			$rss_feed_name = "faculty";
-			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'faculty' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'faculty' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target` = 'all' OR a.`poll_target` = 'faculty')";;
 			$corrected_role = "faculty";
 		break;
 		case "medtech" :
 			$rss_feed_name = "medtech";
-			$notice_where_clause = "(a.`target` NOT LIKE 'proxy_id:%' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target` NOT LIKE 'proxy_id:%' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target` = 'all' OR a.`poll_target` = 'staff')";;
 			$corrected_role = "medtech";
 		break;
 		case "resident" :
 			$rss_feed_name = "resident";
-			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'resident' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'resident' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target` = 'all' OR a.`poll_target` = 'resident')";;
 			$corrected_role = "resident";
 		break;
 		case "staff" :
 			$rss_feed_name = "staff";
-			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'staff' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target` = 'all' OR a.`target` = 'staff' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target` = 'all' OR a.`poll_target` = 'staff')";;
 			$corrected_role = "staff";
 		break;
 		case "student" :
 		default :
-			$cohort = groups_get_cohort($_SESSION["details"]["id"]);
+			$cohort = groups_get_cohort($ENTRADA_USER->getID());
 			$rss_feed_name = clean_input((isset($_SESSION["details"]["grad_year"]) && $_SESSION["details"]["grad_year"] ? $_SESSION["details"]["grad_year"] : "default"), "alphanumeric");
-			$notice_where_clause = "(a.`target`='cohort:".clean_input($cohort["group_id"], "alphanumeric")."' OR a.`target` = 'all' OR a.`target` = 'students' OR a.`target` = ".$db->qstr("proxy_id:".((int) $_SESSION["details"]["id"])).")";
+			$notice_where_clause = "(a.`target`='cohort:".clean_input($cohort["group_id"], "alphanumeric")."' OR a.`target` = 'all' OR a.`target` = 'students' OR a.`target` = ".$db->qstr("proxy_id:".((int) $ENTRADA_USER->getID())).")";
 			$poll_where_clause = "(a.`poll_target_type` = 'cohort' AND a.`poll_target`='".clean_input($cohort["group_id"], "alphanumeric")."' OR a.`poll_target` = 'all' OR a.`poll_target` = 'students')";
 			$corrected_role = "students";
 		break;
@@ -170,7 +170,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					FROM `poll_questions` AS a
 					LEFT JOIN `poll_results` AS b
 					ON b.`poll_id` = a.`poll_id`
-					AND b.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					WHERE b.`result_id` IS NULL
 					AND (`poll_from` = '0' OR `poll_from` <= '".time()."')
 					AND (`poll_until` = '0' OR `poll_until` >= '".time()."')
@@ -209,41 +209,41 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					FROM `notices` AS a
 					LEFT JOIN `statistics` AS b
 					ON b.`module` = 'notices'
-					AND b.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					AND b.`action` = 'read'
 					AND b.`action_field` = 'notice_id'
 					AND b.`action_value` = a.`notice_id`
-					LEFT JOIN `notice_audience` AS c 
-					ON a.`notice_id` = c.`notice_id` 
+					LEFT JOIN `notice_audience` AS c
+					ON a.`notice_id` = c.`notice_id`
 					WHERE (
 						c.`audience_type` = 'all:users'
 						".($corrected_role == "medtech" ? "OR c.`audience_type` LIKE '%all%' OR c.`audience_type` = 'cohorts'" : "OR c.`audience_type` = 'all:".$corrected_role."'")."
 						OR
 						((
-							c.`audience_type` = 'students' 
-							OR c.`audience_type` = 'faculty' 
-							OR c.`audience_type` = 'staff') 
-							AND c.`audience_value` = ".$db->qstr($_SESSION["details"]["id"])."
-						) 
-						OR ((
-							c.`audience_type` = 'cohorts' 
-							OR c.`audience_type` = 'course_list') 
-							AND c.`audience_value` IN (
-								SELECT `group_id` 
-								FROM `group_members` 
-								WHERE `proxy_id` = ".$db->qstr($_SESSION["details"]["id"]).")
+							c.`audience_type` = 'students'
+							OR c.`audience_type` = 'faculty'
+							OR c.`audience_type` = 'staff')
+							AND c.`audience_value` = ".$db->qstr($ENTRADA_USER->getID())."
 						)
-					) 
-					AND (a.`organisation_id` IS NULL 
-					OR a.`organisation_id` = ".$db->qstr($_SESSION["details"]["organisation_id"]).") 
-					AND (a.`display_from`='0' 
-					OR a.`display_from` <= '".time()."') 
-					AND (a.`display_until`='0' 
-					OR a.`display_until` >= '".time()."') 
+						OR ((
+							c.`audience_type` = 'cohorts'
+							OR c.`audience_type` = 'course_list')
+							AND c.`audience_value` IN (
+								SELECT `group_id`
+								FROM `group_members`
+								WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getID()).")
+						)
+					)
+					AND (a.`organisation_id` IS NULL
+					OR a.`organisation_id` = ".$db->qstr($_SESSION["details"]["organisation_id"]).")
+					AND (a.`display_from`='0'
+					OR a.`display_from` <= '".time()."')
+					AND (a.`display_until`='0'
+					OR a.`display_until` >= '".time()."')
 					AND a.`organisation_id` = ".$db->qstr($_SESSION["details"]["organisation_id"])."
 					GROUP BY a.`notice_id`
 					ORDER BY a.`updated_date` DESC, a.`display_until` ASC";
-		
+
 		$results = $db->GetAll($query);
 		if ($results) {
 			foreach ($results as $result) {
@@ -292,7 +292,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		}
 	}
 
-	switch ($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]) {
+	switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 		case "medtech" :
 		case "student" :
 			$BREADCRUMB[] = array("url" => ENTRADA_URL, "title" => "Student Dashboard");
@@ -301,12 +301,12 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 			 * How did this person not get assigned this already? Mak'em new.
 			 */
 			if (!isset($cohort) || !$cohort) {
-				$query = "SELECT * 
+				$query = "SELECT *
 						FROM `groups`
 						WHERE `group_id` = ".$db->qstr(fetch_first_cohort());
 				$cohort = $db->GetRow($query);
 			}
-			
+
 			$HEAD[]	= "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"Notices\" href=\"".ENTRADA_URL."/notices/".$cohort["group_id"]."\" />";
 
 			if (!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"])) {
@@ -325,14 +325,14 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 							ON c.`region_id` = a.`region_id`
 							LEFT JOIN `".CLERKSHIP_DATABASE."`.`apartment_schedule` AS d
 							ON d.`event_id` = a.`event_id`
-							AND d.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+							AND d.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 							AND d.`aschedule_status` = 'published'
 							LEFT JOIN `".CLERKSHIP_DATABASE."`.`global_lu_rotations` AS e
 							ON e.`rotation_id` = a.`rotation_id`
 							WHERE a.`event_finish` >= ".$db->qstr(strtotime("00:00:00"))."
 							AND (a.`event_status` = 'published' OR a.`event_status` = 'approval')
 							AND b.`econtact_type` = 'student'
-							AND b.`etype_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+							AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 							ORDER BY a.`event_start` ASC";
 				$clerkship_schedule	= $db->GetAll($query);
 				if ($clerkship_schedule) {
@@ -362,10 +362,10 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 								</div>
 							</div>
 							<?php
-							$query = "	SELECT `rotation_id` 
+							$query = "	SELECT `rotation_id`
 										FROM `".CLERKSHIP_DATABASE."`.`events`
 										WHERE `event_id` = ".$db->qstr($clerkship_schedule[0]["event_id"]);
-							$ROTATION_ID = $db->GetOne($query); 
+							$ROTATION_ID = $db->GetOne($query);
 							?>
 							<div style="float: right; margin-bottom: 5px">
 								<div id="module-content">
@@ -424,7 +424,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 									}
 
 									$event_title = clean_input($result["event_title"], array("htmlbrackets", "trim"));
-								
+
 									$cssclass = "";
 									$skip = false;
 
@@ -488,6 +488,18 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 			if (strpos($_SERVER["HTTP_USER_AGENT"], "MSIE 6.") !== false) {
 				echo display_error(array("Unfortunately you are using <strong>Internet Explorer 6.0</strong> as your web-browser to view this site and we are unable to display a dashboard calendar that is compatible with this browser.<br /><br />To view your learning events, please click the <a href=\"".ENTRADA_RELATIVE."/events\" style=\"font-weight: bold\">Learning Events</a> tab at the top."));
 			} else {
+				// If saturday or sunday add 48 or 24 hours to the current time so the calendar displays the correct week, otherwise use the current time.
+				switch (date("N", time())) {
+					case '6' :
+						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] = time() + (86400 * 2);
+					break;
+					case '7' :
+						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] = time() + 86400;
+					break;
+					default :
+						$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] = time();
+					break;
+				}
 				?>
 				<script type="text/javascript">
 				var year = new Date().getFullYear();
@@ -496,7 +508,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 
 				jQuery(document).ready(function() {
 					jQuery('#dashboardCalendar').weekCalendar({
-						date : new Date(<?php echo ((($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"]) ? $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dstamp"] : time()) * 1000); ?>),
+						date : new Date(<?php echo ((($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"]) ? $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["caltime"] : time()) * 1000); ?>),
 						dateFormat : 'M d, Y',
 						height: function($calendar) {
 							return 600;
@@ -630,7 +642,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 		break;
 		case "resident" :
 		case "faculty" :
-			$BREADCRUMB[] = array("url" => ENTRADA_URL, "title" => ucwords($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"])." Dashboard");
+			$BREADCRUMB[] = array("url" => ENTRADA_URL, "title" => ucwords($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"])." Dashboard");
 
 			/**
 			 * Update requested timestamp to display.
@@ -681,26 +693,23 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 					break;
 			}
 
-			$query		= "	SELECT a.*, e.`course_code`, CONCAT_WS(', ', c.`lastname`, c.`firstname`) AS `fullname`, MAX(d.`timestamp`) AS `last_visited`
-							FROM `events` AS a
-							JOIN `event_contacts` AS b
-							ON b.`event_id` = a.`event_id`
-							JOIN `".AUTH_DATABASE."`.`user_data` AS c
-							ON c.`id` = b.`proxy_id`
-							LEFT JOIN `statistics` AS d
-							ON d.`module` = 'events'
-							AND d.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-							AND d.`action` = 'view'
-							AND d.`action_field` = 'event_id'
-							AND d.`action_value` = a.`event_id`
-							JOIN `courses` AS e
-							ON e.`course_id` = a.`course_id`
-							WHERE (a.`event_start` BETWEEN ".$db->qstr($DISPLAY_DURATION["start"])." AND ".$db->qstr($DISPLAY_DURATION["end"]).")
-							AND b.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
-							GROUP BY a.`event_id`
-							ORDER BY a.`event_start` ASC";
-			$results	= $db->GetAll($query);
-			$TOTAL_ROWS	= @count($results);
+            $results = events_fetch_filtered_events(
+                        $ENTRADA_USER->getActiveId(),
+                        $ENTRADA_USER->getActiveGroup(),
+                        $ENTRADA_USER->getActiveRole(),
+                        $ENTRADA_USER->getActiveOrganisation(),
+                        "date",
+                        "asc",
+                        "custom",
+                        $DISPLAY_DURATION["start"],
+                        $DISPLAY_DURATION["end"],
+                        events_filters_defaults($ENTRADA_USER->getActiveId(), $ENTRADA_USER->getActiveGroup(), $ENTRADA_USER->getActiveRole(), $ENTRADA_USER->getActiveOrganisation()),
+                        false,
+                        0,
+                        0,
+                        0,
+                        false);
+            $TOTAL_ROWS = count($results["result_ids_map"]);
 			?>
 			<table style="width: 100%" cellspacing="0" cellpadding="0" border="0" summary="Weekly Student Calendar">
 				<tr>
@@ -747,26 +756,29 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 						</thead>
 						<tbody>
 							<?php
-							foreach ($results as $result) {
-								if (((!$result["release_date"]) || ($result["release_date"] <= time())) && ((!$result["release_until"]) || ($result["release_until"] >= time()))) {
-									$attachments	= attachment_check($result["event_id"]);
-									$url			= ENTRADA_URL."/admin/events?section=content&id=".$result["event_id"];
+							foreach ($results["events"] as $result) {
+                                $attachments = attachment_check($result["event_id"]);
+                                $url = ENTRADA_URL."/admin/events?section=content&id=".$result["event_id"];
+                				$accessible = true;
 
-									if (((int) $result["last_visited"]) && ((int) $result["last_visited"] < (int) $result["updated_date"])) {
-										$is_modified = true;
-										$modified++;
-									} else {
-										$is_modified = false;
-									}
+                                if ((($result["release_date"]) && ($result["release_date"] > time())) || (($result["release_until"]) && ($result["release_until"] < time()))) {
+                                    $accessible = false;
+                                }
 
-									echo "<tr id=\"event-".$result["event_id"]."\" class=\"event\">\n";
-									echo "	<td class=\"modified\">".(($is_modified) ? "<img src=\"".ENTRADA_URL."/images/lecture-modified.gif\" width=\"15\" height=\"15\" alt=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" title=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" style=\"vertical-align: middle\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"15\" height=\"15\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
-									echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
-									echo "	<td class=\"course-code\"><a href=\"".$url."\">".html_encode($result["course_code"])."</a></td>\n";
-									echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">".html_encode($result["event_title"])."</a></td>\n";
-									echo "	<td class=\"attachment\">".(($attachments) ? "<img src=\"".ENTRADA_URL."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" title=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
-									echo "</tr>\n";
-								}
+                                if (((int) $result["last_visited"]) && ((int) $result["last_visited"] < (int) $result["updated_date"])) {
+                                    $is_modified = true;
+                                    $modified++;
+                                } else {
+                                    $is_modified = false;
+                                }
+
+                                echo "<tr id=\"event-".$result["event_id"]."\" class=\"event".(!$accessible ? " na" : "")."\">\n";
+                                echo "	<td class=\"modified\">".(($is_modified) ? "<img src=\"".ENTRADA_URL."/images/lecture-modified.gif\" width=\"15\" height=\"15\" alt=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" title=\"This event has been modified since your last visit on ".date(DEFAULT_DATE_FORMAT, $result["last_visited"]).".\" style=\"vertical-align: middle\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"15\" height=\"15\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
+                                echo "	<td class=\"date\"><a href=\"".$url."\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</a></td>\n";
+                                echo "	<td class=\"course-code\"><a href=\"".$url."\">".html_encode($result["course_code"])."</a></td>\n";
+                                echo "	<td class=\"title\"><a href=\"".$url."\" title=\"Event Title: ".html_encode($result["event_title"])."\">".html_encode($result["event_title"])."</a></td>\n";
+                                echo "	<td class=\"attachment\">".(($attachments) ? "<img src=\"".ENTRADA_URL."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" title=\"Contains ".$attachments." attachment".(($attachments != 1) ? "s" : "")."\" />" : "<img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"16\" height=\"16\" alt=\"\" title=\"\" style=\"vertical-align: middle\" />")."</td>\n";
+                                echo "</tr>\n";
 							}
 							?>
 						</tbody>
@@ -834,7 +846,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 	<div class="rss-add">
 		<a id="add-rss-feeds-link" href="#edit-rss-feeds" class="feeds add-rss">Add RSS Feed</a>
 		<a id="edit-rss-feeds-link" href="#edit-rss-feeds" class="feeds edit-rss">Modify RSS Feeds</a>
-		
+
 		<div id="rss-edit-details" class="display-generic" style="display: none;">
 			While you are in <strong>edit mode</strong> you can rearrange the feeds below by dragging them to your preferred location. You can also <a href="#edit-rss-feeds" id="rss-feed-reset">reset this page to the default RSS feeds</a> if you would like. <span id="rss-save-results">&nbsp;</span>
 		</div>
@@ -846,13 +858,13 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 						<col style="width: 25%" />
 						<col style="width: 72%" />
 					</colgroup>
-					<tr>						
+					<tr>
 						<td colspan="3">
 							<h2 style="margin-top: 0">Add RSS Feed</h2>
 							<p>You can add your own external news feeds to your dashboard by providing both a title, and the full URL to your valid RSS feed.</p>
 						</td>
 					</tr>
-					<tr>						
+					<tr>
 						<td id="rss-add-status" colspan="3"></td>
 					</tr>
 					<tr>
@@ -892,7 +904,7 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 	</script>
 	<div id="dashboard-syndicated-content" style="width: 750px">
 		<ul id="rss-list-1" class="rss-list first">
-			
+
 			<?php
 			if ((is_array($dashboard_feeds)) && (count($dashboard_feeds))) {
 				$list_2 = false;
@@ -903,13 +915,13 @@ if (!$ENTRADA_ACL->amIAllowed("dashboard", "read")) {
 				}
 
 				for ($i = 0; $i < count($dashboard_feeds); $i++) {
-					
+
 					if ($i >= $break && !$list_2) {
 						$list_2 = true;
 						echo "</ul>
 						<ul id=\"rss-list-2\" class=\"rss-list\">\n";
 					}
-					
+
 					$feed = $dashboard_feeds[$i];
 					echo "<li> \n";
 					echo "<h2 class=\"rss-title\"><a href=\"".$feed["url"]."\" title=\"".$feed["title"]."\" target=\"_blank\">".$feed["title"]."</a></h2>\n";

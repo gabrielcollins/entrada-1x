@@ -48,7 +48,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 
 	if ($conflicts) {
 		foreach ($conflicts as $conflict) {
-			echo $conflict."<br/>";
+			echo $conflict."<br />";
 		}
 	}
 

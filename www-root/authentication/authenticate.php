@@ -21,14 +21,17 @@
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
- * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
+ * @author Developer: Matt Simpson <simpson@queensu.ca>
  * @copyright Copyright 2008 Queen's University. All Rights Reserved.
- * 
+ *
  * Changes:
  * =============================================================================
+ * 1.4.1 - July 9th, 2012
+ * [+]	Added access_id variable to list of available variables.
+ *
  * 1.4.0 - August 10th, 2011
  * [+]	Added enc_method variable to specify encryption method (default = low security, no requirements | blowfish = medium security, requires mCrypt | rijndael 256 = highest security, requires mcrypt).
-
+ *
  * 1.3.0 - August 24th, 2010
  * [*]	Added ability for fallback auth methods (auth_method = "local, ldap").
  *
@@ -37,39 +40,39 @@
  * [*]  Major changes to the structure of the code.
  * [+]  Added auth_method variable.
  * [+]  Added ability to authenticate against LDAP servers.
- * 
+ *
  * 1.1.2 - July 11th, 2008
  * [-]	Removed the checkslashes function.
  * [+]	Added clean_input() function.
  * [*]	Used $db->qstr to prevent SQL injection.
- * 
+ *
  * 1.1.1 - November 30th, 2004
  * [+]	Added magic_quotes detection to provided variables.
  * [*]	Moved configuration options to seperate config file.
- * 
+ *
  * 1.1.0 - September 16th, 2004
  * [+]	Added organisation and department returns.
  * [*]	Updated documentation
- * 
+ *
  * 1.0.0 - April 1st, 2004
  * [+]	First release of this application.
- * 
+ *
  * Available Variables:
  * =============================================================================
  * $_POST["auth_app_id"]		- REQ	- int(12)
  * $_POST["auth_username"]		- REQ	- varchar(32)	- plain text.
  * $_POST["auth_password"]		- REQ	- varchar(32)	- md5 encrypted.
  * $_POST["auth_method"]		- OPT   - varchar(32)   - plain text. Options: "local" or "ldap", or both "local, ldap" for chained methods.
- * 
+ *
  * $_POST["action"]				- REQ   - varchar(32)   - plain text.
- * 
+ *
  * $_POST["username"]			- REQ	- varchar(32)	- plain text.
  * $_POST["password"]			- REQ	- varchar(32)	- md5 encrypted.
  * $_POST["requested_info"]		- OPT	- serialized array() of what information you would like returned.
  *
  * $_SERVER["REMOTE_ADDR"]
  * $_SERVER["HTTP_REFERER"]
- * 
+ *
 */
 
 @set_include_path(implode(PATH_SEPARATOR, array(
@@ -200,7 +203,7 @@ if (!$ERROR) {
 	if (isset($_POST["username"]) && isset($_POST["password"])) {
 		$user_username = clean_input($_POST["username"], "credentials");
 		$user_password = clean_input($_POST["password"], "trim");
-		
+
 		if (empty($user_username) || empty($user_password)) {
 			$ERROR++;
 
@@ -242,7 +245,7 @@ if (!$ERROR) {
 					 * The provided user credentials are considered valid.
 					 */
 					$user_data = $result;
-				}	
+				}
 			break;
 			case "ldap" :
 			case "ldap3" :
@@ -357,7 +360,7 @@ if (!$ERROR) {
 
 					echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
 					echo "\t\t<message>".encrypt("Your account has expired for this application. Please contact a system administrator if you require further assistance.", $auth_password)."</message>\n";
-					
+
 					application_log("auth_notice", "Username [".$user_username."] attempted to log into an expired account under application_id [".$auth_app_id."].");
 				}
 			} else {
@@ -365,23 +368,23 @@ if (!$ERROR) {
 
 				echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
 				echo "\t\t<message>".encrypt("Your account is not yet active for this application.", $auth_password)."</message>\n";
-	
+
 				application_log("auth_notice", "Username [".$user_username."] attempted to log into an account that is not yet active under application_id [".$auth_app_id."].");
 			}
 		} else {
 			$ERROR++;
-			
+
 			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
 			echo "\t\t<message>".encrypt("Your account is not currently active for this application. Please contact a system administrator if you require further assistance.", $auth_password)."</message>\n";
-	
+
 			application_log("auth_notice", "Username [".$user_username."] attempted to log into an account was marked inactive under application_id [".$auth_app_id."].");
 		}
 	} else {
 		$ERROR++;
-		
+
 		echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
 		echo "\t\t<message>".encrypt("Your account has not yet been setup for access to this application. Please contact a system administrator if you require further assistance.", $auth_password)."</message>\n";
-	
+
 		application_log("auth_notice", "Username [".$user_username."] attempted to log into application_id [".$auth_app_id."], and their account has not yet been provisioned.");
 	}
 }
@@ -397,11 +400,11 @@ if (!$ERROR) {
 			 */
 			echo "\t\t<status>".encrypt("success", $auth_password)."</status>\n";
 			echo "\t\t<message>".encrypt("You were successfully authenticated into this application.", $auth_password)."</message>\n";
-			
+
 			if ((isset($_POST["requested_info"])) && ($REQUESTED_INFO = @unserialize(base64_decode($_POST["requested_info"]))) && (is_array($REQUESTED_INFO)) && (count($REQUESTED_INFO) > 0)) {
 				$APPLICATION_SPECIFIC	= unserialize(base64_decode($user_access["extras"]));
 				$tokens_returned		= count($REQUESTED_INFO);
-				
+
 				foreach($REQUESTED_INFO as $value) {
 					$type = explode("-", $value);
 					switch ($type[0]) {
@@ -460,6 +463,9 @@ if (!$ERROR) {
 						case "privacy_level" :
 							echo "\t\t<".$value.">".encrypt($user_data["privacy_level"], $auth_password)."</".$value.">\n";
 						break;
+						case "access_id" :
+							echo "\t\t<".$value.">".encrypt($user_access["id"], $auth_password)."</".$value.">\n";
+						break;
 						case "access_starts" :
 							echo "\t\t<".$value.">".encrypt($user_access["access_starts"], $auth_password)."</".$value.">\n";
 						break;
@@ -494,7 +500,7 @@ if (!$ERROR) {
 						break;
 					}
 				}
-				
+
 				application_log("auth_success", "Username [".$user_username."] was successfully authenticated into application_id [".$auth_app_id."]. ".$tokens_returned." token".(($tokens_returned != 1) ? "s were" : "was")." returned.");
 			}
 		break;
@@ -504,13 +510,13 @@ if (!$ERROR) {
 			} else {
 				$LAST_LOGIN = time();
 			}
-			
+
 			if ((isset($_POST["last_ip"])) && ($_POST["last_ip"] != "") && (preg_match("^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])){3}^", $_POST["last_ip"]))) {
 				$LAST_IP	= $_POST["last_ip"];
 			} else {
 				$LAST_IP	= 0;
 			}
-			
+
 			if (!@$db->Execute("UPDATE `user_access` SET `last_login` = ".$db->qstr($LAST_LOGIN).", `last_ip` = ".$db->qstr($LAST_IP)." WHERE `user_id` = ".$db->qstr($user_data["id"])." AND `app_id` = ".$db->qstr($application["id"]))) {
 				application_log("auth_error", "Unabled to update the user_access table for the last login information action. Database said: ".$db->ErrorMsg());
 			}
@@ -520,7 +526,7 @@ if (!$ERROR) {
 
 			echo "\t\t<status>".encrypt("failed", $auth_password)."</status>\n";
 			echo "\t\t<message>".encrypt("A problem occurred during the authentication process and we were unable to complete the request. A system administrator has been notified of the error, please try again later.", $auth_password)."</message>\n";
-			
+
 			application_log("auth_error", "An unrecognized authentication action [".$auth_action."] was used against the authentication system.");
 		break;
 	}

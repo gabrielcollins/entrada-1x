@@ -35,7 +35,7 @@ if ($RECORD_ID) {
 	if ($file_record) {
 		if (((int) $file_record["file_active"]) && ((int) $file_record["parent_file_active"])) {
 			if (shares_file_module_access($file_record["csfile_id"], "delete-revision")) {
-				if ($db->AutoExecute("community_share_file_versions", array("file_active" => 0, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`csfversion_id` = ".$db->qstr($RECORD_ID)." AND `csfile_id` = ".$db->qstr($file_record["csfile_id"])." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
+				if ($db->AutoExecute("community_share_file_versions", array("file_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`csfversion_id` = ".$db->qstr($RECORD_ID)." AND `csfile_id` = ".$db->qstr($file_record["csfile_id"])." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 					add_statistic("community:".$COMMUNITY_ID.":shares", "revision_delete", "csfversion_id", $RECORD_ID);
 					communities_deactivate_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID);
 				} else {

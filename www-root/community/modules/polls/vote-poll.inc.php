@@ -43,13 +43,13 @@ if ($RECORD_ID) {
 			else if (($COMMUNITY_MEMBER && (int)$poll_record['allow_member_vote'] == 1)
 			|| (!(int) $community_details["community_protected"] && (int)$poll_record['allow_public_vote'] == 1)
 			|| (!(int) $community_details["community_registration"] && (int)$poll_record['allow_troll_vote'] == 1)) {
-				if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+				if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 				{
 					$allow_main_load = true;
 				}
 			}
 			if ($allow_main_load) {				
-				$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+				$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $ENTRADA_USER->getActiveId());
 				
 				if (((int)$poll_record["allow_multiple"] == 0 && (!isset($vote_record["votes"]) || (int)$vote_record["votes"] == 0))
 				|| ((int)$poll_record["allow_multiple"] == 1 && (!isset($vote_record["votes"]) || ($poll_record["number_of_votes"] == 0 || (int)$vote_record["votes"] < (int)$poll_record["number_of_votes"]))))
@@ -100,9 +100,9 @@ if ($RECORD_ID) {
 							}
 							
 							if (!$ERROR) {
-								$PROCESSED["proxy_id"]				= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+								$PROCESSED["proxy_id"]				= $ENTRADA_USER->getActiveId();
 								$PROCESSED["updated_date"]			= time();
-								$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+								$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 								
 								$query = "SELECT SUM(`minimum_responses`) AS `min`, SUM(`maximum_responses`) AS `max` FROM `community_polls_questions` WHERE `cpolls_id` = ".$db->qstr($RECORD_ID)." AND `question_active` = '1'";
 
@@ -189,7 +189,7 @@ if ($RECORD_ID) {
 							if (($questions = $db->GetAll($query))) {
 								$count = 1;
 								foreach ($questions as $question) {
-									echo "	<h2>".$count.". ".html_encode($question["poll_question"])."</h2>".($question["maximum_responses"] > 1 ? "<div class=\"content-small\" style=\"width: 100%; text-align: right; margin-right: 10px;\">".($question["maximum_responses"] == $question["minimum_responses"] ? "Choose ".$question["minimum_responses"]." responses." : "Choose between ".$question["minimum_responses"]." and ".$question["maximum_responses"]." responses.")."</div>" : "<br/>");
+									echo "	<h2>".$count.". ".html_encode($question["poll_question"])."</h2>".($question["maximum_responses"] > 1 ? "<div class=\"content-small\" style=\"width: 100%; text-align: right; margin-right: 10px;\">".($question["maximum_responses"] == $question["minimum_responses"] ? "Choose ".$question["minimum_responses"]." responses." : "Choose between ".$question["minimum_responses"]." and ".$question["maximum_responses"]." responses.")."</div>" : "<br />");
 									$count++;
 		    						$query 		= "SELECT * FROM `community_polls_responses` WHERE `cpolls_id` = ".$db->qstr($RECORD_ID)." AND `cpquestion_id` = ".$question["cpquestion_id"]." ORDER BY `response_index` ASC";
 		    						$results 	= $db->GetAll($query);
@@ -244,7 +244,7 @@ if ($RECORD_ID) {
 	
 			echo display_notice();
 	
-			application_log("error", "The poll record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to vote in it.");
+			application_log("error", "The poll record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to vote in it.");
 		}
 	} else {
 		$ERROR++;

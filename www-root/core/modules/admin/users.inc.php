@@ -36,10 +36,13 @@ if (!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_USERS", true);
-
+?>
+<link href="<?php echo ENTRADA_RELATIVE; ?>/css/jquery.multiselect.css" rel="stylesheet" type="text/css" media="all" />
+<script type="text/javascript" src="<?php echo ENTRADA_RELATIVE; ?>/javascript/jquery.multiselect.min.js"></script>
+<?php
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users", "title" => $MODULES[strtolower($MODULE)]["title"]);
 
 	if (($router) && ($router->initRoute())) {
@@ -53,10 +56,6 @@ if (!defined("PARENT_INCLUDED")) {
 
 		$module_file = $router->getRoute();
 		if ($module_file) {
-			
-			
-			
-			
 			require_once($module_file);
 		}
 

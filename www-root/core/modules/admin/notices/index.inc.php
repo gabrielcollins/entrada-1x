@@ -34,7 +34,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * This query will automatically remove notices that have expired more than 5 days ago.
@@ -124,20 +124,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 					<col class="modified" />
 					<col class="date" />
 					<col class="title" />
-					<col class="accesses" />
 				</colgroup>
 				<thead>
 					<tr>
 						<td class="modified">&nbsp;</td>
 						<td class="date<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "date") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("date", "Display Until"); ?></td>
 						<td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"] == "summary") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]) : ""); ?>"><?php echo admin_order_link("summary", "Notice"); ?></td>
-						<td class="accesses">Reads</td>
 					</tr>
 				</thead>
 				<tfoot>
 					<tr>
 						<td></td>
-						<td colspan="3" style="padding-top: 10px">
+						<td colspan="2" style="padding-top: 10px">
 							<input type="submit" class="button" value="Delete Selected" />
 						</td>
 					</tr>
@@ -156,7 +154,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 						echo "	<td class=\"modified\"><input type=\"checkbox\" name=\"delete[]\" value=\"".$result["notice_id"]."\" /></td>\n";
 						echo "	<td class=\"date\">".(($url) ? "<a href=\"".$url."\">" : "").date(DEFAULT_DATE_FORMAT, $result["display_until"]).(($url) ? "</a>" : "")."</td>\n";
 						echo "	<td class=\"title content-small\">".limit_chars(strip_tags($result["notice_summary"]), 125, false, true)."</td>\n";
-						echo "	<td class=\"accesses\" style=\"text-align: center\">".count_notice_reads($result["notice_id"])."</td>\n";
+//						echo "	<td class=\"accesses\" style=\"text-align: center\">".count_notice_reads($result["notice_id"])."</td>\n";
 						echo "</tr>\n";
 					}
 					?>

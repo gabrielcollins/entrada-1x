@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	if((isset($_GET["id"])) && ((int) trim($_GET["id"]))) {
 		$EVENT_ID = (int) trim($_GET["id"]);
@@ -271,7 +271,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 					/**
 					 * Required field "city" / City.
 					 */
-					if ((isset($_POST["city"])) && ($city = clean_input($_POST["city"], array("notags", "trim"))) && strpos($city, ",") !== false) {
+					if ((isset($_POST["city"])) && ($city = clean_input($_POST["city"], array("notags", "trim"))) && strpos($city, ",") === false) {
 						$PROCESSED["city"] = $city;
 					} else {
 						$ERROR++;
@@ -353,7 +353,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 					
 					if (!$ERROR) {
 						$PROCESSED["updated_date"]			= time();
-						$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 						
 						$EVENT["category_id"]				= $PROCESSED["category_id"];
 						$query = "	SELECT `region_id` FROM `".CLERKSHIP_DATABASE."`.`regions`
@@ -1332,7 +1332,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP")) || (!defined("IN
 							if(!$ERROR) {
 								$PROCESSED["rotation_id"] = $db->GetOne("SELECT `rotation_id` FROM `".CLERKSHIP_DATABASE."`.`categories` WHERE `category_id` = ".$db->qstr($PROCESSED["category_id"]));
 								$PROCESSED["modified_last"]	= time();
-								$PROCESSED["modified_by"]	= $_SESSION["details"]["id"];
+								$PROCESSED["modified_by"]	= $ENTRADA_USER->getID();
 								if(!$db->AutoExecute("`".CLERKSHIP_DATABASE."`.`events`", $PROCESSED, "UPDATE", "`event_id` = ".$db->qstr($EVENT_ID))) {
 									$ERROR++;
 									$ERRORSTR[]	= "Failed to update this event in the database. Please contact a system administrator if this problem persists.";

@@ -22,7 +22,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if (isset($_POST["delete_id"]) && ($incident_ids = $_POST["delete_id"]) && is_array($incident_ids) && count($incident_ids)) {
 		foreach ($incident_ids as $incident_id) {
@@ -55,7 +55,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 			
 			$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
 
-			application_log("success", "Proxy ID [".$_SESSION["details"]["id"]."] successfully closed incidents for the user [".$incident_record["proxy_id"]."].");
+			application_log("success", "Proxy ID [".$ENTRADA_USER->getID()."] successfully closed incidents for the user [".$incident_record["proxy_id"]."].");
 		}
 
 		if ($ERROR) {

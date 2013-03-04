@@ -19,7 +19,7 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_DISCUSSIONS"))) {
 	exit;
 }
 
-if ($RECORD_ID) {
+if ($RECORD_ID) {	
 	$query			= "
 					SELECT a.*, b.`forum_title`, CONCAT_WS(' ', c.`firstname`, c.`lastname`) AS `poster_fullname`, c.`username` AS `poster_username`
 					FROM `community_discussion_topics` AS a
@@ -107,7 +107,7 @@ if ($RECORD_ID) {
 				</thead>
 				<tbody>
 					<tr>
-						<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($topic_record["poster_username"]); ?>" style="font-size: 10px"><?php echo html_encode($topic_record["poster_fullname"]); ?></a></td>
+						<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <?php if(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && isset($topic_record["anonymous"]) && $topic_record["anonymous"] && !$COMMUNITY_ADMIN){?><span style="font-size: 10px">Anonymous</span><?php } else {?><a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($topic_record["poster_username"]); ?>" style="font-size: 10px"><?php echo html_encode($topic_record["poster_fullname"]); ?></a><?php } ?></td>
 						<td style="border-bottom: none">
 							<div style="float: left">
 								<span class="content-small"><strong>Posted:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $topic_record["updated_date"]); ?></span>
@@ -161,7 +161,7 @@ if ($RECORD_ID) {
 						$replies++;
 						?>
 						<tr>
-							<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["poster_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["poster_fullname"]); ?></a></td>
+							<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <?php if(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && isset($result["anonymous"]) && $result["anonymous"] && !$COMMUNITY_ADMIN){?><span style="font-size: 10px">Anonymous</span><?php } else {?><a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["poster_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["poster_fullname"]); ?></a><?php } ?></td>
 							<td style="border-bottom: none">
 								<div style="float: left">
 									<span class="content-small"><strong>Replied:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
@@ -206,7 +206,9 @@ if ($RECORD_ID) {
 				?>
 			</div>
 			<?php
-			add_statistic("community:".$COMMUNITY_ID.":discussions", "post_view", "cdtopic_id", $RECORD_ID);
+			if ($LOGGED_IN) {
+				add_statistic("community:".$COMMUNITY_ID.":discussions", "post_view", "cdtopic_id", $RECORD_ID);
+			}
 		} else {
 			if ($ERROR) {
 				echo display_error();

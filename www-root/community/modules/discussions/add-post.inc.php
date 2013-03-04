@@ -66,6 +66,14 @@ if ($RECORD_ID) {
 					} else {
 						$notifications = false;
 					}
+					/**
+					 * Non-required field "anonymous" / Should posts be displayed anonymously to non-admins
+					 */
+					if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && (isset($_POST["anonymous"])) && ((int) $_POST["anonymous"])) {
+						$PROCESSED["anonymous"]	= 1;
+					} else {
+						$PROCESSED["anonymous"]	= 0;
+					}					
 
 					/**
 					 * Required field "release_from" / Release Start (validated through validate_calendars function).
@@ -88,10 +96,10 @@ if ($RECORD_ID) {
 						$PROCESSED["cdtopic_parent"]	= 0;
 						$PROCESSED["cdiscussion_id"]	= $RECORD_ID;
 						$PROCESSED["community_id"]		= $COMMUNITY_ID;
-						$PROCESSED["proxy_id"]			= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+						$PROCESSED["proxy_id"]			= $ENTRADA_USER->getActiveId();
 						$PROCESSED["topic_active"]		= 1;
 						$PROCESSED["updated_date"]		= time();
-						$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 						if ($db->AutoExecute("community_discussion_topics", $PROCESSED, "INSERT")) {
 							if ($TOPIC_ID = $db->Insert_Id()) {
@@ -178,6 +186,15 @@ if ($RECORD_ID) {
 								<textarea id="topic_description" name="topic_description" style="width: 100%; height: 200px" cols="68" rows="12"><?php echo ((isset($PROCESSED["topic_description"])) ? html_encode($PROCESSED["topic_description"]) : ""); ?></textarea>
 							</td>
 						</tr>
+						<?php if (defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON) { ?>
+						<tr>
+							<td colspan="3">&nbsp;</td>
+						</tr>
+						<tr>
+							<td><input type="checkbox" name="anonymous" <?php echo (isset($PROCESSED["anonymous"]) && $PROCESSED["anonymous"] ? "checked=\"checked\"" : ""); ?> value="1"/></td>
+							<td colspan="2"><label for="anonymous" class="form-nrequired">Hide name from non-administrator users</label></td>
+						</tr>						
+						<?php } ?>
 						<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
 						<tr>
 							<td colspan="3">&nbsp;</td>

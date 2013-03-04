@@ -99,7 +99,7 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 							AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
 							AND b.`group` = 'student'
 							AND a.`grad_year` >= ".$db->qstr((fetch_first_year() - 4)).
-							(($ENTRADA_USER->getGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getProxyId()) : "")."
+							(($ENTRADA_USER->getGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getID()) : "")."
 							GROUP BY a.`id`
 							ORDER BY a.`grad_year` DESC, a.`lastname` ASC, a.`firstname` ASC";
 				$student_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
@@ -272,6 +272,27 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 				}
 
 				echo lp_multiple_select_popup("topic", $topics, array("title" => "Select Hot Topics:", "submit_text" => "Apply", "cancel" => true, "submit" => true));
+			break;
+			case "department" : // Departments
+				$department = $organisation;
+				
+				$query =	"SELECT `department_id`, `department_title` 
+							 FROM `".AUTH_DATABASE."`.`departments` 
+							 WHERE `organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
+							 AND `department_active` = '1'";
+				$departments = $db->GetAll($query);
+				if (!empty($departments)) {
+					foreach ($departments as $department_details) {
+						if (isset($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["department"]) && is_array($_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["department"]) && in_array($department_details["department_id"], $_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"]["department"])) {
+							$checked = "checked=\"checked\"";
+						} else {
+							$checked = "";
+						}
+
+						$department[$ENTRADA_USER->getActiveOrganisation()]["options"][] = array("text" => $department_details["department_title"], "value" => "department_" . $department_details["department_id"], "checked" => $checked);
+					}
+				}
+				echo lp_multiple_select_popup("department", $department, array("title" => "Select Departments:", "submit_text" => "Apply", "cancel" => true, "submit" => true));
 			break;
 			default :
 				application_log("notice", "Unknown learning event filter type [" . $options_for . "] provided to events_filters API.");

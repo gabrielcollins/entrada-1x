@@ -29,7 +29,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('group', 'create', false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed('course', 'update', false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
 	$ERROR++;
@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	ini_set('auto_detect_line_endings',true);
 
@@ -46,14 +46,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 
 	echo "<script language=\"text/javascript\">var DELETE_IMAGE_URL = '".ENTRADA_URL."/images/action-delete.gif';</script>";
 	
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/course/groups?".replace_query(array("section" => "add")), "title" => "Adding Group");
+	    $BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/course/groups?".replace_query(array("section" => "add")), "title" => "Add Course Group");
 
 	$group_type = "individual";
 	$group_populate = "group_number";
 	$number_of_groups = "";
 	$populate = 0;
 	$GROUP_IDS = array();
-
+	
+	$course_details = $db->GetRow("SELECT * FROM `courses` WHERE `course_id` = ".$db->qstr($COURSE_ID));
+	courses_subnavigation($course_details,"groups");
 	echo "<h1>Add Group</h1>\n";
 	
 	// Error Checking
@@ -63,7 +65,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 			 *  CSV file format "group_name, first_name, last_name, status, entrada_id"
 			 */
 			$PROCESSED["updated_date"]	= time();
-			$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+			$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 			
 			/**
 			 * Required field "prefix" / Group Name.
@@ -90,6 +92,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 						}
 					break;
 					case "populated" :
+						/**
+						 * Audience type is a required field. There shouldn't be anyway to not have it, but it checks to be sure.
+						 */
+						if (!(isset($_POST["group_audience_type"]) && $audience_type = clean_input($_POST["group_audience_type"],array("trim")))) {
+							add_error("You have requested the groups be preopulated but have not specified where they should be populated from.");
+							$audience_type = false;
+						} else {
+							$PROCESSED["group_audience_type"] = $audience_type;
+						}
+						/**
+						 * If the audience is custom sets $groups variable to false, or an array of group ids. Used to fetch course members for each group further down.
+						 */
+						if ($audience_type == 'custom') {
+							if(!isset($_POST["group_audience_cohorts"]) || !$cohorts = clean_input($_POST["group_audience_cohorts"],array("trim"))){
+								add_error("You selected a custom audience to prepopulate the groups from but did not select any groups.");
+								$groups = false;
+							} else {
+								$split_cohorts = explode(",",$cohorts);
+								if (!$split_cohorts || empty($split_cohorts)) {
+									add_error("You selected a custom audience to prepopulate the groups from but did not select any groups.");
+									$groups = false;									
+								} else {
+									$groups = array();
+									foreach($split_cohorts as $cohort){
+										$groups[] = substr($cohort, 6);
+										$PROCESSED["associated_cohort_ids"][] = substr($cohort, 6);
+									}
+								}
+								
+							}
+						}
+						
 						if (!((isset($_POST["number"])) && ($number_of_groups = clean_input($_POST["number"], array("trim", "int"))))) {
 							$number_of_groups = 0;
 						}
@@ -201,62 +235,33 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 					$prefix = $PROCESSED["group_name"].' ';
 
 					if ($group_populate == "group_size") {
-						if ($course_audience) {
-							$query	= "	SELECT COUNT(a.`id`)
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON a.`id` = b.`user_id`
-										JOIN `course_audience` AS c
-										ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-										AND c.`audience_type` = 'proxy_id'
-										AND a.`id` = c.`audience_value`
-										JOIN `curriculum_periods` AS d
-										ON c.`cperiod_id` = d.`cperiod_id`
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND b.`account_active` = 'true'
-										AND b.`group` = 'student'
-										AND c.`audience_active` = 1
-										AND d.`start_date` <= ".$db->qstr(time())."
-										AND d.`finish_date` >= ".$db->qstr(time());
-							$students = $db->GetOne($query);
-							$query	= "	SELECT COUNT(a.`id`)
-										FROM `".AUTH_DATABASE."`.`user_data` AS a
-										JOIN `".AUTH_DATABASE."`.`user_access` AS b
-										ON a.`id` = b.`user_id`
-										JOIN `course_audience` AS c
-										ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-										AND c.`audience_type` = 'group_id'
-										JOIN `groups` AS d
-										ON c.`audience_value` = d.`group_id`
-										JOIN `group_members` AS e
-										ON d.`group_id` = e.`group_id`
-										AND e.`proxy_id` = a.`id`
-										JOIN `curriculum_periods` AS f
-										ON c.`cperiod_id` = f.`cperiod_id`
-										WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-										AND b.`account_active` = 'true'
-										AND b.`group` = 'student'
-										AND c.`audience_active` = 1
-										AND f.`start_date` <= ".$db->qstr(time())."
-										AND f.`finish_date` >= ".$db->qstr(time())."
-										AND d.`group_active` = 1
-										AND e.`member_active` = 1
-										AND ((d.`start_date` <= ".$db->qstr(time())." OR d.`start_date` = 0)
-										AND (d.`expire_date` >= ".$db->qstr(time())." OR d.`expire_date` = 0 OR d.`expire_date` IS NULL))";
-							$students += $db->GetOne($query);
+						if ($audience_type == "course") {
+							/**
+							 * Sets the audience_members to the audience of the course at the time the groups are being made.
+							 * Also sets $students to the number of results.
+							 */
+							$audience_members = course_fetch_course_audience($COURSE_ID);
+							$students = count($audience_members);
 						} else {
 							$query	= "	SELECT a.`id`
 										FROM `".AUTH_DATABASE."`.`user_data` AS a
 										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 										ON a.`id` = b.`user_id`
-										WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
+										JOIN `group_members` c
+										ON a.`id` = c.`proxy_id`
+										AND c.`group_id` IN(".implode(",",$groups).")
+										AND c.`member_active` = '1'
+										WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")					
 										AND b.`group` = 'student'										
 										AND b.`account_active` = 'true'
 										AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
 										AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
+										AND (c.`start_date` = '0' OR c.`start_date` <= ".$db->qstr(time()).")
+										AND (c.`finish_date` = '0' OR c.`finish_date` > ".$db->qstr(time()).")											
 										GROUP BY a.`id`
 										ORDER BY a.`lastname` ASC, a.`firstname` ASC";
-							$students = count($db->GetAll($query));
+							$audience_members = $db->GetAll($query);
+							$students = count($audience_members);
 						}
 						$number_of_groups = ceil($students / $size_of_groups) ;
 					}
@@ -264,7 +269,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 
 					$result = false;
 					for ($i=1;$i<=$number_of_groups&&!$result;$i++){
-						$result = $db->GetRow("SELECT `cgroup_id` FROM `course_groups` WHERE `group_name` = ".$db->qstr($prefix.sprintf($dfmt,$i))." AND `course_id` = ".$db->qstr($COURSE_ID));	
+                        $result = $db->GetRow("SELECT `cgroup_id` FROM `course_groups` WHERE `group_name` = ".$db->qstr($prefix.sprintf($dfmt,$i))." AND `course_id` = ".$db->qstr($COURSE_ID))?true:$result;    
 					}
 					if ($result) {
 						$ERROR++;
@@ -286,81 +291,55 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 				if ($populate) {
 					unset($PROCESSED["group_name"]);
 					$PROCESSED["active"] = 1;
-					if ($course_audience) {
-						$query	= "	SELECT a.`id`
-									FROM `".AUTH_DATABASE."`.`user_data` AS a
-									LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-									ON a.`id` = b.`user_id`
-									JOIN `course_audience` AS c
-									ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-									AND c.`audience_type` = 'proxy_id'
-									AND a.`id` = c.`audience_value`
-									JOIN `curriculum_periods` AS d
-									ON c.`cperiod_id` = d.`cperiod_id`
-									WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-									AND b.`account_active` = 'true'
-									AND b.`group` = 'student'
-									AND c.`audience_active` = 1
-									AND d.`start_date` <= ".$db->qstr(time())."
-									AND d.`finish_date` >= ".$db->qstr(time())."
-									
-									UNION
-									
-									SELECT a.`id`
-									FROM `".AUTH_DATABASE."`.`user_data` AS a
-									JOIN `".AUTH_DATABASE."`.`user_access` AS b
-									ON a.`id` = b.`user_id`
-									JOIN `course_audience` AS c
-									ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-									AND c.`audience_type` = 'group_id'
-									JOIN `groups` AS d
-									ON c.`audience_value` = d.`group_id`
-									JOIN `group_members` AS e
-									ON d.`group_id` = e.`group_id`
-									AND e.`proxy_id` = a.`id`
-									JOIN `curriculum_periods` AS f
-									ON c.`cperiod_id` = f.`cperiod_id`
-									WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-									AND b.`account_active` = 'true'
-									AND b.`group` = 'student'
-									AND c.`audience_active` = 1
-									AND f.`start_date` <= ".$db->qstr(time())."
-									AND f.`finish_date` >= ".$db->qstr(time())."
-									AND d.`group_active` = 1
-									AND e.`member_active` = 1
-									AND (d.`start_date` <= ".$db->qstr(time())." OR d.`start_date` = 0)
-									AND (d.`expire_date` >= ".$db->qstr(time())." OR d.`start_date` = 0)
-									
-									ORDER By RAND()";
+					if ($audience_type == "course") {
+						/**
+						 * if somehow the audience wasn't populated above, populate it here.
+						 */
+						if(!isset($audience_members) || !$audience_members){
+							$audience_members = course_fetch_course_audience($COURSE_ID);
+						}
 					} else {
-						$query	= "	SELECT a.`id`
-									FROM `".AUTH_DATABASE."`.`user_data` AS a
-									LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-									ON a.`id` = b.`user_id`
-									WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-									AND b.`group` = 'student'
-									AND b.`account_active` = 'true'
-									AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
-									AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
-									GROUP BY a.`id`
-									ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+						/**
+						 * if somehow the audience wasn't populated above, populate it here.
+						 */						
+						if(!isset($audience_members) || !$audience_members){
+							$query	= "	SELECT a.`id`
+										FROM `".AUTH_DATABASE."`.`user_data` AS a
+										LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+										ON a.`id` = b.`user_id`
+										JOIN `group_members` c
+										ON a.`id` = c.`proxy_id`
+										AND c.`group_id` IN(".implode(",",$groups).")
+										AND c.`member_active` = '1'
+										WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")					
+										AND b.`account_active` = 'true'
+										AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
+										AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
+										AND (c.`start_date` = '0' OR c.`start_date` <= ".$db->qstr(time()).")
+										AND (c.`finish_date` = '0' OR c.`finish_date` > ".$db->qstr(time()).")
+										GROUP BY a.`id`
+										ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+							$audience_members = $db->GetAll($query);							
+						}
 					}
 					$results = $db->GetAll($query);
 
 					$i = 0;
-					foreach($results as $result) {
-						$PROCESSED["proxy_id"] =  $result["id"];
-						
-						$PROCESSED["cgroup_id"] =  $GROUP_IDS[$i];
-						$i++;
-						if (!$db->AutoExecute("course_group_audience", $PROCESSED, "INSERT")) {
-							$ERROR++;
-							$ERRORSTR[] = "There was an error while trying to add an audience member to the database.<br /><br />The system administrator was informed of this error; please try again later.";
-							application_log("error", "Unable to insert a new group member ".$PROCESSED["proxy_id"].". Database said: ".$db->ErrorMsg());
-							break;
-						}
-						if ($i==$number_of_groups) {
-							$i = 0;
+					if ($audience_members) {
+						foreach ($audience_members as $result) {
+							$PROCESSED["proxy_id"] =  $result["id"];
+
+							$PROCESSED["cgroup_id"] =  $GROUP_IDS[$i];
+							$i++;
+							if (!$db->AutoExecute("course_group_audience", $PROCESSED, "INSERT")) {
+								$ERROR++;
+								$ERRORSTR[] = "There was an error while trying to add an audience member to the database.<br /><br />The system administrator was informed of this error; please try again later.";
+								application_log("error", "Unable to insert a new group member ".$PROCESSED["proxy_id"].". Database said: ".$db->ErrorMsg());
+								break;
+							}
+							if ($i==$number_of_groups) {
+								$i = 0;
+							}
 						}
 					}
 				}
@@ -464,9 +443,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 							<div class="content-small">These groups will be prepopulated with a number of users based on either the number of groups, or the explicit maximum group size.</div>
 						</td>
 					</tr>
+				<?php
+					$PROCESSED["course_id"] = $COURSE_ID;
+					if (isset($PROCESSED["course_id"]) && $PROCESSED["course_id"]) {
+						require_once(ENTRADA_ABSOLUTE."/core/modules/admin/courses/groups/api-audience-options.inc.php");
+					}
+					?>									
+					
 					<tr class="group_members populated_members">
 						<td></td>
-						<td><label class="form-required">Populate based on:</label></td>
+						<td><label class="form-required">Populate based on</label></td>
 						<td>
 							<div style="display: inline-block; width: 180px;">
 								<input type="radio" onchange="toggleGroupTextbox()" name="group_populate" id="group_populate_group_number" value="group_number" <?php echo (!isset($group_populate) || ($group_populate == "group_number") ? " checked=\"checked\"" : ""); ?> />
@@ -474,6 +460,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 							</div>
 							<input type="text" id="group_number" name="number" value="<?php echo html_encode($number_of_groups); ?>"  style="width: 50px<?php echo (!isset($group_populate) || ($group_populate == "group_number") ? "" : "; display: none;"); ?>" />
 						</td>
+					</tr>
 					<tr class="group_members populated_members">
 						<td colspan="2">&nbsp;</td>
 						<td>
@@ -533,6 +520,173 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 					}
 				}
 			</script>
+			<script type="text/javascript">
+			var multiselect = [];
+			var audience_type;
+
+			function showMultiSelect() {
+				$$('select_multiple_container').invoke('hide');
+				audience_type = $F('audience_type');
+				course_id = <?php echo $COURSE_ID;?>;
+				if (multiselect[audience_type]) {
+					multiselect[audience_type].container.show();
+				} else {
+					if (audience_type) {
+						new Ajax.Request('<?php echo ENTRADA_RELATIVE; ?>/admin/courses/groups?section=api-audience-selector', {
+							evalScripts : true,
+							parameters: { 
+								'options_for' : audience_type, 
+								'course_id' : course_id, 
+								'group_audience_cohorts' : $('group_audience_cohorts').value, 
+								'group_audience_course_groups' : $('group_audience_course_groups').value, 
+								'group_audience_students' : $('group_audience_students').value
+							},
+							method: 'post',
+							onLoading: function() {
+								$('options_loading').show();
+							},
+							onSuccess: function(response) {
+								if (response.responseText) {
+									$('options_container').insert(response.responseText);
+	
+									if ($(audience_type + '_options')) {
+	
+										$(audience_type + '_options').addClassName('multiselect-processed');
+	
+										multiselect[audience_type] = new Control.SelectMultiple('group_audience_'+audience_type, audience_type + '_options', {
+											checkboxSelector: 'table.select_multiple_table tr td input[type=checkbox]',
+											nameSelector: 'table.select_multiple_table tr td.select_multiple_name label',
+											filter: audience_type + '_select_filter',
+											resize: audience_type + '_scroll',
+											afterCheck: function(element) {
+												var tr = $(element.parentNode.parentNode);
+												tr.removeClassName('selected');
+	
+												if (element.checked) {
+													tr.addClassName('selected');
+	
+													addAudience(element.id, audience_type);
+												} else {
+													removeAudience(element.id, audience_type);
+												}
+											}
+										});
+	
+										if ($(audience_type + '_cancel')) {
+											$(audience_type + '_cancel').observe('click', function(event) {
+												this.container.hide();
+	
+												$('audience_type').options.selectedIndex = 0;
+												$('audience_type').show();
+	
+												return false;
+											}.bindAsEventListener(multiselect[audience_type]));
+										}
+	
+										if ($(audience_type + '_close')) {
+											$(audience_type + '_close').observe('click', function(event) {
+												this.container.hide();
+												
+												$('audience_type').clear();
+	
+												return false;
+											}.bindAsEventListener(multiselect[audience_type]));
+										}
+	
+										multiselect[audience_type].container.show();
+									}
+								} else {
+									new Effect.Highlight('audience_type', {startcolor: '#FFD9D0', restorecolor: 'true'});
+									new Effect.Shake('audience_type');
+								}
+							},
+							onError: function() {
+								alert("There was an error retrieving the requested audience. Please try again.");
+							},
+							onComplete: function() {
+								$('options_loading').hide();
+							}
+						});
+					}
+				}
+				return false;
+			}
+
+			function addAudience(element, audience_id) {
+				if (!$('audience_'+element)) {
+					$('audience_list').innerHTML += '<li class="' + (audience_id == 'students' ? 'user' : 'group') + '" id="audience_'+element+'" style="cursor: move;">'+$($(element).value+'_label').innerHTML+'<img src="<?php echo ENTRADA_RELATIVE; ?>/images/action-delete.gif" onclick="removeAudience(\''+element+'\', \''+audience_id+'\');" class="list-cancel-image" /></li>';
+					$$('#audience_list div').each(function (e) { e.hide(); });
+
+					Sortable.destroy('audience_list');
+					Sortable.create('audience_list');
+				}
+			}
+
+			function removeAudience(element, audience_id) {
+				$('audience_'+element).remove();
+				Sortable.destroy('audience_list');
+				Sortable.create('audience_list');
+				if ($(element)) {
+					$(element).checked = false;
+				}
+				var audience = $('group_audience_'+audience_id).value.split(',');
+				for (var i = 0; i < audience.length; i++) {
+					if (audience[i] == element) {
+						audience.splice(i, 1);
+						break;
+					}
+				}
+				$('group_audience_'+audience_id).value = audience.join(',');
+			}
+
+			function selectGroupAudienceOption(type) {
+				if (type == 'custom' && !jQuery('#group_audience_type_custom_options').is(":visible")) {
+					jQuery('#group_audience_type_custom_options').slideDown();
+				} else if (type != 'custom' && jQuery('#group_audience_type_custom_options').is(":visible")) {
+					jQuery('#group_audience_type_custom_options').slideUp();
+				}
+			}
+			
+			function updateAudienceOptions() {
+				if ($F('course_id') > 0)  {
+
+					var selectedCourse = '';
+					
+					var currentLabel = $('course_id').options[$('course_id').selectedIndex].up().readAttribute('label');
+
+					if (currentLabel != selectedCourse) {
+						selectedCourse = currentLabel;
+
+						$('audience-options').show();
+						$('audience-options').update('<tr><td colspan="2">&nbsp;</td><td><div class="content-small" style="vertical-align: middle"><img src="<?php echo ENTRADA_RELATIVE; ?>/images/indicator.gif" width="16" height="16" alt="Please Wait" title="" style="vertical-align: middle" /> Please wait while <strong>audience options</strong> are being loaded ... </div></td></tr>');
+
+						new Ajax.Updater('audience-options', '<?php echo ENTRADA_RELATIVE; ?>/admin/courses/groups?section=api-audience-options', {
+							evalScripts : true,
+							parameters : {
+								ajax : 1,
+								course_id : $F('course_id'),
+								group_audience_students: ($('group_audience_students') ? $('group_audience_students').getValue() : ''),
+								group_audience_course_groups: ($('group_audience_course_groups') ? $('group_audience_course_groups').getValue() : ''),
+								group_audience_cohort: ($('group_audience_cohort') ? $('group_audience_cohort').getValue() : '')
+							},
+							onSuccess : function (response) {
+								if (response.responseText == "") {
+									$('audience-options').update('');
+									$('audience-options').hide();
+								}
+							},
+							onFailure : function () {
+								$('audience-options').update('');
+								$('audience-options').hide();
+							}
+						});
+					}
+				} else {
+					$('audience-options').update('');
+					$('audience-options').hide();
+				}
+			}			
+			</script>									
 			<br /><br />
 			<?php
 		break;

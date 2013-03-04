@@ -54,7 +54,7 @@ if((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
 				$PROCESSED				= array();
 				$PROCESSED["poll_id"]	= $POLL_ID;
 				$PROCESSED["answer_id"]	= (int) trim($_POST["poll_answer_id"]);
-				$PROCESSED["proxy_id"]	= (int) $_SESSION["details"]["id"];
+				$PROCESSED["proxy_id"]	= (int) $ENTRADA_USER->getID();
 				$PROCESSED["ip"]		= $_SERVER["REMOTE_ADDR"];
 				$PROCESSED["timestamp"]	= time();
 

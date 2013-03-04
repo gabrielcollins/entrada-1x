@@ -3,10 +3,17 @@
 15 * * * * /usr/bin/curl -s ENTRADA_URL/cron/community-activities.php > /dev/null 2>&1
 30 * * * * /usr/bin/curl -s ENTRADA_URL/cron/weather.php > /dev/null 2>&1
 30 * * * * /usr/bin/curl -s ENTRADA_URL/cron/calendars.php > /dev/null 2>&1
+05 5 * * * /usr/bin/curl -s ENTRADA_URL/cron/cache-cleanup.php > /dev/null 2>&1
 35 3 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/notifications.php > /dev/null 2>&1
 55 * * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/syllabus_exec.php > /dev/null 2>&1
 00,15,30,45 * * * * /usr/bin/curl -s ENTRADA_URL/cron/community-post.php > /dev/null 2>&1
 05,10,15,20,25,30,35,40,45,50,55 * * * * /usr/bin/curl -s ENTRADA_URL/cron/community-list-members.php > /dev/null 2>&1
+00,10,20,30,40,50 * * * 6,7 /usr/bin/curl -s ENTRADA_URL/cron/community-list-cleanup.php > /dev/null 2>&1
 45 * * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/electives-check.php > /dev/null 2>&1
 00,15,30,45 * * * * /usr/bin/curl -s ENTRADA_URL/cron/most-active-communities.php > /dev/null 2>&1
 35 2 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/clerkship-overdue-logging.php > /dev/null 2>&1
+00,10,20,30,40,50 * * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/send-queued-notifications.php > /dev/null 2>&1
+59 23 * * 0 /usr/bin/php -f ENTRADA_ABSOLUTE/cron/import-draft-schedule.php > /dev/null 2>&1
+59 23 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/check_grade_thresholds.php > /dev/null 2>&1
+59 23 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/observership-confirmations.php > /dev/null 2>&1
+35 2 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/queue-evaluation-notifications.php > /dev/null 2>&1

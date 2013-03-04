@@ -34,19 +34,19 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
-	$PAGE_META["title"]			= "Add Scholarly Activity";
+	$PAGE_META["title"]			= "Add Scholarly Research Activity";
 	$PAGE_META["description"]	= "Research portion of your annual report should be entered / located here.";
 	$PAGE_META["keywords"]		= "";
 	
-	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/research?section=add_scholarly", "title" => "Add Scholarly Activity");
+	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/research?section=add_scholarly", "title" => "Add Scholarly Research Activity");
 	
 	// This grid should be expanded upon redirecting back to the education index.
 	$_SESSION["research_expand_grid"] = "scholarly_grid";
 	
-	echo "<h1>Add Scholarly Activity</h1>";
+	echo "<h1>Add Scholarly Research Activity</h1>";
 	switch($STEP) {
 		case 2 :
 			$ENDERROR = false;
@@ -68,7 +68,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				$ERROR++;
 				$ERRORSTR[] = "The <strong>Description</strong> field is required.";
 			}
-			
+			/**
+			 * Required field "category" / Category
+			 */
+			if((isset($_POST["location"])) && ($location = clean_input($_POST["location"], array("notags", "trim")))) {
+				$PROCESSED["location"] = $location;
+			} else {
+				$ERROR++;
+				$ERRORSTR[] = "The <b>Category</b> field is required.";
+			}
 			/**
 			 * Required field "year_reported" / Year Reported.
 			 */
@@ -95,8 +103,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($db->AutoExecute("ar_scholarly_activity", $PROCESSED, "INSERT")) {
 						$EVENT_ID = $db->Insert_Id();
@@ -153,9 +161,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			$HEAD[] = "<script language=\"javascript\" type=\"text/javascript\" src=\"".WEBSITE_URL."/javascript/calendar/config/xc2_default.js\"></script>\n";
 			$HEAD[] = "<script language=\"javascript\" type=\"text/javascript\" src=\"".WEBSITE_URL."/javascript/calendar/script/xc2_inpage.js\"></script>\n";
 			$HEAD[] = "<script language=\"javascript\" type=\"text/javascript\" src=\"".WEBSITE_URL."/javascript/calendar/script/xc2_timestamp.js\"></script>\n";
-
-//			$HEAD[]		= "<script language=\"JavaScript\" type=\"text/javascript\" src=\"".ADMIN_URL."/javascript/picklist.js\"></script>\n";
-//			$ONLOAD[]		= "document.getElementById('other_teacher_listing').style.display = 'none'";
 			
 			if($ERROR) {
 				echo display_error();
@@ -193,6 +198,24 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				<td></td>
 				<td style="vertical-align: top"><label for="description" class="form-required">Description</label></td>
 				<td><input type="text" id="description" name="description" value="<?php echo html_encode($PROCESSED["description"]); ?>" maxlength="255" style="width: 95%" /></td>
+			</tr>
+			<tr>
+				<td colspan="3">&nbsp;</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td style="vertical-align: top"><label for="category" class="form-required">Category</label></td>
+				<td>
+				<?php
+					if($PROCESSED["location"] == "External") {
+						echo "<input type=\"radio\" id=\"location\" name=\"location\" value=\"Internal\"/> Internal to Queen's<br>
+						<input type=\"radio\" id=\"location\" name=\"location\" value=\"External\" CHECKED /> External";
+					} else {
+						echo "<input type=\"radio\" id=\"location\" name=\"location\" value=\"Internal\" CHECKED /> Internal to Queen's<br>
+						<input type=\"radio\" id=\"location\" name=\"location\" value=\"External\"/> External";
+					}
+				?>
+				</td>
 			</tr>
 			<tr>
 				<td colspan="3">&nbsp;</td>

@@ -33,13 +33,13 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		$_SESSION["reports_expand_grid"] = "reports_grid";
 	}
 	
-	if($_SESSION["details"]["clinical_member"] == 0) {
+	if($ENTRADA_USER->getClinical() == 0) {
 		$clinical_member = "NO";
 	} else {
 		$clinical_member = "YES";
 	}
 	?>
-	<h1>Section <?php echo ($_SESSION["details"]["clinical_member"] ? "VIII" : "VII"); ?> - Annual Report Generator</h1>
+	<h1>Section <?php echo ($ENTRADA_USER->getClinical() ? "VIII" : "VII"); ?> - Annual Report Generator</h1>
 	
 	<table id="flex1" style="display:none"></table>
 	
@@ -50,7 +50,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		reports_grid = jQuery("#flex1").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -93,7 +93,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						jQuery('.trSelected', grid).each(function() {
 							var id = jQuery(this).attr('id');
 							id = id.substring(id.lastIndexOf('row')+3);
-							window.location='<?php echo ENTRADA_URL; ?>/annualreport/generate?section=generate-annual-report&amp;rid='+id+'&amp;proxy_id='+<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>+'&amp;clinical=<?php echo $clinical_member; ?>';
+							window.location='<?php echo ENTRADA_URL; ?>/annualreport/generate?section=generate-annual-report&amp;rid='+id+'&amp;proxy_id='+<?php echo $ENTRADA_USER->getActiveId(); ?>+'&amp;clinical=<?php echo $clinical_member; ?>';
 						});
 			    	} 
 				});
@@ -101,7 +101,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 	    }
 	     
 	    function reportGo(celDiv,id) {
-	    	celDiv.innerHTML = "<a href='<?php echo ENTRADA_URL; ?>/annualreport/generate?section=generate-annual-report&amp;rid="+id+"&amp;proxy_id="+<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>+"&amp;clinical=<?php echo $clinical_member; ?>' style=\"cursor: pointer; cursor: hand\" text-decoration: none><img src=\"<?php echo ENTRADA_RELATIVE; ?>/css/jquery/images/report_go.gif\" style=\"border: none\"/></a>";
+	    	celDiv.innerHTML = "<a href='<?php echo ENTRADA_URL; ?>/annualreport/generate?section=generate-annual-report&amp;rid="+id+"&amp;proxy_id="+<?php echo $ENTRADA_USER->getActiveId(); ?>+"&amp;clinical=<?php echo $clinical_member; ?>' style=\"cursor: pointer; cursor: hand\" text-decoration: none><img src=\"<?php echo ENTRADA_RELATIVE; ?>/css/jquery/images/report_go.gif\" style=\"border: none\"/></a>";
 	    }
 	});
 	</script>

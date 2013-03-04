@@ -165,7 +165,7 @@ function getCategories(MetaDataTypes $available_types) {
 }
 
 function getTypes_User(User $user) {
-	$org_id = $user->getOrganisationID();
+	$org_id = $user->getOrganisationId();
 	$group = $user->getGroup();
 	$role = $user->getRole();
 	$proxy_id = $user->getID();
@@ -174,7 +174,7 @@ function getTypes_User(User $user) {
 }
 
 function getUserCategoryValues(User $eUser, MetaDataType $category) {
-	$org_id = $eUser->getOrganisationID();
+	$org_id = $eUser->getOrganisationId();
 	$group = $eUser->getGroup();
 	$role = $eUser->getRole();
 	$proxy_id = $eUser->getID();

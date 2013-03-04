@@ -58,7 +58,6 @@ if ((isset($_GET["step"])) && ((int) trim($_GET["step"]))) {
  * A list of valid database adapters that Entrada can utilize.
  */
 $DATABASE_ADAPTERS = array(
-	"mysql" => "MySQL",
 	"mysqli" => "MySQL Improved",
 	"pdo_mysql" => "PDO MySQL"
 );
@@ -226,6 +225,7 @@ switch ($STEP) {
 				!@is_writable($entrada_storage."/community-galleries") ||
 				!@is_writable($entrada_storage."/community-shares") ||
 				!@is_writable($entrada_storage."/event-files") ||
+				!@is_writable($entrada_storage."/logs") ||
 				!@is_writable($entrada_storage."/user-photos")) {
 
 				$ERROR++;
@@ -238,6 +238,7 @@ switch ($STEP) {
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-galleries<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-shares<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/event-files<br />\n";
+				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/logs<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/user-photos<br />\n";
 				$ERRORSTR[$i] .= "</div>\n";
 			}
@@ -287,6 +288,7 @@ switch ($STEP) {
 				try {
 					if (!$setup->loadDumpData()) {
 						$ERROR++;
+						$ERRORSTR[] = $setup->database_error;
 					}
 				} catch(Exception $e) {
 					$ERROR++;
@@ -422,22 +424,22 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
 			width: 85%;
 			padding: 20px;
 		}
-		
+
 		.display-success {
 			background-color:#DEE6E3;
 			border:1px #A9D392 solid;
 		}
-		
+
 		.display-notice {
 			background-color:#FFC;
 			border:1px #FC0 solid;
 		}
-		
+
 		.display-error {
 			background-color:#FFD9D0;
 			border:1px #C00 solid;
 		}
-		
+
 		.setup-window {
 			background-color:#FFF;
 			border:1px #CCC solid;
@@ -451,20 +453,20 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
 			margin:0;
 			padding:4px 10px 10px;
 		}
-		
+
 		.display-generic ul li,.display-success ul li,.display-notice ul li,.display-error ul li {
 			vertical-align:middle;
 			padding:0 0 0 18px;
 		}
-		
+
 		.display-success ul li {
 			background:transparent url(../images/list-success.gif) no-repeat 0 2px;
 		}
-		
+
 		.display-notice ul li {
 			background:transparent url(../images/list-notice.gif) no-repeat 0 2px;
 		}
-		
+
 		.display-error ul li {
 			background:transparent url(../images/list-error.gif) no-repeat 0 2px;
 		}
@@ -944,7 +946,7 @@ $storage_path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPAR
 								<tr>
 									<td>&nbsp;</td>
 									<td class="content-small" style="padding-bottom: 15px">
-										Full URL to Entrada (i.e. http://website.edu/entrada). 
+										Full URL to Entrada (i.e. http://website.edu/entrada).
 									</td>
 								</tr>
 								<tr>

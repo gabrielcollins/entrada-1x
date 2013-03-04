@@ -46,7 +46,7 @@ if ($RECORD_ID) {
 						}
 					}
 				}
-				if ($db->AutoExecute("community_discussion_topics", array("topic_active" => 0, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "(`cdtopic_id` = ".$db->qstr($RECORD_ID)." OR `cdtopic_parent` = ".$db->qstr($RECORD_ID).") AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
+				if ($db->AutoExecute("community_discussion_topics", array("topic_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "(`cdtopic_id` = ".$db->qstr($RECORD_ID)." OR `cdtopic_parent` = ".$db->qstr($RECORD_ID).") AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 					communities_deactivate_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID);
 					add_statistic("community:".$COMMUNITY_ID.":discussions", "post_delete", "cdtopic_id", $RECORD_ID);
 					delete_notifications("discussion:discuss_reply:$RECORD_ID");

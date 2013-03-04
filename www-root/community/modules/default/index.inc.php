@@ -250,10 +250,10 @@ if ($result) {
 				echo "	<div class=\"tutorial\">
 							Welcome to your new community! This is where users will first view your community when 
 							joining or browsing from ".APPLICATION_NAME.". This message is displayed because no content
-							is currently being displayed on this page - this can be remedied by in a few different ways:<br/><br/>
+							is currently being displayed on this page - this can be remedied by in a few different ways:<br /><br />
 							<ul>
-								<li>Creating announcements or events within the appropriate pages which will display on this page.<br/><br/></li>
-								<li>Browsing to the 'Manage Pages' link found to the upper-right of the page, and creating a blurb which all users will see they first come to the community.<br/><br/></li>
+								<li>Creating announcements or events within the appropriate pages which will display on this page.<br /><br /></li>
+								<li>Browsing to the 'Manage Pages' link found to the upper-right of the page, and creating a blurb which all users will see they first come to the community.<br /><br /></li>
 								<li>Browsing to the 'Manage Pages' link and changing the type of page which this will be and creating appropriate content based on that. ie. Discussion Forums or Photo Galleries for users to view.</li>
 							</ul>
 						</div>";

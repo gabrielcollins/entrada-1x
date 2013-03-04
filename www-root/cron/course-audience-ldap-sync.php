@@ -137,7 +137,7 @@ if ($results) {
 			 */
 			if (($results = $ldap->GetAll("cn=".$course_code_base."*_1_*"))) {
 				$ldap->Close();
-					echo "<strong>".$course["course_code"]."</strong><pre>".print_r($results, true)."</pre>\n<br/>";
+					echo "<strong>".$course["course_code"]."</strong><pre>".print_r($results, true)."</pre>\n<br />";
 				$uniUids = array();
 				foreach ($results as $result) {
 					//make new connection with the base set to people to get user information
@@ -201,7 +201,7 @@ if ($results) {
 				}
 				
 				print_r($uniUids);
-				echo "<br/>\n";
+				echo "<br />\n";
 				
 				foreach ($uniUids as $key=>$uniUid) {	
 					if ($ldap->Connect(LDAP_HOST, LDAP_SEARCH_DN,LDAP_SEARCH_DN_PASS, LDAP_PEOPLE_BASE_DN)) {

@@ -27,12 +27,12 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	$COMMENT_TYPE = clean_input($_POST["comment_type"],array("trim","notags"));	
 	$PROCESSED["comment_description"] = clean_input($_POST["comment_description"],array("trim","notags"));
 	$PROCESSED["comment_title"] = clean_input($_POST["comment_title"],array("trim","notags"));
-	$PROCESSED["proxy_id"] = $ENTRADA_USER->getProxyId();
+	$PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
 	$PROCESSED["comment_active"] = 1;
 	$PROCESSED["release_date"] = time();
 	$PROCESSED["updated_date"] = time();
 	$PROCESSED["notify"] = 0;
-	$PROCESSED["updated_by"] = $ENTRADA_USER->getProxyId();
+	$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 	
 	switch($COMMENT_TYPE){
 		case "assignment":
@@ -46,7 +46,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			$PROCESSED["assignment_id"] = (int)$_POST["assignment_id"];
 
 
-			$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($PROCESSED["assignment_id"])." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+			$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($PROCESSED["assignment_id"])." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 			$result = $db->GetRow($query);
 			if (!$result) {
 				application_log("error", "You are not authorized to comment on this submission.");
@@ -91,8 +91,8 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 							</div>
 							<div style="float: right">
 							<?php
-							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getProxyId()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=".$PROCESSED["assignment_id"]."&amp;cid=".$COMMENT_ID."\">edit</a>)" : "");
-							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getProxyId()) ? " (<a class= \"action delete\" id=\"delete_".$COMMENT_ID."\" href=\"#delete_".$COMMENT_ID."\">delete</a>)":"");
+							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=".$PROCESSED["assignment_id"]."&amp;cid=".$COMMENT_ID."\">edit</a>)" : "");
+							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class= \"action delete\" id=\"delete_".$COMMENT_ID."\" href=\"#delete_".$COMMENT_ID."\">delete</a>)":"");
 							?>
 							</div>
 						</td>

@@ -35,7 +35,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_POLLS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if($POLL_ID) {
 		$query	= "SELECT * FROM `poll_questions` WHERE `poll_id`=".$db->qstr($POLL_ID);
@@ -106,7 +106,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_POLLS"))) {
 
 						if(!$ERROR) {
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if($db->AutoExecute("poll_questions", $PROCESSED, "UPDATE", "poll_id=".$db->qstr($POLL_ID))) {
 								$query = "DELETE FROM `poll_answers` WHERE `poll_id`=".$db->qstr($POLL_ID);

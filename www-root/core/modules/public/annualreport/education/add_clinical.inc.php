@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
 	$PAGE_META["title"]			= "Add Education of Clinical Trainees and Clerks";
@@ -112,6 +112,18 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				}
 			}
 			/**
+			 * Non-required field "research_percentage" / Research Percentage.
+			 */
+			if((isset($_POST["research_percentage"])) && ($research_percentage = clean_input($_POST["research_percentage"], array("notags", "trim")))) {
+				if($research_percentage) {
+					$PROCESSED["research_percentage"] = 1;
+				} else {
+					$PROCESSED["research_percentage"] = 0;
+				}
+			} else {
+				$PROCESSED["research_percentage"] = 0;	
+			}
+			/**
 			 * Required field "description" / Description			 
 			 */
 			if((isset($_POST["description"])) && ($description = clean_input($_POST["description"], array("notags", "trim")))) {
@@ -146,8 +158,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($db->AutoExecute("ar_clinical_education", $PROCESSED, "INSERT")) {
 					$EVENT_ID = $db->Insert_Id();
@@ -226,8 +238,28 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					}
 				?>
 				</select>
+				<script>
+			    	jQuery(function($) {
+							jQuery('#level').change(function() {
+								if(jQuery(':selected', this).text() == "Clinical Research Fellow") {
+									jQuery('#research_percentage_details').show();
+								} else {
+									jQuery('#research_percentage_details').hide();
+									jQuery('input[name=research_percentage]').attr('checked', false);
+								}
+							}).trigger('change');
+			    	});
+				</script>
 				</td>
 			</tr>
+			<tr id="research_percentage_details" style="display: none;">
+				<td></td>
+				<td><label for="research_percentage">Research > 75%</label></td>
+				<td>
+					<input type="checkbox" id="research_percentage" name="research_percentage" style="vertical-align:0px;">
+					<span class="content-small">Check this box when clinical trainee devotes 75% or more of their time to research</span>
+				</td>
+			</tr>			
 			<tr>
 				<td></td>
 				<td style="vertical-align: top"><label for="level_description" class="form-nrequired">Level Description</label></td>				

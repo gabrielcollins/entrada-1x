@@ -34,14 +34,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$UNDERGRADUATE_TEACHING_ID = $_GET["rid"];
 	// This grid should be expanded upon redirecting back to the education index.
 	$_SESSION["education_expand_grid"] = "undergraduate_medical_teaching_grid";
 	
 	if($UNDERGRADUATE_TEACHING_ID) {
-		$query	= "SELECT * FROM `ar_undergraduate_teaching` WHERE `undergraduate_teaching_id` = ".$db->qstr($UNDERGRADUATE_TEACHING_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_undergraduate_teaching` WHERE `undergraduate_teaching_id` = ".$db->qstr($UNDERGRADUATE_TEACHING_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result = $db->GetRow($query);
 		if($result) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/education?section=edit_undergraduate", "title" => "Edit Undergraduate Teaching");
@@ -104,8 +104,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 							
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						
 						$undergraduateTeachingQuery = "SELECT `course_name` FROM `ar_undergraduate_teaching` WHERE `undergraduate_teaching_id` = ".$db->qstr($UNDERGRADUATE_TEACHING_ID);
 						$undergraduateTeachingResult = $db->GetRow($undergraduateTeachingQuery);

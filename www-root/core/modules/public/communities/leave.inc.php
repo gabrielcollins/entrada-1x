@@ -58,13 +58,13 @@ if($COMMUNITY_ID) {
 		$query	= "
 				SELECT * FROM `community_members`
 				WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)."
-				AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+				AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			if((int) $result["member_active"]) {
 				switch($STEP) {
 					case 2 :
-						$query = "DELETE FROM `community_members` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `member_active` = '1' LIMIT 1";
+						$query = "DELETE FROM `community_members` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `member_active` = '1' LIMIT 1";
 						if($db->Execute($query)) {
 							if ($MAILING_LISTS["active"]) {
 								$mail_list = new MailingList($COMMUNITY_ID);
@@ -72,11 +72,11 @@ if($COMMUNITY_ID) {
 							}
 
 							if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
-								community_notify($COMMUNITY_ID, $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], "leave", ENTRADA_URL."/people?id=".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $COMMUNITY_ID);
+								community_notify($COMMUNITY_ID, $ENTRADA_USER->getActiveId(), "leave", ENTRADA_URL."/people?id=".$ENTRADA_USER->getActiveId(), $COMMUNITY_ID);
 							}
-							application_log("success", "Removed proxy_id [".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]."] from community_id [".$COMMUNITY_ID."].");
+							application_log("success", "Removed proxy_id [".$ENTRADA_USER->getActiveId()."] from community_id [".$COMMUNITY_ID."].");
 						} else {
-							application_log("error", "Unable to remove proxy_id [".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]."] from community_id [".$COMMUNITY_ID."]. Database said: ".$db->ErrorMsg());
+							application_log("error", "Unable to remove proxy_id [".$ENTRADA_USER->getActiveId()."] from community_id [".$COMMUNITY_ID."]. Database said: ".$db->ErrorMsg());
 						}
 						
 						if($_SESSION['details']['group'] == 'guest') {
@@ -103,7 +103,7 @@ if($COMMUNITY_ID) {
 						$guest_notice = '';
 						if($_SESSION['details']['group'] == 'guest') {
 							 $query = "	SELECT COUNT(*) as total FROM `community_members`
-										WHERE `community_members`.`proxy_id` = ".$db->qstr($_SESSION['details']['id'])." 
+										WHERE `community_members`.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." 
 										AND `community_members`.`member_active` = 1 
 										ORDER BY `community_members`.`member_joined`";
 							$result = $db->GetRow($query);

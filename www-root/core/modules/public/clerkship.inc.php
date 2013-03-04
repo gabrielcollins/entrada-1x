@@ -41,7 +41,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_CLERKSHIP", true);
  
@@ -172,11 +172,11 @@ if(!defined("PARENT_INCLUDED")) {
 		new_sidebar_item("View Schedule", $sidebar_html, "search", "open");
 	}
 	
-	if ($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"] == "student") {
+	if ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student") {
 		/**
 		 * Process local page actions.
 		 */
-		$elective_weeks		= clerkship_get_elective_weeks($_SESSION["details"]["id"]);
+		$elective_weeks		= clerkship_get_elective_weeks($ENTRADA_USER->getID());
 		$remaining_weeks	= ((int) $CLERKSHIP_REQUIRED_WEEKS - (int) $elective_weeks["approved"]);
 
 		$sidebar_html  = "<ul class=\"menu\">\n";
@@ -208,7 +208,7 @@ if(!defined("PARENT_INCLUDED")) {
 								WHERE a.`event_finish` >= ".$db->qstr(strtotime("00:00:00", time()))."
 								AND (a.`event_status` = 'published' OR a.`event_status` = 'approval')
 								AND b.`econtact_type` = 'student'
-								AND b.`etype_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+								AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 								ORDER BY a.`event_start` ASC";
 		
 		$clerkship_schedule	= $db->GetAll($query);
@@ -221,7 +221,7 @@ if(!defined("PARENT_INCLUDED")) {
 										WHERE a.`event_finish` <= ".$db->qstr(strtotime("00:00:00", time()))."
 										AND (a.`event_status` = 'published' OR a.`event_status` = 'approval')
 										AND b.`econtact_type` = 'student'
-										AND b.`etype_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+										AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 										ORDER BY a.`event_start` ASC";
 		$clerkship_past_schedule	= $db->GetAll($query);
 		
@@ -250,7 +250,7 @@ if(!defined("PARENT_INCLUDED")) {
 										JOIN `".CLERKSHIP_DATABASE."`.`logbook_entries` AS b
 										ON a.`lentry_id` = b.`lentry_id`
 										AND b.`entry_active` = '1'
-										AND b.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+										AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										WHERE a.`objective_id` = ".$db->qstr($required_objective["objective_id"])."
 										GROUP BY a.`objective_id`";
 						$recorded = $db->GetOne($query);
@@ -284,7 +284,7 @@ if(!defined("PARENT_INCLUDED")) {
 			$sidebar_html 			.= "</ul>\n";
 			$sidebar_html .= "	<a href=\"".ENTRADA_URL."/clerkship/logbook?section=add&event=".$clerkship_schedule[0]["event_id"]."\">Log encounter</a>\n";
 			if((int)$clinical_encounters["entries"] > 0) {
-				$sidebar_html .= "	<br/><br/><a href=\"".ENTRADA_URL."/clerkship/logbook?sb=rotation&rotation=".$rotation."\">View ".($clinical_encounters["entries"]==1?"entry":"entries - $clinical_encounters[entries]")."</a>\n";
+				$sidebar_html .= "	<br /><br /><a href=\"".ENTRADA_URL."/clerkship/logbook?sb=rotation&rotation=".$rotation."\">View ".($clinical_encounters["entries"]==1?"entry":"entries - $clinical_encounters[entries]")."</a>\n";
 			}
 			if ($rotation) {
 				$sidebar_html .= "<div style=\"margin-top: 10px\">\n";

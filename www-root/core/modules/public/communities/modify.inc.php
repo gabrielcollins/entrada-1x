@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 
 	if ($MAILING_LISTS["active"]) {
@@ -357,7 +357,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 						$community_url	= ENTRADA_URL."/community".$community_details["community_url"];
 
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
 						if ($db->AutoExecute("communities", $PROCESSED, "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID))) {
 							if ($MAILING_LISTS["active"] && array_key_exists("community_list_mode", $PROCESSED) && $PROCESSED["community_list_mode"] != $mailing_list->type) {
@@ -366,7 +366,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COMMUNITIES"))) {
 							$SUCCESS++;
 							$SUCCESSSTR[] = "<strong>You have successfully updated your community.</strong><br /><br />Please <a href=\"".$community_url."\">click here</a> to proceed to it or you will be automatically forwarded in 5 seconds.";
 
-							communities_log_history($COMMUNITY_ID, 0, $_SESSION["details"]["id"], "community_history_edit_community", 1);
+							communities_log_history($COMMUNITY_ID, 0, $ENTRADA_USER->getID(), "community_history_edit_community", 1);
 
 							if ($community_details["community_title"] != $PROCESSED["community_title"]) {
 								communities_log_history($COMMUNITY_ID, 0, 0, "community_history_rename_community", 1);

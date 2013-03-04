@@ -18,7 +18,7 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_MTDTRACKING"))) {
 
 	require_once("functions.inc.php");
 
-	$PROCESSED["userId"] = $_SESSION["details"]["id"];
+	$PROCESSED["userId"] = $ENTRADA_USER->getID();
 	$resident_id = $_GET["resident_id"];
 	//if there is no match on non-numberic characters anywhere in the string then process the number.
 	if (validate_integer_field($resident_id)) {

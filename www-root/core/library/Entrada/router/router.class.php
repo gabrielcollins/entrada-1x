@@ -9,7 +9,7 @@
  * @author Unit: School of Medicine
  * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
- * 
+ *
 */
 class Entrada_Router {
 	private $request = "";
@@ -34,7 +34,7 @@ class Entrada_Router {
 
 		return false;
     }
-    
+
     public function setBasePath($path = "") {
 		$path = clean_input($path, "dir");
 
@@ -56,7 +56,7 @@ class Entrada_Router {
 	public function getLoadPath() {
 		return $this->load_path;
 	}
-	
+
 	/**
 	 * Adds a module (directory) to the requests
 	 * @param string $module
@@ -69,28 +69,28 @@ class Entrada_Router {
 
 	public function initRoute($insert_module = "") {
 		$insert_module = clean_input($insert_module, "module");
-		
+
 		$load_path = array();
 
 		$current_depth = substr_count($this->load_path, "/");
-		
+
 		if ($insert_module) {
 			if (!is_array($this->modules)){
 				$this->modules = array();
-			} 
+			}
 
 			//check modules array to see if it is next in line anyways
 			//if not, splice/push it in
-	
+
 			if (isset($this->modules[$current_depth])) {
 				if ($this->modules[$current_depth] != $insert_module) {
 					array_splice($this->modules, $current_depth, 0, $insert_module);
 				}
 			} else {
 				array_push($this->modules, $insert_module);
-			} 
+			}
 		}
-		
+
 		$request_depth = ((is_array($this->modules)) ? count($this->modules) : 1);
 
 		if ($current_depth <= $request_depth) {

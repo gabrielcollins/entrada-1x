@@ -44,7 +44,6 @@ require_once("Entrada/pagination/pagination.class.php");
 require_once("Entrada/router/router.class.php");
 
 require_once("cache.inc.php");
-require_once("acl.inc.php");
 
 require_once("Models/users/User.class.php");
 if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
@@ -52,6 +51,8 @@ if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
 } else {
 	$ENTRADA_USER = false;
 }
+
+require_once("acl.inc.php");
 
 @ini_set("filter.default_flags", FILTER_FLAG_NO_ENCODE_QUOTES);
 
@@ -75,12 +76,129 @@ if ((defined("AUTH_ALLOW_CAS")) && (AUTH_ALLOW_CAS == true)) {
 $ENTRADA_ACTIVE_TEMPLATE = "";
 
 if ($ENTRADA_USER) {
+	/**
+	 * System groups define which system groups & role combinations are allowed to
+	 * access this system. Note the student and alumni groups have many roles.
+	 */
+	$query = "SELECT a.*
+			  FROM `" . AUTH_DATABASE . "`.`system_groups` a,
+			  `" . AUTH_DATABASE . "`.`system_group_organisation` c
+			  WHERE a.`id` = c.`groups_id`
+			  AND c.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+			  ORDER BY a.`group_name` ASC";
+	$results = $db->getAll($query);
+	if ($results) {
+		foreach ($results as $result) {
+			$SYSTEM_GROUPS[$result["group_name"]] = array();
+			$query = "	SELECT a.*
+						FROM `" . AUTH_DATABASE . "`.`system_roles` a
+						WHERE a.`groups_id` = " . $result["id"] . "
+						ORDER BY a.`role_name` ASC";
+			$roles = $db->getAll($query);
+			if ($roles) {
+				foreach ($roles as $role) {
+					$SYSTEM_GROUPS[$result["group_name"]][] = $role["role_name"];
+				}
+			}
+		}
+	}
+	//Load preferences into local variable as well as $_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]
+	$original_preferences = preferences_load("organisation_switcher");
+    if (isset($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]) && $_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]) {
+        $query = "SELECT `id` FROM `user_access` 
+                    WHERE `user_id` = ".$db->qstr($ENTRADA_USER->getID())." 
+                    AND `access_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"])."
+					AND `account_active` = 'true'
+					AND (`access_starts` = '0' OR `access_starts` < ".$db->qstr(time()).")
+					AND (`access_expires` = '0' OR `access_expires` >= ".$db->qstr(time()).")
+					AND `app_id` = ".$db->qstr(AUTH_APP_ID);
+        $access_id = $db->GetOne($query);
+        if (!$access_id) {
+            unset($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]);
+        }
+    }
+	if (!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"]) || !$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"]) {
+		$query = "	SELECT a.`group`, a.`role`, a.`id`, a.`organisation_id`
+					FROM `" . AUTH_DATABASE . "`.`user_access` a
+					WHERE a.`user_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
+					AND a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+					AND a.`app_id` = " . $db->qstr(AUTH_APP_ID) . "
+					ORDER BY a.`id` ASC";
+		$result = $db->getRow($query);
+		if ($result) {
+			$ENTRADA_USER->setAccessId($result["id"]);
+			$ENTRADA_USER->setActiveOrganisation($result["organisation_id"]);
+			$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"] = $ENTRADA_USER->getAccessId();
+			$_SESSION["permissions"] = permissions_load();
+		}
+	} else {
+		$ENTRADA_USER->setAccessId($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"]);
+		$query = "	SELECT a.`group`, a.`role`, a.`id`, a.`organisation_id`
+					FROM `" . AUTH_DATABASE . "`.`user_access` a
+					WHERE a.`user_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
+					AND a.`id` = " . $db->qstr($ENTRADA_USER->getAccessId()) . "
+					AND a.`app_id` = " . $db->qstr(AUTH_APP_ID) . "
+					ORDER BY a.`id` ASC";
+		$result = $db->getRow($query);
+		$ENTRADA_USER->setActiveOrganisation($result["organisation_id"]);
+		$_SESSION["permissions"] = permissions_load();
+	}
+	
+	if (!isset($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]) && !$_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"] && $ENTRADA_USER->getActiveId() == $ENTRADA_USER->getID()) {
+		$_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"] = $ENTRADA_USER->getAccessId();
+	}
+		
+	if (isset($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]) && $_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"] && $ENTRADA_USER->getActiveId() == $ENTRADA_USER->getID()) {
+		$ENTRADA_USER->setAccessId($_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"]);
+		$query = "	SELECT a.`group`, a.`role`, a.`id`, a.`organisation_id`
+					FROM `" . AUTH_DATABASE . "`.`user_access` a
+					WHERE a.`user_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
+					AND a.`id` = " . $db->qstr($ENTRADA_USER->getAccessId()) . "
+					AND a.`app_id` = " . $db->qstr(AUTH_APP_ID) . "
+					ORDER BY a.`id` ASC";
+		$result = $db->getRow($query);
+		if ($result) {
+			$ENTRADA_USER->setActiveOrganisation($result["organisation_id"]);
+		}
+	}
+
 	if (isset($_GET["organisation_id"])) {
 		$organisation = clean_input($_GET["organisation_id"], array("trim", "notags", "int"));
-		
-		$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"] = $organisation;
-		$ENTRADA_USER->setActiveOrganisation($organisation);
+		$allow_organisation_change = false;
+		foreach ($_SESSION["permissions"] as $permission) {
+			if ($permission["organisation_id"] == $organisation) {
+				$allow_organisation_change = true;
+			}
+		}
+
+		if ($allow_organisation_change) {
+			$ENTRADA_USER->setActiveOrganisation($organisation);
+
+			$query = "SELECT a.`group`, a.`role`, a.`id`
+						FROM `" . AUTH_DATABASE . "`.`user_access` a
+						WHERE a.`user_id` = " . $ENTRADA_USER->getActiveId() . "
+						AND a.`organisation_id` = " . $db->qstr($organisation) . "
+						AND a.`app_id` = " . $db->qstr(AUTH_APP_ID) . "
+						ORDER BY a.`id` ASC";
+
+			$result = $db->getRow($query);
+			if ($result) {
+				$ENTRADA_USER->setAccessId($result["id"]);
+				$_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"] = $ENTRADA_USER->getAccessId();
+				$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"] = $ENTRADA_USER->getAccessId();
+				$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"] = $organisation;
+			}
+		}
 	}
+
+	if (isset($_GET["ua_id"])) {
+		$ua_id = clean_input($_GET["ua_id"], array("trim", "notags", "int"));
+		$ENTRADA_USER->setAccessId($ua_id);
+		$_SESSION[APPLICATION_IDENTIFIER]["organisation_switcher"]["access_id"] = $ENTRADA_USER->getAccessId();
+		$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["access_id"] = $ENTRADA_USER->getAccessId();
+		$_SESSION["permissions"] = permissions_load();
+	}
+	preferences_update("organisation_switcher", $original_preferences);
 
  	$query = "SELECT `template` FROM `" . AUTH_DATABASE . "`.`organisations` WHERE `organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation());
 	$ENTRADA_ACTIVE_TEMPLATE = $db->CacheGetOne(CACHE_TIMEOUT, $query);
@@ -132,9 +250,9 @@ $STEP = 1;
 $PROCESSED = array();
 
 if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
-	$PROXY_ID = $_SESSION["details"]["id"];
-	$GROUP = $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"];
-	$ROLE = $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"];
+	$PROXY_ID = $ENTRADA_USER->getID();
+	$GROUP = $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"];
+	$ROLE = $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"];
 } else {
 	$PROXY_ID = 0;
 	$GROUP = "";

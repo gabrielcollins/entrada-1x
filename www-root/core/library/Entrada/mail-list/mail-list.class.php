@@ -1,4 +1,16 @@
 <?php
+/**
+ * Entrada [ http://www.entrada-project.org ]
+ *
+ * Class responsible for managing google mail-list.
+ *
+ * @author Organisation: Queen's University
+ * @author Unit: School of Medicine
+ * @author Developer: James Ellis <james.ellis@queensu.ca>
+ * @author Developer: Ryan Warner <ryan.warner@queensu.ca>
+ * @copyright Copyright 2012 Queen's University. All Rights Reserved.
+ *
+*/
 
 abstract class MailingListBase
 {
@@ -120,21 +132,22 @@ abstract class MailingListBase
 		return $result;
 	}
 
-	public function base_edit_member($proxy_id, $is_admin = 0, $member_active = 0) {
+	public function base_edit_member($proxy_id, $is_admin = NULL, $member_active = NULL) {
 		global $db;
 		$result = $db->Execute("UPDATE `community_mailing_list_members`
-									SET ".( $is_admin != 0 ? ( $member_active != 0 ? "`list_administrator` = ".$db->qstr($is_admin).", " : "`list_administrator` = ".$db->qstr($is_admin)) : "")."
-										".( $member_active != 0 ? "`member_active` = ".$db->qstr($member_active) : "")."
+									SET ".( $is_admin != NULL ? "`list_administrator` = ".$db->qstr($is_admin).", " : "")."
+										".( $member_active != NULL ? "`member_active` = ".$db->qstr($member_active) : "")."
 									WHERE `proxy_id` = ".$db->qstr($proxy_id)."
 									AND `community_id` = ".$db->qstr($this->community_id));
 		return $result;
 	}
 }
 
-class GoogleMailingList extends MailingListBase
+class GoogleMailingList extends MailingListBase 
 {
-
 	var $service = null;
+	var $current_members = null;
+	var $current_owners = null;
 
 	public function GoogleMailingList($community_id, $type = "inactive") {
     	global $db, $GOOGLE_APPS;
@@ -145,164 +158,163 @@ class GoogleMailingList extends MailingListBase
 		$client = Zend_Gdata_ClientLogin::getHttpClient($GOOGLE_APPS["admin_username"], $GOOGLE_APPS["admin_password"], Zend_Gdata_Gapps::AUTH_SERVICE_NAME);
 		$service = new Zend_Gdata_Gapps($client, $GOOGLE_APPS["domain"]);
 		$this->service = $service;
+	}
+	
+	public function fetch_current_list() {
 		
-		if (!$result && $this->type != "inactive") {
+		if ($list_members = $this->service->retrieveAllMembers($this->list_name)) {
+			
+			$members = array();
+			
+			foreach ($list_members as $member) {
+				$members[] = $member->property[1]->value;
+			}
 
-			try{
+			$this->current_members = $members;
+			
+		}
+		
+		if ($list_owners = $this->service->retrieveGroupOwners($this->list_name)) {
+			
+			$owners = array();
+			
+			foreach ($list_owners as $owner) {
+				$owners[] = $owner->property[0]->value;
+			}
 
-				$entry = new DomDocument("1.0", "UTF-8");
-				$root = $entry->createElement("atom:entry");
-				$root = $entry->appendChild($root);
-				$root->setAttribute("xmlns:atom", "http://www.w3.org/2005/Atom");
-				$root->setAttribute("xmlns:apps", "http://schemas.google.com/apps/2006");
-				$root->setAttribute("xmlns:gd", "http://schemas.google.com/g/2005");
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "groupId");
-				$data->setAttribute("value", $this->list_name);
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "groupName");
-				$data->setAttribute("value", $this->list_name);
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "description");
-				$data->setAttribute("value", "");
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "emailPermission");
-				$data->setAttribute("value", ($this->type == "announcements" ? "Owner" : "Member"));
-				$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"];
+			$this->current_owners = $owners;
+			
+		}
+		
+		return $this;
+		
+	}
+	
+	public function add($memberId, $role = NULL) {
+		
+		$return = false;
+		
+		if (!($this->is_member($memberId, $this->list_name) && ($role == 'member' || $role == NULL)) || !($this->is_owner($memberId, $this->list_name) && $role == 'owner')) {
+			
+			switch ($role) {
+				case 1 :
+					
+					$func = 'addOwnerToGroup';
+					$this->remove($memberId, $this->list_name);
+					
+				break;
+				case 0 :
+				case NULL :
+				default :
+					
+					$func = 'addMemberToGroup';
+					$this->remove($memberId, $this->list_name);
+					
+				break;
+			}
+			
+			if (isset($func) && $this->service->$func($memberId, $this->list_name)) {
+				$this->fetch_current_list($this->list_name);
+				$return = true;
+			}
+			
+		}
+		
+		return $return;
+	}
+	
+	public function extended_add_member($email, $is_owner = false) {
+		return $this->add($email, $is_owner);
+	}
+	
+	public function remove($memberId) {
+		
+		$return = false;
 
-				$service->post($entry->saveXML(), $address);
-
-			} catch (Zend_Gdata_Gapps_ServiceException $e) {
-				if (!$e->hasError(Zend_Gdata_Gapps_Error::ENTITY_DOES_NOT_EXIST)) {
-					return false;
-				}
+		if ($this->is_owner($memberId, $this->list_name)) {
+			if ($this->service->removeOwnerFromGroup($memberId, $this->list_name)) {
+				$return = true;
 			}
 		}
+
+		if ($this->is_member($memberId, $this->list_name)) {
+			if ($this->service->removeMemberFromGroup($memberId, $this->list_name)) {
+				$return = true;
+			}
+		} 
+		
+		$this->fetch_current_list($this->list_name);
+		
+		return $return;
 	}
-
-
-	public function extended_add_member($email, $is_owner = false) {
-		global $GOOGLE_APPS;
-		$service = $this->service;
-
-		$service->addRecipientToEmailList($email, $this->list_name);
-
-		if ($is_owner) {
-			$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"]."/".$this->list_name."/owner";
-		    $entry = new DomDocument("1.0", "UTF-8");
-			$root = $entry->createElement("atom:entry");
-			$root->setAttribute("xmlns:atom", "http://www.w3.org/2005/Atom");
-			$root->setAttribute("xmlns:apps", "http://schemas.google.com/apps/2006");
-			$root->setAttribute("xmlns:gd", "http://schemas.google.com/g/2005");
-			$root = $entry->appendChild($root);
-			$data = $entry->createElement("apps:property");
-			$data = $root->appendChild($data);
-			$data->setAttribute("name", "email");
-			$data->setAttribute("value", $email);
-			$entry = $service->post($entry->saveXML(), $address);
-		}
-		return true;
-	}
-
+	
 	public function extended_remove_member($proxy_id) {
-		global $GOOGLE_APPS;
-		$service = $this->service;
 		$email = $this->users[$proxy_id]["email"];
-		try {
-			$entry = $service->removeRecipientFromEmailList($email, $this->list_name);
-			return $this->base_remove_member($proxy_id);
-		} catch (Exception $e) {
-			return false;
-		}
+		return $this->remove($email);
 	}
-
+	
 	public function extended_edit_member($proxy_id, $is_admin) {
-		global $GOOGLE_APPS;
-		$service = $this->service;
 		$email = $this->users[$proxy_id]["email"];
 		try {
 			if (!$is_admin) {
-				$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"]."/".$this->list_name."/owner/".$email;
-				$entry = $service->delete($address);
-				return $this->base_edit_member($proxy_id, 0);
+				if ($this->is_owner($email)) {
+					$this->remove($email);
+					$this->add($email);
+				}
+				$this->fetch_current_list();
 			} elseif ($is_admin) {
-				$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"]."/".$this->list_name."/owner";
-			    $entry = new DomDocument("1.0", "UTF-8");
-				$root = $entry->createElement("atom:entry");
-				$root->setAttribute("xmlns:atom", "http://www.w3.org/2005/Atom");
-				$root->setAttribute("xmlns:apps", "http://schemas.google.com/apps/2006");
-				$root->setAttribute("xmlns:gd", "http://schemas.google.com/g/2005");
-				$root = $entry->appendChild($root);
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "email");
-				$data->setAttribute("value", $email);
-				$entry = $service->post($entry->saveXML(), $address);
-				return $this->base_edit_member($proxy_id, 1);
+				if ($this->is_member($email) && !$this->is_owner($email)) {
+					$this->remove($email);
+					$this->add($email, "Owner");
+				}
+				$this->fetch_current_list();
 			}
 		} catch (Exception $e) {
 			return false;
 		}
 	}
-
-    public function extended_mode_change($type) {
-    	global $GOOGLE_APPS;
-
-		$service = $this->service;
-    	if ($type == "announcements" || $type == "discussion") {
-			try{
-
-				$entry = new DomDocument("1.0", "UTF-8");
-				$root = $entry->createElement("atom:entry");
-				$root = $entry->appendChild($root);
-				$root->setAttribute("xmlns:atom", "http://www.w3.org/2005/Atom");
-				$root->setAttribute("xmlns:apps", "http://schemas.google.com/apps/2006");
-				$root->setAttribute("xmlns:gd", "http://schemas.google.com/g/2005");
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "groupId");
-				$data->setAttribute("value", $this->list_name);
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "groupName");
-				$data->setAttribute("value", $this->list_name);
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "description");
-				$data->setAttribute("value", "");
-				$data = $entry->createElement("apps:property");
-				$data = $root->appendChild($data);
-				$data->setAttribute("name", "emailPermission");
-				if ($type == "discussion") {
-					$data->setAttribute("value","Member");
-		    	} else {
-					$data->setAttribute("value","Owner");
-		    	}
-		    	if ($this->type != "inactive") {
-					$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"]."/".$this->list_name;
-					$service->put($entry->saveXML(), $address);
-		    	} else {
-					$address = "https://apps-apis.google.com/a/feeds/group/2.0/".$GOOGLE_APPS["domain"];
-					$service->post($entry->saveXML(), $address);
-		    	}
-			} catch (Exception $e) {
-				return false;
+	
+	public function is_owner($memberId) {
+		
+		$return = false;
+		
+		if ($this->service->isOwner($memberId, $this->list_name)) {
+			$return = true;
+		}
+		
+		return $return;
+		
+	}
+	
+	public function is_member($memberId) {
+		
+		$return = false;
+		
+		if ($this->service->isMember($memberId, $this->list_name)) {
+			$return = true;	
+		}
+		
+		return $return;
+		
+	}
+	
+	public function change_mode($mode) {
+		
+		$return = false;
+		
+		if ($mode == "Owner" || $mode == "Member") {
+			if ($this->service->updateGroup($this->list_name, NULL, NULL, $mode)) {
+				$return = true;
 			}
-    	} elseif ($type == "inactive") {
-    		try {
-    			if ($this->type != "inactive") {
-	    			$service->deleteEmailList($this->list_name);
-    			}
-    		} catch (Exception $e) {
-				return false;
-			}
-    	}
-    	return true;
-    }
+		}
+		
+		return $return;
+	}
+	
+	public function extended_mode_change($mode) {
+		return $this->change_mode($mode);
+	}
+	
 }
 
 class MailingList extends GoogleMailingList

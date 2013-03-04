@@ -16,12 +16,12 @@
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file looks a bit different because it is called only by AJAX requests
- * and returns the members relevant to the requested group and role.
+ * and returns the members relevant to the requested group, role, and community.
  *
- * @author Organisation: University of Calgary
+ * @author Organisation: Queen's University
  * @author Unit: School of Medicine
- * @author Developer: Howard Lu <yhlu@ucalgary.ca>
- * @copyright Copyright 2010 University of Calgary. All Rights Reserved.
+ * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
+ * @copyright Copyright 2010 Queen's University. All Rights Reserved.
  *
  * @version $Id: add.inc.php 317 2009-01-19 19:26:35Z simpson $
  *
@@ -43,164 +43,133 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 
 ob_clear_open_buffers();
 $GROUP_ID		= 0;
+$COURSE_ID		= 0;
 
-if((isset($_GET["group"])) && ((int) trim($_GET["group"]))) {
-	$GROUP_ID	= (int) trim($_GET["group"]);
+if((isset($_GET["group_id"])) && ((int) trim($_GET["group_id"]))) {
+	$GROUP_ID	= (int) trim($_GET["group_id"]);
 } elseif((isset($_POST["group_id"])) && ((int) trim($_POST["group_id"]))) {
 	$GROUP_ID	= (int) trim($_POST["group_id"]);
 }
 
-if((isset($_GET["course"])) && ((int) trim($_GET["course"]))) {
-	$COURSE_ID	= (int) trim($_GET["course"]);
+if((isset($_GET["course_id"])) && ((int) trim($_GET["course_id"]))) {
+	$COURSE_ID	= (int) trim($_GET["course_id"]);
 } elseif((isset($_POST["course_id"])) && ((int) trim($_POST["course_id"]))) {
 	$COURSE_ID	= (int) trim($_POST["course_id"]);
 }
 
 if((isset($_GET["action"])) && ($tmp_action_type = clean_input(trim($_GET["action"]), "alphanumeric"))) {
-	$ACTION	= strcmp($tmp_action_type,'all') ? 0 : 1;
+	$ACTION	= $tmp_action_type;
 } elseif((isset($_POST["action"])) && ($tmp_action_type = clean_input(trim($_POST["action"]), "alphanumeric"))) {
-	$ACTION	= strcmp($tmp_action_type,'all') ? 0 : 1;
+	$ACTION	= $tmp_action_type;
 } else {
-	$ACTION = 0;
+	$ACTION = "memberlist";
+}
+
+if ((isset($_GET["type"])) && ($tmp_type = clean_input(trim($_GET["type"]), "alphanumeric"))) {
+	$TYPE	= $tmp_type;
+} elseif((isset($_POST["type"])) && ($tmp_action_type = clean_input(trim($_POST["type"]), "alphanumeric"))) {
+	$TYPE	= $tmp_type;
+} else {
+	$TYPE	= "default";
 }
 
 unset($tmp_action_type);
-
-if(isset($GROUP_ID)) {
+unset($tmp_type);
+unset($tmp_poll);
+if(isset($GROUP_ID) && isset($ACTION)) {
 	ob_clear_open_buffers();
 
-	//Figure out the organisation, group, and role requested
-	if(isset($_POST["ogr"])) {
-		$pieces = explode('|', $_POST["ogr"]);
-		if(isset($pieces[0])) {
-			$ORGANISATION_ID = clean_input($pieces[0], array("trim", "int"));
-		}
-		if(isset($pieces[1])) {
-			$GROUP = clean_input($pieces[1], array("trim", "alphanumeric"));
-		}
-		if(isset($pieces[2])) {
-			$ROLE = clean_input($pieces[2], array("trim", "alphanumeric"));
-		}
-	}
-
-	if((isset($_POST["added_ids"])) && (is_array($_POST["added_ids"])) && count($_POST["added_ids"])) {
-		$previously_added_ids = array();
-		foreach ($_POST["added_ids"] as $id) {
-			$previously_added_ids[] = (int) trim($id);
-		}
-	}
-	
-	if(isset($ORGANISATION_ID) && isset($GROUP) && isset($ROLE)) {
-		$query			= "SELECT * FROM `course_groups` WHERE `cgroup_id` = ".$db->qstr($GROUP_ID)." AND `active` = '1'";
-		$group_details	= $db->GetRow($query);
-		if($group_details) {
-			if($ENTRADA_ACL->amIAllowed('course', 'update')) {
-				//Groups  exists and is editable by the current users
-				$nmembers_results		= false;
-				$nmembers_query	= "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(' ', a.`firstname`, a.`lastname`) AS `fullname`, a.`lastname`, a.`firstname`, a.`username`, a.`organisation_id`, b.`group`, b.`role`
-									FROM `".AUTH_DATABASE."`.`user_data` AS a
-									LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
-									ON a.`id` = b.`user_id`
-									JOIN `course_audience` AS c
-									ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-									AND c.`audience_type` = 'proxy_id'
-									AND a.`id` = c.`audience_value`
-									JOIN `curriculum_periods` AS d
-									ON c.`cperiod_id` = d.`cperiod_id`
-									WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-									AND b.`account_active` = 'true'
-									AND b.`group` = 'student'
-									AND c.`audience_active` = 1
-									AND d.`start_date` <= ".$db->qstr(time())."
-									AND d.`finish_date` >= ".$db->qstr(time())."
-									AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
-									AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
-									AND a.`organisation_id` = ".$db->qstr($ORGANISATION_ID)."
-									AND b.`group` = ".$db->qstr($GROUP)."
-									".($ROLE != 'all' ? "AND b.`role` = ".$db->qstr($ROLE) : "")."
-									
-									UNION
-									
-									SELECT a.`id` AS `proxy_id`, CONCAT_WS(' ', a.`firstname`, a.`lastname`) AS `fullname`, a.`lastname`, a.`firstname`, a.`username`, a.`organisation_id`, b.`group`, b.`role`
-									FROM `".AUTH_DATABASE."`.`user_data` AS a
-									JOIN `".AUTH_DATABASE."`.`user_access` AS b
-									ON a.`id` = b.`user_id`
-									JOIN `course_audience` AS c
-									ON c.`course_id` = ".$db->qstr($COURSE_ID)."
-									AND c.`audience_type` = 'group_id'
-									JOIN `groups` AS d
-									ON c.`audience_value` = d.`group_id`
-									JOIN `group_members` AS e
-									ON d.`group_id` = e.`group_id`
-									AND e.`proxy_id` = a.`id`
-									JOIN `curriculum_periods` AS f
-									ON c.`cperiod_id` = f.`cperiod_id`
-									WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-									AND b.`account_active` = 'true'
-									AND b.`group` = 'student'
-									AND c.`audience_active` = 1
-									AND f.`start_date` <= ".$db->qstr(time())."
-									AND f.`finish_date` >= ".$db->qstr(time())."
-									AND d.`group_active` = 1
-									AND (d.`start_date` <= ".$db->qstr(time())." OR d.`start_date` = 0)
-									AND (d.`expire_date` >= ".$db->qstr(time())." OR d.`expire_date` = 0 OR d.`expire_date` IS NULL)
-									AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
-									AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
-									AND a.`organisation_id` = ".$db->qstr($ORGANISATION_ID)."
-									AND b.`group` = ".$db->qstr($GROUP)."
-									".($ROLE != 'all' ? "AND b.`role` = ".$db->qstr($ROLE) : "")."
-									
-									GROUP BY a.`id`
-									ORDER BY `lastname` ASC, `firstname` ASC";
-
-				//Fetch list of current members
-				$current_member_list	= array();
-				$query		= "SELECT `proxy_id` FROM `course_group_audience` WHERE `cgroup_id` = ".$db->qstr($GROUP_ID)." AND `active` = '1'";
-				$results	= $db->GetAll($query);
-				if($results) {
-					foreach($results as $result) {
-						if($proxy_id = (int) $result["proxy_id"]) {
-							$current_member_list[] = $proxy_id;
-						}
-					}
+	switch($ACTION) {
+		case "memberlist":
+			//Figure out the organisation, group, and role requested
+			if(isset($_POST["ogr"])) {
+				$pieces = explode('|', $_POST["ogr"]);
+				if(isset($pieces[0])) {
+					$ORGANISATION_ID = clean_input($pieces[0], array("trim", "int"));
 				}
-				
-				if($nmembers_query != "") {
-					$nmembers_results = $db->GetAll($nmembers_query);
-					if($nmembers_results) {
-						$members = array(array('text' => "$GROUP > $ROLE", 'value'=>$GROUP.$ROLE, 'options'=>array(), 'disabled'=>false, 'category'=>'true'));
-						foreach($nmembers_results as $member) {
-							if(in_array($member['proxy_id'], $current_member_list)) {
-								$registered = true;
+				if(isset($pieces[1])) {
+					$GROUP = clean_input($pieces[1], array("trim", "alphanumeric"));
+				}
+				if(isset($pieces[2])) {
+					$ROLE = clean_input($pieces[2], array("trim", "alphanumeric"));
+				}
+			}
+			
+			if (isset($ORGANISATION_ID) && isset($GROUP) && isset($ROLE)) {
+				$query = "SELECT * FROM `course_groups` WHERE `cgroup_id` = ".$db->qstr($GROUP_ID);
+				$group_details = $db->GetRow($query);
+				if ($group_details) {
+					if($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID,$ORGANISATION_ID), 'update')) {
+						//Community exists and is editable by the current users
+						$nmembers_results		= false;
+						$nmembers_query	= "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, a.`username`, a.`organisation_id`, b.`group`, b.`role`
+											FROM `".AUTH_DATABASE."`.`user_data` AS a
+											LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+											ON a.`id` = b.`user_id`
+											WHERE
+											a.`organisation_id` = ".$db->qstr($ORGANISATION_ID)."
+											AND b.`group` = ".$db->qstr($GROUP)."
+											".($ROLE != 'all' ? "AND b.`role` = ".$db->qstr($ROLE) : "")."
+											AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
+											AND b.`account_active` = 'true'
+											AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
+											AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
+											GROUP BY a.`id`
+											ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+
+						//Fetch list of current members
+						$current_member_list	= array();
+						$query				= "SELECT * FROM `course_group_audience` WHERE `cgroup_id` = ".$db->qstr($GROUP_ID)." AND `active` = '1'";
+						$results	= $db->GetAll($query);
+						if($results) {
+							foreach($results as $result) {
+								if($proxy_id = (int) $result["proxy_id"]) {
+									$current_member_list[] = $proxy_id;
+								}
+							}
+						}
+
+
+						//
+						if($nmembers_query != "") {
+							$nmembers_results = $db->GetAll($nmembers_query);
+							if($nmembers_results) {
+								$members = array(array('text' => "$GROUP > $ROLE", 'value'=>$GROUP.$ROLE, 'options'=>array(), 'disabled'=>false, 'category'=>'true'));
+								foreach($nmembers_results as $member) {
+									if(in_array($member['proxy_id'], $current_member_list)) {
+										$registered = true;
+									} else {
+										$registered = false;
+									}
+
+									$members[0]['options'][] = array('text' => $member['fullname'].($registered ? ' (already a member)' : ''), 'value' => $member['proxy_id'], 'disabled' => $registered);
+
+								}
+
+								foreach($members[0]['options'] as $key => $member) {
+									if(isset($member['options']) && is_array($member['options']) && !empty($member['options'])) {
+										//Alphabetize members
+										sort($members[0]['options'][$key]['options']);
+									}
+								}
+
+								echo '<table cellspacing="0" cellpadding="0" class="select_multiple_table" width="100%">';
+								echo lp_multiple_select_table($members, 0, 0, true);
+								echo '</table>';
 							} else {
-								$registered = false;
+								echo "No One Available [1]";
 							}
-							$members[0]['options'][] = array('text' => $member['fullname'].($registered ? ' (already a member)' : ''), 'value' => $member['proxy_id'], 'disabled' => $registered, "checked" => (isset($previously_added_ids) && in_array(((int)$member["proxy_id"]), $previously_added_ids) ? "checked=\"checked\"" : ""));
-//							$members[0]['options'][] = array('text' => $member['fullname'], 'value' => $member['proxy_id'], 'disabled' => false, 'checked' => ($registered ? "checked=\"checked\"" : ""));	
+						} else {
+							echo "No One Available [2]";
 						}
-						
-						foreach($members[0]['options'] as $key => $member) {
-							if(isset($member['options']) && is_array($member['options']) && !empty($member['options'])) {
-								//Alphabetize members
-								sort($members[0]['options'][$key]['options']);
-							}
-						}
-						echo '<table cellspacing="0" cellpadding="0" class="select_multiple_table" width="100%">';
-						echo lp_multiple_select_table($members, 0, 0, true);
-						echo '</table>';
 					} else {
-						echo "No One Available [1]";
+						echo "Permissions error!";
 					}
 				} else {
-					echo "No One Available [2]";
+						echo "Invalid group provided!";
 				}
-			} else {
-				echo "Permissions error!";
 			}
-		} else {
-//			echo "Malformed request!";
-			echo "<h2>Group is inactive!</h2>";
-		}
+			break;
 	}
 }
 exit();

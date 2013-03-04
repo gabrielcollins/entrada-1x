@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
 	$PAGE_META["title"]		= "Add Activity Profile";
@@ -48,7 +48,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 	
 	echo "<h1>Add Activity Profile</h1>";
 	
-	$departments = get_user_departments($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+	$departments = get_user_departments($ENTRADA_USER->getActiveId());
 	foreach($departments as $department) {
 		if($parent = fetch_department_parent($department["department_id"])) {
 			$department["department_title"] = fetch_department_title($parent);
@@ -61,7 +61,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 		}
 	}
 	
-	if(!$_SESSION["details"]["clinical_member"]) {
+	if(!$ENTRADA_USER->getClinical()) {
 		// Error Checking
 		switch($STEP) {
 		case 2 :
@@ -187,7 +187,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			 */
 			$sql = "SELECT * 
 			FROM ar_profile 
-			WHERE proxy_id = ".$_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']."
+			WHERE proxy_id = ".$ENTRADA_USER->getActiveId()."
 			AND year_reported = $year_reported";
 			
 			$result = $db->GetRow($sql);
@@ -201,8 +201,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($db->AutoExecute("ar_profile", $PROCESSED, "INSERT")) {
 					$EVENT_ID = $db->Insert_Id();
@@ -685,7 +685,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			 */
 			$sql = "SELECT * 
 			FROM ar_profile 
-			WHERE proxy_id = ".$_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']."
+			WHERE proxy_id = ".$ENTRADA_USER->getActiveId()."
 			AND year_reported = $year_reported";
 			
 			$result = $db->GetRow($sql);
@@ -699,8 +699,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];				
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();				
 				
 				$PROCESSED["roles"] 		= implode(", ", $PROCESSED["roles"]);
 				

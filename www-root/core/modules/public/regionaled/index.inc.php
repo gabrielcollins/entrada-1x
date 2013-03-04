@@ -38,7 +38,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Add the accommodation issue sidebar item.
@@ -64,7 +64,7 @@ if (!defined("PARENT_INCLUDED")) {
 				LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS e
 				ON e.`user_id` = d.`id`
 				AND e.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-				WHERE a.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+				WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 				ORDER BY a.`confirmed` ASC, a.`inhabiting_start` ASC";
 	$results = $db->GetAll($query);
 	if ($results) {

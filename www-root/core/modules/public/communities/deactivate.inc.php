@@ -77,7 +77,7 @@ if($COMMUNITY_ID) {
 			$ERROR++;
 			$ERRORSTR[] = "You are not listed as an active administrator of this community, or the community has already been deactivated. If you are having trouble, please contact a community administrator or the MEdTech Unit directly.";
 
-			application_log("error", "The proxy_id [".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]." / ".$_SESSION["details"]["id"]."] is not an administrator of community_id [".$COMMUNITY_ID."] was not found or was already deactivated.");
+			application_log("error", "The proxy_id [".$ENTRADA_USER->getActiveId()." / ".$ENTRADA_USER->getID()."] is not an administrator of community_id [".$COMMUNITY_ID."] was not found or was already deactivated.");
 		}
 	} else {
 		$ERROR++;

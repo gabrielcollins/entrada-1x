@@ -27,7 +27,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "create", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "update", false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
 	$ERROR++;
@@ -35,15 +35,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-	
+
 	if(isset($_GET["assignment_id"]) && $tmp_id = clean_input($_GET["assignment_id"],"int")){
 		$ASSIGNMENT_ID = $tmp_id;
-		$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+		$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 		$IS_CONTACT = $db->GetRow($query);
+		if(!$IS_CONTACT){
+			$query = "	SELECT a.`course_id`,a.`organisation_id`
+						FROM `courses` a
+						JOIN `assigments` b
+						ON a.`course_id` = b.`course_id`
+						WHERE b.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
+			$course_details = $db->GetRow($query);
+			if($course_details){
+				if($ENTRADA_ACL->amIAllowed(new CourseResource($course_details["course_id"], $course_details["organisation_id"]),"update",false)){
+					$IS_CONTACT = true;
+				}
+			}
+		}
 	}
-	
+
 	if ($COURSE_ID) {
 		if($ASSIGNMENT_ID){
 			if($IS_CONTACT){
@@ -210,7 +223,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									$assessment_options_selected = array();
 									foreach ($_POST["option"] as $option_id) {
 										if ($option_id = (int) $option_id) {
-											$query = "SELECT * FROM `assessments_lu_meta_options` 
+											$query = "SELECT * FROM `assessments_lu_meta_options`
 													  WHERE id = " . $db->qstr($option_id) . "
 													  AND `active` = '1'";
 											$results = $db->GetAll($query);
@@ -237,7 +250,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 								if (!$ERROR) {
 									$PROCESSED["updated_date"] = time();
-									$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+									$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 									$PROCESSED["course_id"] = $COURSE_ID;
 
 									if ($db->AutoExecute("assessments", $PROCESSED, "UPDATE", "`assessment_id` = " . $db->qstr($assessment_details["assessment_id"]))) {
@@ -316,7 +329,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								$PROCESSED["due_date"] = (int) $due_date["finish"];
 							} else {
 								$PROCESSED["due_date"] = 0;
-							}														
+							}
 
 							if (isset($_POST["post_action"])) {
 								if (@in_array($_POST["post_action"], array("new", "index", "parent", "grade"))) {
@@ -326,38 +339,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								}
 							} else {
 								$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "index";
-							}							
+							}
 							if(!$ERROR){
 
 								$PROCESSED["updated_date"]	= time();
-								$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+								$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 								$PROCESSED["course_id"]		= $COURSE_ID;
 
 								if ($db->AutoExecute("assignments", $PROCESSED, "UPDATE","`assignment_id` = ".$db->qstr($ASSIGNMENT_ID))) {
 									$query = "DELETE FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
 									if($db->Execute($query)) {
 										$PROCESSED["assignment_id"] = $ASSIGNMENT_ID;
-										$PROCESSED["proxy_id"] = $ENTRADA_USER->getProxyId();
+										$PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
 										$PROCESSED["contact_order"] = 0;
 										$PROCESSED["updated_date"]	= time();
-										$PROCESSED["updated_by"] = $ENTRADA_USER->getProxyId();
+										$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 										if ($db->AutoExecute("assignment_contacts", $PROCESSED, "INSERT")) {
 											if ((isset($_POST["associated_director"])) && ($associated_directors = explode(",", $_POST["associated_director"])) && (@is_array($associated_directors)) && (@count($associated_directors))) {
 												$order = 0;
 												foreach($associated_directors as $proxy_id) {
 													if ($proxy_id = clean_input($proxy_id, array("trim", "int"))) {
-														if($proxy_id != $ENTRADA_USER->getProxyId()){
-															if (!$db->AutoExecute("assignment_contacts", array("assignment_id" => $ASSIGNMENT_ID, "proxy_id" => $proxy_id, "contact_order" => $order+1, "updated_date"=>time(),"updated_by"=>$ENTRADA_USER->getProxyId()), "INSERT")) {
+														if($proxy_id != $ENTRADA_USER->getID()){
+															if (!$db->AutoExecute("assignment_contacts", array("assignment_id" => $ASSIGNMENT_ID, "proxy_id" => $proxy_id, "contact_order" => $order+1, "updated_date"=>time(),"updated_by"=>$ENTRADA_USER->getID()), "INSERT")) {
 																add_error("There was an error when trying to insert a &quot;" . $module_singular_name . " Director&quot; into the system. The system administrator was informed of this error; please try again later.");
 
 																application_log("error", "Unable to insert a new course_contact to the database when updating an event. Database said: ".$db->ErrorMsg());
 															} else {
-																$order++;	
+																$order++;
 															}
 														}
 													}
 												}
-											}																		
+											}
 											application_log("success", "Successfully added assignment ID [".$ASSIGNMENT_ID."]");
 										} else {
 											application_log("error", "Unable to fetch the newly inserted assignment identifier for this assignment.");
@@ -397,7 +410,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								$STEP = 1;
 							}
 						break;
-						case 1 :							
+						case 1 :
 						default :
 							$query = "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
 							if($assignment_record = $db->GetRow($query)){
@@ -414,7 +427,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						break;
 					}
 										$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assignments?".replace_query(array("section" => "grade", "id" => $COURSE_ID, "assignment_id"=>$PROCESSED["assignment_id"],"step" => false)), "title" => $PROCESSED["assignment_title"]);
-										$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "edit", "id" => $COURSE_ID, "step" => false)), "title" => "Editing Assignment");
+										$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "edit", "id" => $COURSE_ID, "step" => false)), "title" => "Edit Assignment Drop Box");
 					// Display Content
 					switch ($STEP) {
 						case 2 :
@@ -448,9 +461,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									$assignment_directors[$result["proxy_id"]] = array('proxy_id'=>$result["proxy_id"], 'fullname'=>$result["fullname"], 'organisation_id'=>$result['organisation_id']);
 								}
 								$DIRECTOR_LIST = $assignment_directors;
-							}							
-							
-							
+							}
+
+
 							/**
 							 * Non-required field "associated_faculty" / Associated Faculty (array of proxy ids).
 							 * This is actually accomplished after the event is inserted below.
@@ -471,16 +484,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									}
 								}
 							}
-							
+
 						?>
-						<h1>Edit Assignment</h1>
+						<h1>Edit Assignment Drop Box</h1>
 						<?php
 						if ($ERROR) {
 							echo display_error();
 						}
 						?>
 						<form action="<?php echo ENTRADA_URL; ?>/admin/gradebook/assignments?<?php echo replace_query(array("step" => 2)); ?>" method="post">
-							<h2>Assignment Details</h2>
+							<h2>Drop Box Details</h2>
 							<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Adding Assignment">
 								<colgroup>
 									<col style="width: 3%" />
@@ -491,26 +504,38 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 									<tr>
 										<td></td>
-										<td><label class="form-nrequired">Assignment Name</label></td>
+										<td><label class="form-nrequired">Drop Box Name</label></td>
 										<td>
 											<input type="text" name="assignment_title" style="width: 243px" value="<?php echo ($PROCESSED["assignment_title"]?$PROCESSED["assignment_title"]:"");?>"/>
 										</td>
-									</tr>							
+									</tr>
 									<tr>
 										<td></td>
 										<td style="vertical-align: top;"><label class="form-nrequired">Associated Assessment</label></td>
 										<td>
 											<select name="assessment_id" id="assessment-selector" style="width: 250px">
-												<option value="0"<?php echo $PROCESSED["assessment_id"] == 0?' selected="selected"':'';?>>No Assessment</option>
-												<option value="N"<?php echo !isset($PROCESSED["assessment_id"])?' selected="selected"':'';?>>New Assessment</option>
-												<?php 
-													$query = "SELECT * FROM `assessments` WHERE `course_id` = ".$db->qstr($COURSE_ID);
-													$course_assessments = $db->GetAll($query);
-													if($course_assessments){
-														foreach($course_assessments as $course_assessment){
-															?><option value="<?php echo $course_assessment["assessment_id"];?>"<?php echo ($PROCESSED["assessment_id"] && $PROCESSED["assessment_id"] == $course_assessment["assessment_id"]?" selected=\"selected\"":"");?>><?php echo $course_assessment["name"];?></option><?php
+												<option value="0"<?php echo isset($PROCESSED["assessment_id"]) && $PROCESSED["assessment_id"]==0?' selected="selected"':'';?>>No Assessment</option>
+												<option value="N" <?php echo !isset($PROCESSED["assessment_id"])?' selected="selected"':'';?>>New Assessment</option>
+												<?php
+													$query = "	SELECT a.`group_id`, a.`group_name` FROM `groups` a
+																JOIN `assessments` b
+																ON a.`group_id` = b.`cohort`
+																WHERE b.`course_id` = ".$db->qstr($COURSE_ID)."
+																GROUP BY a.`group_id`";
+													if($groups = $db->GetAll($query)){
+														foreach($groups as $group){
+															$query = "SELECT * FROM `assessments` WHERE `course_id` = ".$db->qstr($COURSE_ID)." AND `cohort` = ".$db->qstr($group["group_id"]);
+															$course_assessments = $db->GetAll($query);
+															if($course_assessments){
+																echo '<optgroup label="'.$group["group_name"].'">';
+																foreach($course_assessments as $course_assessment){
+																	?><option value="<?php echo $course_assessment["assessment_id"];?>"<?php echo ($PROCESSED["assessment_id"] && $PROCESSED["assessment_id"] == $course_assessment["assessment_id"]?" selected=\"selected\"":"");?>><?php echo $course_assessment["name"];?></option><?php
+																}
+																echo '</optgroup>';
+															}
 														}
-													}	
+													}
+
 												?>
 											</select>
 											<div class="content-small">The assessment determines how the assignment should be marked. You can either select one if it already exists, or create a new one now.</div>
@@ -518,7 +543,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									</tr>
 									<tr>
 										<td>&nbsp;</td>
-										<td style="vertical-align:top">Assignment Contacts</td>
+										<td style="vertical-align:top">Drop Box Contacts</td>
 										<td>
 										<script type="text/javascript">
 											var sortables = new Array();
@@ -598,7 +623,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 														$('curriculum_type_periods').update(new Element('div', {'class':'display-error'}).update('No Periods were found for this Curriculum Category.'));
 													}
 												});
-											}								
+											}
 											</script>
 											<input type="text" id="director_name" name="fullname" size="30" autocomplete="off" style="width: 203px; vertical-align: middle" onkeyup="checkItem('director')" onblur="addItemNoError('director')" />
 											<script type="text/javascript">
@@ -619,11 +644,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											<span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
 											<ul id="director_list" class="menu" style="margin-top: 15px">
 												<?php
-												if (is_array($chosen_course_directors) && count($chosen_course_directors)) {
+												if (is_array($DIRECTOR_LIST) && is_array($chosen_course_directors) && count($chosen_course_directors)) {
 													foreach ($chosen_course_directors as $director) {
 														if ((array_key_exists($director, $DIRECTOR_LIST)) && is_array($DIRECTOR_LIST[$director])) {
 															?>
-																<li class="community" id="director_<?php echo $DIRECTOR_LIST[$director]["proxy_id"]; ?>" style="cursor: move;"><?php echo $DIRECTOR_LIST[$director]["fullname"]; ?><img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" class="list-cancel-image" onclick="removeItem('<?php echo $DIRECTOR_LIST[$director]["proxy_id"]; ?>', 'director');"/></li>								
+																<li class="community" id="director_<?php echo $DIRECTOR_LIST[$director]["proxy_id"]; ?>" style="cursor: move;"><?php echo $DIRECTOR_LIST[$director]["fullname"]; ?><img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" class="list-cancel-image" onclick="removeItem('<?php echo $DIRECTOR_LIST[$director]["proxy_id"]; ?>', 'director');"/></li>
 															<?php
 														}
 													}
@@ -633,10 +658,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											<input type="hidden" id="director_ref" name="director_ref" value="" />
 											<input type="hidden" id="director_id" name="director_id" value="" />
 										</td>
-									</tr>							
+									</tr>
 									<tr>
 										<td>&nbsp;</td>
-										<td style="vertical-align: top">Assignment Description</td>
+										<td style="vertical-align: top">Drop Box Description</td>
 										<td>
 											<textarea id="assignment_description" name="assignment_description" style="width: 100%; height: 150px" cols="70" rows="10"><?php echo html_encode(trim(strip_selected_tags($PROCESSED["assignment_description"], array("font")))); ?></textarea>
 										</td>
@@ -648,17 +673,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											<table>
 												<tbody>
 														<tr>
-															<td style="vertical-align: top"><input type="radio" name="assignment_uploads" value="allow" style="vertical-align: middle" <?php echo $PROCESSED["assignment_uploads"] == 0?"checked=\"checked\"":"";?>></td>
+															<td style="vertical-align: top"><input type="radio" name="assignment_uploads" id="assignment_uploads_allow" value="allow" style="vertical-align: middle" <?php echo $PROCESSED["assignment_uploads"] == 0?"checked=\"checked\"":"";?>></td>
 															<td colspan="2" style="padding-bottom: 15px">
-																<label for="event_audience_type_course" class="radio-group-title">Allow Submission Revision</label>
-																<div class="content-small">Allow students to upload a newer version of their assignment after they've already made their submission as long as its still before the due date.</div>
+																<label for="assignment_uploads_allow" class="radio-group-title">Allow Submission Revision</label>
+																<div class="content-small">Allow students to upload a newer version of their assignment after they have already made their submission as long as its still before the due date.</div>
 															</td>
 														</tr>
 														<tr>
-															<td style="vertical-align: top"><input type="radio" name="assignment_uploads" value="deny" style="vertical-align: middle;" <?php echo $PROCESSED["assignment_uploads"] == 1?"checked=\"checked\"":"";?>></td>
+															<td style="vertical-align: top"><input type="radio" name="assignment_uploads" id="assignment_uploads_deny" value="deny" style="vertical-align: middle;" <?php echo $PROCESSED["assignment_uploads"] == 1?"checked=\"checked\"":"";?>></td>
 															<td colspan="2" style="padding-bottom: 15px">
-																<label for="event_audience_type_course" class="radio-group-title">Do Not Allow Submission Revision</label>
-																<div class="content-small">Do not allow students to upload a newer version of their assignment after they've already uploaded one.</div>
+																<label for="assignment_uploads_deny" class="radio-group-title">Do Not Allow Submission Revision</label>
+																<div class="content-small">Do not allow students to upload a newer version of their assignment after initial upload.</div>
 															</td>
 														</tr>
 
@@ -667,12 +692,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 										</td>
 									</tr>
 									<?php echo generate_calendars("viewable", "", true, false, ((isset($PROCESSED["release_date"])) ? $PROCESSED["release_date"] : 0), true, false, ((isset($PROCESSED["release_until"])) ? $PROCESSED["release_until"] : 0)); ?>
-									<?php echo generate_calendars("due", "", false, false,  0, true, false,  ((isset($PROCESSED["due_date"])) ? $PROCESSED["due_date"] : 0)); ?>
+        							<?php echo generate_calendars("due", "Assignment", false, false, 0, true, false, ((isset($PROCESSED["due_date"])) ? $PROCESSED["due_date"] : 0), true, false, "", " Due Date"); ?>
 								</tbody>
 							</table>
 							<div id="assessment-section">
 							<h2>Assessment Details</h2>
-				<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Editing Assessment">
+                            <table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Editing Assessment">
 								<colgroup>
 									<col style="width: 3%" />
 									<col style="width: 22%" />
@@ -686,7 +711,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											<a href="<?php echo ENTRADA_URL; ?>/admin/gradebook?<?php echo replace_query(array("step" => false, "section" => "view")); ?>"><?php echo html_encode($course_details["course_name"]); ?></a>
 										</td>
 									</tr>
-									<?php 					
+									<?php
 									$query = "SELECT * FROM `groups` WHERE `group_type` = 'course_list' AND `group_value` = ".$db->qstr($COURSE_ID);
 									$course_list = $db->GetRow($query);
 									if($course_list){
@@ -704,7 +729,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									</tr>
 									<?php
 									}
-									?>									
+									?>
 									<tr>
 										<td colspan="3">&nbsp;</td>
 									</tr>
@@ -890,7 +915,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							</table>
 							</div>
 							<script type="text/javascript" charset="utf-8">
-								
+
 								jQuery('#assessment-section').hide();
 
 								jQuery(document).ready(function(){
@@ -907,8 +932,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									}else{
 										jQuery('#assessment-section').slideUp('slow');
 									}
-								});	
-								
+								});
+
 								jQuery(function($) {
 									jQuery('#marking_scheme_id').change(function() {
 										if(jQuery(':selected', this).val() == 3 || jQuery(':selected', this).text() == "Numeric") {
@@ -917,30 +942,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											jQuery('#numeric_marking_scheme_details').hide();
 										}
 									}).trigger('change');
-												
+
 									jQuery('#grade_weighting').keyup(function() {
 										if (parseInt(jQuery('#grade_weighting').val())) {
 											jQuery('#assessment_required_1').attr('checked', 'checked');
 											jQuery('#assessment_required_options').hide();
-														
+
 										} else {
 											jQuery('#assessment_required_0').attr('checked', 'checked');
 											jQuery('#assessment_required_options').show();
-														
+
 										}
 									});
-												
+
 									jQuery('#grade_weighting').ready(function() {
 										if (parseInt(jQuery('#grade_weighting').val())) {
 											jQuery('#assessment_required_1').attr('checked', 'checked');
 											jQuery('#assessment_required_options').hide();
-														
+
 										} else {
 											jQuery('#assessment_required_options').show();
-														
+
 										}
 									});
-												
+
 									jQuery('#assessment_characteristic').change(function (){
 										jQuery('#assessment_options input:[type=checkbox]').removeAttr('checked');
 										var assessmentType = jQuery('#assessment_characteristic option:selected').attr('assessmenttype');
@@ -950,7 +975,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											jQuery('#assessment_options').hide();
 										}
 									});
-												
+
 									jQuery('#assessment_characteristic').ready(function (){
 										var assessmentType = jQuery('#assessment_characteristic option:selected').attr('assessmenttype');
 										if(assessmentType == 'exam' || assessmentType == 'quiz') {
@@ -959,7 +984,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											jQuery('#assessment_options').hide();
 										}
 									});
-									
+
 									jQuery("input[name='show_learner_option']").change(function(){
 										if (jQuery("input[name='show_learner_option']:checked").val() == 1) {
 											jQuery('#gradebook_release_options').show();
@@ -977,7 +1002,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											jQuery('#gradebook_release_options').hide();
 										}
 									});
-										
+
 								});
 							</script>
 							<div style="padding-top: 25px">

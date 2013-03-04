@@ -55,7 +55,7 @@ if ($RECORD_ID) {
 			}
 		}
 
-		if (($is_administrator) || ($quiz_record["proxy_id"] == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])) {
+		if (($is_administrator) || ($quiz_record["proxy_id"] == $ENTRADA_USER->getActiveId())) {
 			$respondent_name = get_account_data("firstlast", $quiz_record["proxy_id"]);
 
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/community".$quiz_record["community_url"].":".$quiz_record["page_url"], "title" => limit_chars($quiz_record["content_title"], 32));

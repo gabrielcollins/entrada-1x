@@ -1,5 +1,9 @@
 var wizardStep	= 1;
 var maxSteps	= 3;
+var uploaded = false;
+var frameLoad = function () {
+	return false;
+}
 
 function allowSubmit(checked) {
 	if (checked) {
@@ -10,17 +14,13 @@ function allowSubmit(checked) {
 }
 
 function parentReload() {
-	if (window.opener && !window.opener.closed) {
-		window.opener.location.href = window.opener.location.href;
+	if (!uploaded || uploaded == false) {
+		uploaded = true;
 	}
 }
 
 function closeWizard() {
-	window.close();
-
-	if (window.opener && !window.opener.closed) {
-		window.opener.focus();
-	}
+	Control.Modal.close();
 }
 
 function updateTitle() {
@@ -46,6 +46,11 @@ function updateButtons() {
 
 	return true;
 
+}
+
+function restartWizard(url) {
+	wizardStep = 1;
+	frames['upload-frame'].location = url;
 }
 
 function initStep(step) {
@@ -88,11 +93,42 @@ function nextStep() {
 		updateTitle();
 	} else {
 		$('uploading-window').style.display	= 'block';
-
+		frameLoad = function() {
+			var ret = frames['upload-frame'].document.getElementById('wizard').innerHTML;
+			var scripts = frames['upload-frame'].document.getElementById('scripts-on-open').innerHTML;
+			$('wizard').innerHTML = ret;
+			eval(scripts);
+		}
 		$('wizard-form').submit();
 	}
 
 	return true;
+}
+
+function quizPrevStep() {
+	$('go_back').value = 1;
+	$('uploading-window').style.display	= 'block';
+	frameLoad = function() {
+		var ret = frames['upload-frame'].document.getElementById('quiz-wizard').innerHTML;
+		var scripts = frames['upload-frame'].document.getElementById('scripts-on-open').innerHTML;
+		$('quiz-wizard').innerHTML = ret;
+		eval(scripts);
+		$('uploading-window').style.display	= 'none';
+	}
+	$('wizard-form').submit();
+}
+
+function quizNextStep() {
+	$('go_forward').value = 1;
+	$('uploading-window').style.display	= 'block';
+	frameLoad = function() {
+		var ret = frames['upload-frame'].document.getElementById('quiz-wizard').innerHTML;
+		var scripts = frames['upload-frame'].document.getElementById('scripts-on-open').innerHTML;
+		$('quiz-wizard').innerHTML = ret;
+		eval(scripts);
+		$('uploading-window').style.display	= 'none';
+	}
+	$('wizard-form').submit();
 }
 
 function handleKeys(event) {
@@ -140,5 +176,17 @@ function updateFile(state) {
 		$('upload-new-file').style.display = state;
 	}
 
+	return true;
+}
+
+function submitPodcast() {
+	$('uploading-window').style.display	= 'block';
+	frameLoad = function() {
+		var ret = frames['upload-frame'].document.getElementById('wizard').innerHTML;
+		var scripts = frames['upload-frame'].document.getElementById('scripts-on-open').innerHTML;
+		$('wizard').innerHTML = ret;
+		eval(scripts);
+	}
+	$('wizard-form').submit();
 	return true;
 }

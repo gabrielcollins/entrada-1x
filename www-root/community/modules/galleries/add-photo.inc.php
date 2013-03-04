@@ -176,15 +176,15 @@ if ($RECORD_ID) {
 										if (!$error_current) {
 											$PROCESSED["cgallery_id"]		= $RECORD_ID;
 											$PROCESSED["community_id"]		= $COMMUNITY_ID;
-											$PROCESSED["proxy_id"]			= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+											$PROCESSED["proxy_id"]			= $ENTRADA_USER->getActiveId();
 											$PROCESSED["photo_active"]		= 1;
 											$PROCESSED["updated_date"]		= time();
-											$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+											$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 											if ($db->AutoExecute("community_gallery_photos", $PROCESSED, "INSERT")) {
 												$photo_id = $db->Insert_Id();
 												if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) {
-													$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($_SESSION["details"]["id"]).", ".$db->qstr($photo_id).", ".$db->qstr($COMMUNITY_ID).", 'photo-comment', '".(isset($notifications) && $notifications ? "1" : "0")."')");
+													$db->Execute("INSERT INTO `community_notify_members` (`proxy_id`, `record_id`, `community_id`, `notify_type`, `notify_active`) VALUES (".$db->qstr($ENTRADA_USER->getID()).", ".$db->qstr($photo_id).", ".$db->qstr($COMMUNITY_ID).", 'photo-comment', '".(isset($notifications) && $notifications ? "1" : "0")."')");
 												}
 												if ($photo_id) {
 													if (communities_galleries_process_photo($_FILES["photo_files"]["tmp_name"][$tmp_photo_id], $photo_id)) {

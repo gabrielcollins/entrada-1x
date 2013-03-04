@@ -23,13 +23,13 @@ if ($RECORD_ID) {
 	$query = "SELECT a.*, b.`parent_id`  FROM `assignment_file_versions` AS a JOIN `assignment_files` AS b ON a.`afile_id` = b.`afile_id` WHERE a.`afversion_id` = ".$db->qstr($RECORD_ID);
 	$file_version = $db->getRow($query);
 	if ($file_version) {
-		echo $ENTRADA_USER->getProxyId();
-		if ($ENTRADA_USER->getProxyId() == $file_version["proxy_id"]) {
+		echo $ENTRADA_USER->getID();
+		if ($ENTRADA_USER->getID() == $file_version["proxy_id"]) {
 			if (((int) $file_version["file_active"])) {
-				if ($db->AutoExecute("assignment_file_versions", array("file_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getProxyId()), "UPDATE", "`afversion_id` = ".$db->qstr($RECORD_ID)." AND `afile_id` = ".$db->qstr($file_version["afile_id"]))) {
+				if ($db->AutoExecute("assignment_file_versions", array("file_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`afversion_id` = ".$db->qstr($RECORD_ID)." AND `afile_id` = ".$db->qstr($file_version["afile_id"]))) {
 					$query = "	SELECT COUNT(*) FROM `assignment_file_versions` WHERE `afile_id` = ".$file_version["afile_id"]." AND `file_active` = '1'";
 					if (!$db->GetOne($query)) {
-						if ($db->AutoExecute("assignment_files", array("file_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getProxyId()), "UPDATE", "`afile_id` = ".$db->qstr($file_version["afile_id"]))) {
+						if ($db->AutoExecute("assignment_files", array("file_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`afile_id` = ".$db->qstr($file_version["afile_id"]))) {
 
 						}else{
 							application_log("error", "Successfully deactivated file version [".$RECORD_ID."] but unable to remove associated file information.");

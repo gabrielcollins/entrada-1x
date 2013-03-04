@@ -97,7 +97,7 @@ if (!defined("IN_REGIONS")) {
 			if (!$ERROR) {
 				$PROCESSED["region_active"] = 1;
 				$PROCESSED["updated_date"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 				if (($db->AutoExecute(CLERKSHIP_DATABASE.".regions", $PROCESSED, "INSERT")) && ($region_id = $db->Insert_Id())) {
 					$SUCCESS++;

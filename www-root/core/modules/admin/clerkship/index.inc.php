@@ -35,7 +35,7 @@ if (!defined("IN_CLERKSHIP")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/calendar/script/xc2_timestamp.js\"></script>\n";
 	
@@ -52,7 +52,7 @@ if (!defined("IN_CLERKSHIP")) {
 	
 	$query = "	SELECT a.*
 				FROM `".CLERKSHIP_DATABASE."`.`events` AS a
-				JOIN `".CLERKSHIP_DATABASE."`.`electives` AS a
+				JOIN `".CLERKSHIP_DATABASE."`.`electives` AS b
 				ON a.`event_id` = b.`event_id`
 				WHERE a.`event_type`= 'elective'
 				AND a.`event_status` = 'approval'
@@ -386,7 +386,7 @@ if (!defined("IN_CLERKSHIP")) {
 						<tr>
 						</table>
 						</form>
-						<br/><br/>
+						<br /><br />
 					</div>
 						<?php
 					break;

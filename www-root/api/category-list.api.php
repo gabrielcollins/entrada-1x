@@ -23,8 +23,6 @@
  */
 require_once("init.inc.php");
 
-define("DEFAULT_ORGANIZATION_CATEGORY_ID", 49);
-
 if (isset($_POST["cid"]) && $_SESSION["isAuthorized"]) {
 	$category_id = clean_input($_POST["cid"], array("int"));
 	if ($category_id) {
@@ -32,14 +30,14 @@ if (isset($_POST["cid"]) && $_SESSION["isAuthorized"]) {
 					WHERE `category_id` = ".$db->qstr($category_id);
 		$category = $db->GetRow($query);
 		if ($category) {
-			if ($category["category_parent"] != DEFAULT_ORGANIZATION_CATEGORY_ID) {
+			if ($category["category_parent"] != CLERKSHIP_TOP_CATEGORY_ID) {
 				$parent_id 								= $category["category_parent"];
 				$category_selected_reverse[1]["id"]		= 0;
 				$category_selected_reverse[1]["parent"]	= $category_id;
 				$category_selected_reverse[2]["id"]		= $category_id;
 				$category_selected_reverse[2]["parent"]	= $category["category_parent"];
 				$count = 2;
-				while ($parent_id != DEFAULT_ORGANIZATION_CATEGORY_ID) {
+				while ($parent_id != CLERKSHIP_TOP_CATEGORY_ID) {
 					$count++;
 					$query = "	SELECT * FROM `".CLERKSHIP_DATABASE."`.`categories`
 								WHERE `category_id` = ".$db->qstr($parent_id);
@@ -57,7 +55,7 @@ if (isset($_POST["cid"]) && $_SESSION["isAuthorized"]) {
 			} else {
 					$category_selected[1]["id"]		= $category_id;
 					$category_selected[2]["id"]		= 0;
-					$category_selected[1]["parent"]	= DEFAULT_ORGANIZATION_CATEGORY_ID;
+					$category_selected[1]["parent"]	= CLERKSHIP_TOP_CATEGORY_ID;
 					$category_selected[2]["parent"]	= $category_id;
 					$count = 2;
 			}
@@ -65,7 +63,7 @@ if (isset($_POST["cid"]) && $_SESSION["isAuthorized"]) {
 		}
 	} else {
 		$category_selected[1]["id"]		= 0;
-		$category_selected[1]["parent"]	= DEFAULT_ORGANIZATION_CATEGORY_ID;
+		$category_selected[1]["parent"]	= CLERKSHIP_TOP_CATEGORY_ID;
 		$count = 1;
 	}
 	$margin = 0;

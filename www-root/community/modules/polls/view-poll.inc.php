@@ -61,7 +61,7 @@ if ($RECORD_ID) {
 				|| (!(int) $community_details["community_protected"] && (int)$poll_record['allow_public_results'] == 1)
 				|| (!(int) $community_details["community_registration"] && (int)$poll_record['allow_troll_results'] == 1))
 				{
-					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 					{
 						$allow_main_load = true;
 					}
@@ -70,10 +70,10 @@ if ($RECORD_ID) {
 				|| (!(int) $community_details["community_protected"] && (int)$poll_record['allow_public_results_after'] == 1)
 				|| (!(int) $community_details["community_registration"] && (int)$poll_record['allow_troll_results_after'] == 1))
 				{
-					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 					{
 						// Check to see that they have voted, if they haven't then they cannot view the results yet.
-						$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+						$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $ENTRADA_USER->getActiveId());
 						
 						if (isset($vote_record["votes"])) {
 							$allow_main_load = true;
@@ -95,9 +95,9 @@ if ($RECORD_ID) {
 							}
 							
 							if (!$ERROR) {
-								$PROCESSED["proxy_id"]				= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+								$PROCESSED["proxy_id"]				= $ENTRADA_USER->getActiveId();
 								$PROCESSED["updated_date"]			= time();
-								$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+								$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 								
 								// Use $databaseResponses when inserting into community_polls_responses
 								if ($db->AutoExecute("community_polls_results", $PROCESSED, "INSERT"))
@@ -412,7 +412,9 @@ if ($RECORD_ID) {
 							}
 						break;
 					} 
-					add_statistic("community_polling", "poll_view", "cpolls_id", $RECORD_ID);
+					if ($LOGGED_IN) {
+						add_statistic("community_polling", "poll_view", "cpolls_id", $RECORD_ID);
+					}
 				} else {
 					$ERROR++;
 					$ERRORSTR[] = "You do not have permission to view the results of this ".$terminology.". Please provide a valid id to proceed.";

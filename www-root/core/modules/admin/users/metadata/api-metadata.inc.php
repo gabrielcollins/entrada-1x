@@ -91,7 +91,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				}
 				if (!has_error()) {
 					echo "<h2>".$category->getLabel()."</h2>";
-					echo "<div class=\"content-small\">for ". $organisation->getTitle(). " &gt; " . ucwords($group). " &gt; " . ucwords($opts["associated_role"]) . "</div><br/>";
+					echo "<div class=\"content-small\">for ". $organisation->getTitle(). " &gt; " . ucwords($group). " &gt; " . ucwords($opts["associated_role"]) . "</div><br />";
 					echo editMetaDataTable_Category($organisation_id, $group, $role, null, $category);
 				} else {
 					header("HTTP/1.0 500 Internal Error");
@@ -186,7 +186,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				
 				if (!has_error()) {
 					echo "<h2>".$category->getLabel()."</h2>";
-					echo "<div class=\"content-small\">for ". $organisation->getTitle(). " &gt; " . ucwords($group). " &gt; " . ucwords($opts["associated_role"]) . "</div><br/>";
+					echo "<div class=\"content-small\">for ". $organisation->getTitle(). " &gt; " . ucwords($group). " &gt; " . ucwords($opts["associated_role"]) . "</div><br />";
 					echo editMetaDataTable_Category($organisation_id, $group, $role, null, $category);
 				} else {
 					//if there were any errors, return a 500 and display errors
@@ -201,7 +201,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				$type = MetaDataType::get($cat_id);
 				if ($type) {
 					$user = User::get($proxy_id);
-					$org_id = $user->getOrganisationID();
+					$org_id = $user->getOrganisationId();
 					$group = $user->getGroup();
 					$role = $user->getRole();
 					

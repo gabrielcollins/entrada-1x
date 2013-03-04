@@ -16,9 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.	If not, see <http://www.gnu.org/licenses/>.
  *
- * Tools: Planetary Collision. Used for merging two previously independent 
- * Entrada installations into one big clusterfuck of a database. 
- *
  * @author Unit: Medical Education Technology Unit
  * @author Developer: James Ellis <james.ellis@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
@@ -70,17 +67,17 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 								WHERE a.`quiz_id` = ".$db->qstr($progress_record["quiz_id"])."
 								ORDER BY a.`question_order` ASC";
 				$questions	= $db->GetAll($query);
-				
+
 				$qprogress_id		= $progress_record["qprogress_id"];
 				$quiz_score			= 0;
 				$quiz_value			= 0;
-				
+
 				$PROCESSED = quiz_load_progress($qprogress_id);
-				
+
 				foreach ($questions as $question) {
 					$question_correct	= false;
 					$question_points	= 0;
-				
+
 					$query		= "	SELECT a.*
 									FROM `quiz_question_responses` AS a
 									WHERE a.`qquestion_id` = ".$db->qstr($question["qquestion_id"])."
@@ -90,10 +87,10 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 						foreach ($responses as $response) {
 							$response_selected	= false;
 							$response_correct	= false;
-				
+
 							if ($PROCESSED[$question["qquestion_id"]] == $response["qqresponse_id"]) {
 								$response_selected = true;
-				
+
 								if ($response["response_correct"] == 1) {
 									$response_correct	= true;
 									$question_correct	= true;
@@ -104,16 +101,16 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 							}
 						}
 					}
-				
+
 					$quiz_score += $question_points;
 					$quiz_value += $question["question_points"];
 				}
-				
+
 				$quiz_progress_array	= array (
 											"quiz_score" => $quiz_score,
 											"quiz_value" => $quiz_value
 										);
-				
+
 				if (!$db->AutoExecute("quiz_progress", $quiz_progress_array, "UPDATE", "qprogress_id = ".$db->qstr($qprogress_id))) {
 					echo "\nThere was an issue encountered while attempting to update this quiz progress for proxy id [".$db->qstr($progress_record["proxy_id"])."].\n";
 				} else {
@@ -129,7 +126,7 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 } elseif ($ACTION == "-delete") {
 	$QUIZ_ID			= ((isset($_SERVER["argv"][2]) && ((int) $_SERVER["argv"][2])) ? (int) $_SERVER["argv"][2] : false);
 	$QUESTION_ORDER			= ((isset($_SERVER["argv"][3]) && ((int) $_SERVER["argv"][3])) ? (int) $_SERVER["argv"][3] : false);
-	$query = "	SELECT * FROM `quiz_questions` 
+	$query = "	SELECT * FROM `quiz_questions`
 				WHERE `quiz_id` = ".$db->qstr($QUIZ_ID)."
 				ORDER BY `question_order` ASC
 				LIMIT ".((int)($QUESTION_ORDER - 1)).", 1";
@@ -156,17 +153,17 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 										WHERE a.`quiz_id` = ".$db->qstr($progress_record["quiz_id"])."
 										ORDER BY a.`question_order` ASC";
 						$questions	= $db->GetAll($query);
-						
+
 						$qprogress_id		= $progress_record["qprogress_id"];
 						$quiz_score			= 0;
 						$quiz_value			= 0;
-						
+
 						$PROCESSED = quiz_load_progress($qprogress_id);
-						
+
 						foreach ($questions as $question) {
 							$question_correct	= false;
 							$question_points	= 0;
-						
+
 							$query		= "	SELECT a.*
 											FROM `quiz_question_responses` AS a
 											WHERE a.`qquestion_id` = ".$db->qstr($question["qquestion_id"])."
@@ -176,10 +173,10 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 								foreach ($responses as $response) {
 									$response_selected	= false;
 									$response_correct	= false;
-						
+
 									if ($PROCESSED[$question["qquestion_id"]] == $response["qqresponse_id"]) {
 										$response_selected = true;
-						
+
 										if ($response["response_correct"] == 1) {
 											$response_correct	= true;
 											$question_correct	= true;
@@ -190,16 +187,16 @@ if (!isset($ACTION) || !$ACTION || $ACTION == "-usage") {
 									}
 								}
 							}
-						
+
 							$quiz_score += $question_points;
 							$quiz_value += $question["question_points"];
 						}
-						
+
 						$quiz_progress_array	= array (
 													"quiz_score" => $quiz_score,
 													"quiz_value" => $quiz_value
 												);
-						
+
 						if (!$db->AutoExecute("quiz_progress", $quiz_progress_array, "UPDATE", "qprogress_id = ".$db->qstr($qprogress_id))) {
 							echo "\nThere was an issue encountered while attempting to update this quiz progress for proxy id [".$db->qstr($progress_record["proxy_id"])."].\n";
 						} else {

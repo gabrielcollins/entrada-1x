@@ -11,7 +11,7 @@
  * @copyright Copyright 2008 University of Calgary. All Rights Reserved.
  * 
 */
-    
+global $AGENT_CONTACTS;
 return array (
 	/**
 	 * Core Navigation
@@ -95,15 +95,18 @@ return array (
 		),
 		"cp" => array (
 			"label" => "Clinical Presentation Filters",
-			"global_lu_objectives_name" => "MCC Objectives"
+			"global_lu_objectives_name" => "MCC Presentations"
 		),
 		"co" => array (
 			"label" => "Curriculum Objective Filters",
-			"global_lu_objectives_name" => "Queen's Objectives"
+			"global_lu_objectives_name" => "Curriculum Objectives"
 		),
 		"topic" => array (
 			"label" => "Hot Topic Filters"
-		)
+		),
+		"department" => array (
+			"label" => "Department Filters"
+		),
 	),
 	
 	/**
@@ -113,6 +116,24 @@ return array (
     "global_button_cancel" => "Cancel",
     "global_button_proceed" => "Proceed",
 
+	"global_feedback_widget" => array(
+		"global" => array(
+			"system"		=> array(
+				"link-text" => APPLICATION_NAME." Feedback",
+				"link-desc" => "Please share any feedback you may have about this page.",
+				"form"		=> array(
+					"title" => "Feedback about ".APPLICATION_NAME,
+					"description" => "This form is provided so you can efficiently provide our developers with important feedback regarding this application. Whether you are reporting a bug, feature request or just general feedback, all messages are important to us and appreciated.<br /><br />
+									<span class=\"content-small\">Please note: If you are submitting a bug or problem, please try to be specific as to the issue. If possible also let us know how to recreate the problem.</span>",
+					"anon"	=> false,
+					"recipients" => array(
+						$AGENT_CONTACTS["administrator"]["email"] => $AGENT_CONTACTS["administrator"]["name"]
+					)
+				)
+			)
+		)
+	),
+	
 	/**
 	 * Public Dashboard Module
 	 * modules/public/dashboard

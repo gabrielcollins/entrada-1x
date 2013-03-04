@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$RESEARCH_ID = $_GET["rid"];
 	
@@ -42,12 +42,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 	$_SESSION["research_expand_grid"] = "scholarly_grid";
 	
 	if($RESEARCH_ID) {
-		$query	= "SELECT * FROM `ar_scholarly_activity` WHERE `scholarly_activity_id`=".$db->qstr($RESEARCH_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_scholarly_activity` WHERE `scholarly_activity_id`=".$db->qstr($RESEARCH_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
-			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/research?section=edit_scholarly", "title" => "Edit Scholarly Activity");
+			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/research?section=edit_scholarly", "title" => "Edit Scholarly Research Activity");
 			
-			echo "<h1>Edit Scholarly Activity</h1>\n";
+			echo "<h1>Edit Scholarly Research Activity</h1>\n";
 
 			// Error Checking
 			switch($STEP) {
@@ -71,7 +71,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						$ERROR++;
 						$ERRORSTR[] = "The <strong>Description</strong> field is required.";
 					}
-					
+					/**
+					 * Required field "category" / Category
+					 */
+					if((isset($_POST["location"])) && ($location = clean_input($_POST["location"], array("notags", "trim")))) {
+						$PROCESSED["location"] = $location;
+					} else {
+						$ERROR++;
+						$ERRORSTR[] = "The <b>Category</b> field is required.";
+					}
 					/**
 					 * Required field "year_reported" / Year Reported.
 					 */
@@ -98,8 +106,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						
 						if($db->AutoExecute("ar_scholarly_activity", $PROCESSED, "UPDATE", "`scholarly_activity_id`=".$db->qstr($RESEARCH_ID))) {
 								switch($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
@@ -192,6 +200,24 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						<td></td>
 						<td style="vertical-align: top"><label for="description" class="form-required">Description</label></td>
 						<td><input type="text" id="description" name="description" value="<?php echo ((isset($scholarlyResult["description"])) ? html_encode($scholarlyResult["description"]) : html_encode($PROCESSED["description"])); ?>" maxlength="255" style="width: 95%" /></td>						
+					</tr>
+					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td style="vertical-align: top"><label for="category" class="form-required">Category</label></td>
+						<td>
+						<?php
+							if($PROCESSED["location"] == "External" || $scholarlyResult["location"] == "External") {
+								echo "<input type=\"radio\" id=\"location\" name=\"location\" value=\"Internal\"/> Internal to Queen's<br>
+								<input type=\"radio\" id=\"location\" name=\"location\" value=\"External\" CHECKED /> External";
+							} else {
+								echo "<input type=\"radio\" id=\"location\" name=\"location\" value=\"Internal\" CHECKED /> Internal to Queen's<br>
+								<input type=\"radio\" id=\"location\" name=\"location\" value=\"External\"/> External";
+							}
+						?>
+						</td>
 					</tr>
 					<tr>
 						<td colspan="3">&nbsp;</td>

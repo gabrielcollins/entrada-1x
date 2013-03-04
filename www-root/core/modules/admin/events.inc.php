@@ -36,7 +36,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_EVENTS",	true);
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/events", "title" => $MODULES[strtolower($MODULE)]["title"]);
@@ -62,7 +62,7 @@ if(!defined("PARENT_INCLUDED")) {
 		 * and add the appropriate toggle sidebar item.
 		 */
 		if ($ENTRADA_ACL->amIAllowed("eventcontent", "update", false)) {
-			switch ($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]) {
+			switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]) {
 				case "admin" :
 					$admin_wording = "Administrator View";
 				break;
@@ -100,5 +100,15 @@ if(!defined("PARENT_INCLUDED")) {
 		 * Check if preferences need to be updated on the server at this point.
 		 */
 		preferences_update($MODULE, $PREFERENCES);
+		$modules = $router->getModules();
+		if (isset($modules[1])) {
+			$submodule = $modules[1];
+		}
+		if (!isset($submodule) || $submodule != "drafts") {
+			$sidebar_html  = "<ul class=\"menu none\">\n";
+			$sidebar_html .= "<li><a href=\"".ENTRADA_RELATIVE."/admin/events/drafts\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>Draft Schedules</span></a></li>\n";
+			$sidebar_html .= "</ul>\n";
+			new_sidebar_item("Event Options", $sidebar_html, "display-style", "open");
+		}
 	}
 }

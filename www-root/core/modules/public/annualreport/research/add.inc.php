@@ -34,10 +34,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
-	$PAGE_META["title"]			= "Research Add";
+	$PAGE_META["title"]			= "Add Research Grant";
 	$PAGE_META["description"]	= "Research portion of your annual report should be entered / located here.";
 	$PAGE_META["keywords"]		= "";
 	
@@ -51,7 +51,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 	switch($STEP) {
 		case 2 :
 			$ENDERROR = false;
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 				/**
 				 * Required field "status" / Status
 				 */
@@ -80,7 +80,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				$ERROR++;
 				$ERRORSTR[] = "The <b>Type</b> field is required.";
 			}
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 				/**
 				 * Required field "category" / Category
 				 */
@@ -267,8 +267,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($db->AutoExecute("ar_research", $PROCESSED, "INSERT")) {
 					$EVENT_ID = $db->Insert_Id();
@@ -336,7 +336,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				<td colspan="3"><h2>Details</h2></td>
 			</tr>
 			<?php
-				if($_SESSION["details"]["clinical_member"]) {
+				if($ENTRADA_USER->getClinical()) {
 			?>
 			<tr>
 				<td></td>
@@ -389,7 +389,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				<td colspan="3">&nbsp;</td>
 			</tr>
 			<?php
-				if($_SESSION["details"]["clinical_member"]) {
+				if($ENTRADA_USER->getClinical()) {
 			?>
 			<tr>
 				<td></td>

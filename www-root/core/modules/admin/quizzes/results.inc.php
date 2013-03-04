@@ -38,8 +38,64 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+	if (isset($_POST["mode"]) && $_POST["mode"] == "ajax") {
+		ob_clear_open_buffers();
+		
+		$response_id = (int) $_POST["response_id"];
+		$quiz_id = (int) $_POST["quiz_id"];
+		
+		$query = "	SELECT `b`.`question_text`, `a`.`response_text`
+					FROM `quiz_question_responses` AS `a`
+					JOIN `quiz_questions` AS `b`
+					ON `a`.`qquestion_id` = `b`.`qquestion_id`
+					WHERE `a`.`qqresponse_id` = ".$db->qstr($response_id);
+		$quiz_details = $db->GetRow($query);
+		
+		$query = "	SELECT `a`.`proxy_id`, `a`.`qprogress_id`, `b`.`number`, CONCAT(`b`.`lastname`, ', ', `b`.`firstname`) AS `name`
+					FROM `".DATABASE_NAME."`.`quiz_progress_responses` AS `a`
+					JOIN `".AUTH_DATABASE."`.`user_data` AS `b`
+					ON `a`.`proxy_id` = `b`.`id`
+					WHERE `a`.`qqresponse_id` = ".$db->qstr($response_id)."
+					AND `a`.`aquiz_id` = ".$db->qstr($quiz_id);
+		$results = $db->GetAll($query);
+		
+		if (!empty($results)) {
+			echo "<div style=\"width:500px;height:400px;overflow-y:scroll;\">\n";
+			echo "<table class=\"quizResults\">\n";
+			echo "\t<tbody>\n";
+			echo "\t\t<tr>\n";
+			echo "\t\t\t<td width=\"20%\" class=\"borderless bold\">Question:</th>\n";
+			echo "\t\t\t<td class=\"borderless\">".$quiz_details["question_text"]."</th>\n";
+			echo "\t\t</tr>\n";
+			echo "\t\t<tr>\n";
+			echo "\t\t\t<td class=\"borderless bold\">Response:</th>\n";
+			echo "\t\t\t<td class=\"borderless\">".$quiz_details["response_text"]."</th>\n";
+			echo "\t\t</tr>\n";
+			echo "\t</tbody>\n";
+			echo "</table>\n";
+			echo "<br />";
+			echo "<table class=\"quizResults\">\n";
+			echo "\t<tbody>\n";
+			echo "\t\t<tr>\n";
+			echo "\t\t\t<td class=\"borderless bold\">Fullname</td>\n";
+			echo "\t\t\t<td class=\"borderless bold\">Number</td>\n";
+			echo "\t\t</tr>\n";			
+			foreach ($results as $result) {
+				echo "\t\t<tr>\n";
+				echo "\t\t\t<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$result["qprogress_id"]."\">".$result["name"]."</a></td>\n";
+				echo "\t\t\t<td><a href=\"".ENTRADA_URL."/quizzes?section=results&amp;id=".$result["qprogress_id"]."\">".$result["number"]."</a></td>\n";
+				echo "\t\t</tr>\n";
+			}
+			echo "\t</tbody>\n";
+			echo "</table>\n";
+			echo "</div>";
+		}
+		
+		exit;
+	}
+		
 	if ($RECORD_ID) {
 		if ($QUIZ_TYPE == "event") {
 			$query		= "	SELECT a.*, b.`course_id`, b.`event_title` AS `content_title`, d.`audience_type`, d.`audience_value` AS `event_cohort`, e.`quiz_title` AS `default_quiz_title`, e.`quiz_description` AS `default_quiz_description`, f.`quiztype_code`, g.`organisation_id`
@@ -76,7 +132,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 		if ($quiz_record) {
 			$community_access_query = "	SELECT * FROM `community_members`
 										WHERE `community_id` = ".$db->qstr($quiz_record["community_id"])."
-										AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+										AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										AND `member_active` = '1'
 										AND `member_acl` = '1'";
 			if ($QUIZ_TYPE == "event" && !$ENTRADA_ACL->amIAllowed(new EventContentResource($quiz_record["content_id"], $quiz_record["course_id"], $quiz_record["organisation_id"]), "update")) {
@@ -427,6 +483,32 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							exit;
 						}
 						?>
+						<script type="text/javascript">
+							jQuery(function(){
+								
+								jQuery(".respondents").click(function(){
+									jQuery.ajax({
+										type: 'POST',
+										url: '<?php echo ENTRADA_URL."/admin/".$MODULE.'?section=results'; ?>',
+										data: 'mode=ajax&response_id='+jQuery(this).attr("rel")+'&quiz_id=<?php echo $RECORD_ID; ?>',
+										success: function(data) {
+											jQuery(data).dialog({
+												modal: true,
+												resizable: false,
+												draggable: false,
+												width: 500,
+												height: 400,
+												title: 'Question Respondents',
+												buttons: {
+													"OK": function() { jQuery(this).dialog("close"); }
+												}
+											});
+										}
+									});
+									return false;
+								});
+							});
+						</script>
 						<a name="question-breakdown-section"></a>
 						<h2 title="Question Breakdown Section">Quiz Results by Question Breakdown</h2>
 						<div id="question-breakdown-section">
@@ -466,11 +548,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										}
 
 										$percent = number_format(((round(($response["response_selected"] / $total_attempts), 3)) * 100), 1);
-
 										echo "<tr>\n";
 										echo "	<td>&nbsp;</td>\n";
 										echo "	<td><img src=\"".ENTRADA_URL."/images/question-".((($response["response_correct"] == 1)) ? "correct" : "incorrect").".gif\" width=\"16\" height=\"16\" /></td>";
-										echo "	<td>".clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "allowedtags" : "encode"))."</td>";
+										echo "	<td>".clean_input($response["response_text"], (($response["response_is_html"] == 1) ? "trim" : "encode"))."</td>";
 										echo "	<td>\n";
 										echo "		<div id=\"response-".$qqresponse_id."\" class=\"stats-container".(($response["response_correct"] == 1) ? " correct" : "")."\"></div>\n";
 										echo "		<script type=\"text/javascript\">\n";
@@ -478,7 +559,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										echo "		</script>\n";
 										echo "	</td>\n";
 										echo "	<td class=\"left\">".$percent."%</td>";
-										echo "	<td class=\"center\">".$response["response_selected"]."</td>";
+										echo "	<td class=\"center\">".(($response["response_selected"] > 0) ? "<a href=\"#\" class=\"respondents\" rel=\"".$response["qqresponse_id"]."\">" : "" ).$response["response_selected"].(($response["response_selected"] > 0) ? "</a>" : "" )."</td>";
 										echo "</tr>";
 									}
 									echo "<tr>\n";

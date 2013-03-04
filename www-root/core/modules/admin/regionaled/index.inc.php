@@ -124,7 +124,7 @@ if (!defined("IN_REGIONALED")) {
 	</div>
 
 	<?php
-	$query = "	SELECT a.*, b.`apartment_title`, c.`region_name`, d.`id` AS `proxy_id`, d.`firstname`, d.`lastname`, IF(e.`group` = 'student', 'Clerk', 'Resident') AS `learner_type`
+	$query = "	SELECT a.*, b.`apartment_title`, c.`region_name`, d.`id` AS `proxy_id`, d.`firstname`, d.`lastname`, e.`group` AS `learner_type`
 				FROM `".CLERKSHIP_DATABASE."`.`apartment_schedule` AS a
 				LEFT JOIN `".CLERKSHIP_DATABASE."`.`apartments` AS b
 				ON b.`apartment_id` = a.`apartment_id`
@@ -134,9 +134,12 @@ if (!defined("IN_REGIONALED")) {
 				ON d.`id` = a.`proxy_id`
 				LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS e
 				ON e.`user_id` = d.`id`
+				AND e.`group` IN ('student', 'Clerk', 'Resident')
+				AND e.`account_active` = 'true'
 				AND e.`app_id` = ".$db->qstr(AUTH_APP_ID)."
 				WHERE a.`confirmed` = '0'
 				AND a.`inhabiting_finish` > UNIX_TIMESTAMP()
+				GROUP BY d.`id`
 				ORDER BY a.`inhabiting_start` ASC";
 	$results = $db->GetAll($query);
 	if ($results) {

@@ -35,7 +35,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "add")), "title" => "Add Evaluation Form");
 	
@@ -72,17 +72,52 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			} else {
 				$PROCESSED["form_description"] = "";
 			}
+			
+			/**
+			 * Required field "associated_author" / Associated Authors (array of proxy ids).
+			 * This is actually accomplished after the evaluation_form is inserted below.
+			 */	
+			if ((isset($_POST["associated_author"]))) {
+				$associated_authors = explode(",", $_POST["associated_author"]);
+				foreach($associated_authors as $contact_order => $proxy_id) {
+					if ($proxy_id = clean_input($proxy_id, array("trim", "int"))) {
+						$PROCESSED["associated_authors"][(int) $contact_order] = $proxy_id;	
+					}
+				}
+			}
+			
+			/**
+			 * The current evaluation author must be in the author list.
+			 */
+			if (!in_array($ENTRADA_USER->getActiveId(), $PROCESSED["associated_authors"])) {
+				array_unshift($PROCESSED["associated_authors"], $ENTRADA_USER->getActiveId());
+			}
 
 			if (!$ERROR) {
 				$PROCESSED["form_parent"] = 0;
 				$PROCESSED["form_active"] = 1;
 				$PROCESSED["updated_date"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 				if ($db->AutoExecute("evaluation_forms", $PROCESSED, "INSERT") && ($eform_id = $db->Insert_Id())) {
+					if ((is_array($PROCESSED["associated_authors"])) && (count($PROCESSED["associated_authors"]))) {
+						foreach($PROCESSED["associated_authors"] as $contact_order => $proxy_id) {
+							$contact_details =  array(	"eform_id" => $eform_id, 
+														"proxy_id" => $proxy_id, 
+														"contact_role" => "author",
+														"contact_order" => (int) $contact_order, 
+														"updated_date" => time(), 
+														"updated_by" => $ENTRADA_USER->getID());
+							if (!$db->AutoExecute("evaluation_form_contacts", $contact_details, "INSERT")) {
+								add_error("There was an error while trying to attach an <strong>Associated Author</strong> to this evaluation form.<br /><br />The system administrator was informed of this error; please try again later.");
+
+								application_log("error", "Unable to insert a new evaluation_form_contact record while adding a new evaluation form. Database said: ".$db->ErrorMsg());
+							}
+						}
+					}
 					application_log("success", "New evaluation form [".$eform_id."] was added to the system.");
 
-					header("Location: ".ENTRADA_URL."/admin/evaluations/forms/questions?id=".$eform_id."&section=add");
+					header("Location: ".ENTRADA_URL."/admin/evaluations/forms?section=edit&id=".$eform_id);
 					exit;
 				} else {
 					$ERROR++;
@@ -117,6 +152,26 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		break;
 		case 1 :
 		default :
+
+			$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+			
+			/**
+			 * Compiles the full list of faculty members.
+			 */
+			$AUTHOR_LIST = array();
+			$query = "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, a.`organisation_id`
+						FROM `".AUTH_DATABASE."`.`user_data` AS a
+						LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+						ON b.`user_id` = a.`id`
+						WHERE b.`app_id` = '".AUTH_APP_ID."'
+						AND (b.`group` = 'faculty' OR (b.`group` = 'resident' AND b.`role` = 'lecturer') OR b.`group` = 'staff' OR b.`group` = 'medtech')
+						ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+			$results = $db->GetAll($query);
+			if ($results) {
+				foreach($results as $result) {
+					$AUTHOR_LIST[$result["proxy_id"]] = array('proxy_id'=>$result["proxy_id"], 'fullname'=>$result["fullname"], 'organisation_id'=>$result['organisation_id']);
+				}
+			}
 			/**
 			 * Load the rich text editor.
 			 */
@@ -184,6 +239,44 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							</td>
 							<td>
 								<textarea id="form_description" name="form_description" style="width: 550px; height: 125px" cols="70" rows="10"><?php echo clean_input($PROCESSED["form_description"], array("trim", "allowedtags", "encode")); ?></textarea>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="3">&nbsp;</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="vertical-align: top;">
+								<label for="evaluation_authors" class="form-required">Evaluation Authors</label>
+							</td>
+							<td>
+								<input type="text" id="author_name" name="fullname" size="30" autocomplete="off" style="width: 203px; vertical-align: middle" />
+								<?php
+								$ONLOAD[] = "author_list = new AutoCompleteList({ type: 'author', url: '". ENTRADA_RELATIVE ."/api/personnel.api.php?type=facultyorstaff', remove_image: '". ENTRADA_RELATIVE ."/images/action-delete.gif'})";
+								?>
+								<div class="autocomplete" id="author_name_auto_complete"></div>
+								<input type="hidden" id="associated_author" name="associated_author" />
+								<input type="button" class="button-sm" id="add_associated_author" value="Add" style="vertical-align: middle" />
+								<span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
+								<ul id="author_list" class="menu" style="margin-top: 15px">
+									<?php
+									if (is_array($PROCESSED["associated_authors"]) && count($PROCESSED["associated_authors"])) {
+										foreach ($PROCESSED["associated_authors"] as $author) {
+											if ((array_key_exists($author, $AUTHOR_LIST)) && is_array($AUTHOR_LIST[$author])) {
+												?>
+												<li class="user" id="author_<?php echo $AUTHOR_LIST[$author]["proxy_id"]; ?>" style="cursor: move;margin-bottom:10px;width:350px;"><?php echo $AUTHOR_LIST[$author]["fullname"]; if ($author != $ENTRADA_USER->getID()) {?> <img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="author_list.removeItem('<?php echo $AUTHOR_LIST[$author]["proxy_id"]; ?>');" class="list-cancel-image" /><?php } ?></li>
+												<?php
+											}
+										}
+									} else {
+										?>
+										<li class="user" id="author_<?php echo $AUTHOR_LIST[$ENTRADA_USER->getProxyId()]["proxy_id"]; ?>" style="cursor: move;margin-bottom:10px;width:350px;"><?php echo $AUTHOR_LIST[$ENTRADA_USER->getProxyId()]["fullname"]; ?></li>
+										<?php
+									}
+									?>
+								</ul>
+								<input type="hidden" id="author_ref" name="author_ref" value="" />
+								<input type="hidden" id="author_id" name="author_id" value="" />
 							</td>
 						</tr>
 					</tbody>

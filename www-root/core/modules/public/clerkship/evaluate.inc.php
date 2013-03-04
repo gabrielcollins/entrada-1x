@@ -29,7 +29,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 	exit;
 }
 
-switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]) {
+switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 	case "student" :
 		if(isset($NOTIFICATION_ID) && ((int) $NOTIFICATION_ID)) {
 			$query		= "	SELECT a.*, b.`region_id`, b.`event_title`, b.`event_desc`, b.`event_start`, b.`event_finish`, c.`form_id`, d.`form_type`, d.`form_title`, d.`form_desc`
@@ -41,7 +41,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 							LEFT JOIN `".CLERKSHIP_DATABASE."`.`eval_forms` AS d
 							ON d.`form_id` = c.`form_id`
 							WHERE a.`notification_id` = ".$db->qstr($NOTIFICATION_ID)."
-							AND a.`user_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+							AND a.`user_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 							AND a.`item_maxinstances` > '0'
 							AND (
 								a.`notification_status` <> 'complete'
@@ -185,7 +185,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 												LEFT JOIN `".CLERKSHIP_DATABASE."`.`notifications` AS b
 												ON b.`notification_id` = a.`notification_id`
 												WHERE a.`instructor_id` = ".$db->qstr($PROCESSED["instructor_id"])."
-												AND b.`user_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+												AND b.`user_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 										$result	= $db->GetRow($query);
 										if($result) {
 											$ERROR++;
@@ -250,7 +250,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 										$PROCESSED["notification_status"] = "complete";
 									}
 									
-									if(!$db->AutoExecute(CLERKSHIP_DATABASE.".notifications", $PROCESSED, "UPDATE", "`user_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `notification_id` = ".$db->qstr($NOTIFICATION_ID))) {
+									if(!$db->AutoExecute(CLERKSHIP_DATABASE.".notifications", $PROCESSED, "UPDATE", "`user_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `notification_id` = ".$db->qstr($NOTIFICATION_ID))) {
 										application_log("error", "Unable to update the status of a notification. Database said: ".$db->ErrorMsg());
 									}
 								}
@@ -563,7 +563,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 														if ($answers[$i]["answer_type"] == $FIELD_ANSWERTYPE["radio"]["value"]) {
 															if ($answers[$i]["answer_value"] != 0) { 
 																echo "<td align=\"center\">\n";
-																echo "	<input type=\"radio\" id=\"".$evaluate["form_id"]."_".$answers[$i]["question_id"]."_answer_".$i."\" name=\"form[".$evaluate["form_id"]."][".$answers[$i]["question_id"]."][answer]\" value=\"".html_encode($answers[$i]["answer_id"])."\"".(($_POST["form"][$evaluate["form_id"]][$answers[$i]["question_id"]]["answer"] == $answers[$i]["answer_id"]) ? " checked=\"checked\"" : "")." />\n";
+																echo "	<input type=\"radio\" id=\"".$evaluate["form_id"]."_".$answers[$i]["question_id"]."_answer_".$i."\" name=\"form[".$evaluate["form_id"]."][".$answers[$i]["question_id"]."][answer]\" value=\"".html_encode($answers[$i]["answer_id"])."\"".((isset($_POST["form"][$evaluate["form_id"]][$answers[$i]["question_id"]]["answer"]) && $_POST["form"][$evaluate["form_id"]][$answers[$i]["question_id"]]["answer"] == $answers[$i]["answer_id"]) ? " checked=\"checked\"" : "")." />\n";
 																echo "</td>\n";
 															}
 														} 

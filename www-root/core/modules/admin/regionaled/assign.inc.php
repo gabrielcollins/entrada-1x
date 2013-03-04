@@ -121,7 +121,7 @@ if (!defined("IN_REGIONALED")) {
 						$PROCESSED["inhabiting_start"] = $event_info["event_start"];
 						$PROCESSED["inhabiting_finish"] = $event_info["event_finish"];
 						$PROCESSED["updated_last"] = time();
-						$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 						$PROCESSED["aschedule_status"] = "published";
 
 						if ($db->AutoExecute(CLERKSHIP_DATABASE.".apartment_schedule", $PROCESSED, "INSERT") && ($aschedule_id = $db->Insert_Id())) {

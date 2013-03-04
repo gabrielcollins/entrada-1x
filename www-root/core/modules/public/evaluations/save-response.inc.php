@@ -63,6 +63,8 @@ if ($RECORD_ID) {
 						ON a.`eform_id` = b.`eform_id`
 						LEFT JOIN `evaluation_progress` AS c
 						ON a.`evaluation_id` = c.`evaluation_id`
+						LEFT JOIN `evaluations_lu_targets` AS d
+						ON b.`target_id` = d.`target_id`
 						WHERE a.`evaluation_id` = ".$db->qstr($RECORD_ID)."
 						AND a.`evaluation_active` = '1'";
 	$evaluation_record	= $db->GetRow($query);
@@ -72,7 +74,6 @@ if ($RECORD_ID) {
 		 * on both the quiz and the event, allow them to continue.
 		 */
 		if (((int) $evaluation_record["release_date"] === 0) || ($evaluation_record["release_date"] <= time())) {
-			$completed_attempts = 0;
 
 			$query				= "	SELECT *
 									FROM `evaluation_progress` AS a
@@ -81,104 +82,72 @@ if ($RECORD_ID) {
 									LEFT JOIN `evaluation_forms` AS c
 									ON b.`eform_id` = c.`eform_id`
 									WHERE a.`evaluation_id` = ".$db->qstr($RECORD_ID)."
-									AND a.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
-									AND a.`progress_value` = 'complete'
+									AND a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
+									AND a.`progress_value` = 'inprogress'
 									ORDER BY a.`updated_date` ASC";
-			$completed_record	= $db->GetAll($query);
-			if ($completed_record) {
-				$completed_attempts = count($completed_record);
-			}
+			$progress_record	= $db->GetRow($query);
+			if ($progress_record) {
+				$evaluation_progress_array	= array (
+											"updated_date" => time(),
+											"updated_by" => $ENTRADA_USER->getID()
+										);
 
-			/**
-			 * Providing they can still still make attempts at this quiz, allow them to continue.
-			 */
-			if (((int) $evaluation_record["max_attempts"] === 0) || ($completed_attempts < $evaluation_record["max_attempts"])) {
-				/**
-				 * Check to see if they currently have a quiz in progress,
-				 * if the do, then use that qprogress_id.
-				 */
-				$query				= "	SELECT *
-										FROM `evaluation_progress` AS a
-										LEFT JOIN `evaluations` AS b
-										ON a.`evaluation_id` = b.`evaluation_id`
-										LEFT JOIN `evaluation_forms` AS c
-										ON b.`eform_id` = c.`eform_id`
-										WHERE a.`evaluation_id` = ".$db->qstr($RECORD_ID)."
-										AND a.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
-										AND a.`progress_value` = 'inprogress'
-										ORDER BY a.`updated_date` ASC";
-				$progress_record	= $db->GetRow($query);
-				if ($progress_record) {
-					$evaluation_progress_array	= array (
-												"updated_date" => time(),
-												"updated_by" => $_SESSION["details"]["id"]
-											);
+				if ($db->AutoExecute("evaluation_progress", $evaluation_progress_array, "UPDATE", "`eprogress_id` = ".$db->qstr($progress_record["eprogress_id"]))) {
+					if ((isset($_POST["qid"])) && ($tmp_input = clean_input($_POST["qid"], "int"))) {
+						$qquestion_id = $tmp_input;
 
-					if ($db->AutoExecute("evaluation_progress", $evaluation_progress_array, "UPDATE", "`eprogress_id` = ".$db->qstr($progress_record["eprogress_id"]))) {
-						if ((isset($_POST["qid"])) && ($tmp_input = clean_input($_POST["qid"], "int"))) {
-							$qquestion_id = $tmp_input;
+						if ((isset($_POST["rid"])) && ($tmp_input = clean_input($_POST["rid"], "int"))) {
+							$qqresponse_id = $tmp_input;
 
-							if ((isset($_POST["rid"])) && ($tmp_input = clean_input($_POST["rid"], "int"))) {
-								$qqresponse_id = $tmp_input;
-								
-								if ((isset($_POST["comments"])) && clean_input($_POST["comments"], array("trim", "notags"))) {
-									$comments = clean_input($_POST["comments"], array("trim", "notags"));
-								} else {
-									$comments = NULL;
-								}
-								if (evaluation_save_response($progress_record["eprogress_id"], $progress_record["eform_id"], $qquestion_id, $qqresponse_id, $comments)) {
-									echo 200;
-									exit;
-								} else {
-									/**
-									 * @exception 409: Unable to record a response to a question.
-									 */
-									echo 409;
-									exit;
-								}
+							if ((isset($_POST["comments"])) && clean_input($_POST["comments"], array("trim", "notags"))) {
+								$comments = clean_input($_POST["comments"], array("trim", "notags"));
 							} else {
-								application_log("error", "A rid variable was not provided when attempting to submit a response to a question.");
-
+								$comments = NULL;
+							}
+							if (evaluation_save_response($progress_record["eprogress_id"], $progress_record["eform_id"], $qquestion_id, $qqresponse_id, $comments)) {
+								echo 200;
+								exit;
+							} else {
 								/**
-								 * @exception 408: Quiz Question Response ID was not provided.
+								 * @exception 409: Unable to record a response to a question.
 								 */
-								echo 408;
+								echo 409;
 								exit;
 							}
 						} else {
-							application_log("error", "A qid variable was not provided when attempting to submit a response to a question.");
+							application_log("error", "A rid variable was not provided when attempting to submit a response to a question.");
 
 							/**
-							 * @exception 407: Quiz Question ID was not provided.
+							 * @exception 408: Quiz Question Response ID was not provided.
 							 */
-							echo 407;
+							echo 408;
 							exit;
 						}
 					} else {
-						application_log("error", "Unable to update the evaluation_progress.updated_date field when attempting to submit a question response for qprogress_id [".$progress_record["qprogress_id"]."] when attempting to continue with a quiz. Database said: ".$db->ErrorMsg());
+						application_log("error", "A qid variable was not provided when attempting to submit a response to a question.");
 
 						/**
-						 * @exception 406: Unable to update the evaluation_progress.updated_date field to the current timestamp.
+						 * @exception 407: Quiz Question ID was not provided.
 						 */
-						echo 406;
+						echo 407;
 						exit;
 					}
 				} else {
-					application_log("error", "Unable to locate a current evaluation_progress record when attempting to submit a question response to aevaluation_id [".$RECORD_ID."] (evaluation_id [".$evaluation_record["evaluation_id"]."] / event_id [".$evaluation_record["event_id"]."]).");
+					application_log("error", "Unable to update the evaluation_progress.updated_date field when attempting to submit a question response for qprogress_id [".$progress_record["qprogress_id"]."] when attempting to continue with a quiz. Database said: ".$db->ErrorMsg());
 
 					/**
-					 * @exception 405: Unable to locate a current progress record.
+					 * @exception 406: Unable to update the evaluation_progress.updated_date field to the current timestamp.
 					 */
-					echo 405;
+					echo 406;
 					exit;
 				}
 			} else {
-				application_log("error", "Someone attempted to submit a question response to aevaluation_id [".$RECORD_ID."] (evaluation_id [".$evaluation_record["evaluation_id"]."] / event_id [".$evaluation_record["event_id"]."]) more than the total number of possible attempts [".$evaluation_record["evaluation_attempts"]."].");
+				application_log("error", "Unable to locate a current evaluation_progress record when attempting to submit a question response to aevaluation_id [".$RECORD_ID."] (evaluation_id [".$evaluation_record["evaluation_id"]."] / event_id [".$evaluation_record["event_id"]."]).");
 
 				/**
-				 * @exception 404: Attempted to submit a response to a question when they have already completed the quiz the maximum number of times.
+				 * @exception 405: Unable to locate a current progress record.
 				 */
-				echo 404;
+				echo 405;
 				exit;
 			}
 		} else {

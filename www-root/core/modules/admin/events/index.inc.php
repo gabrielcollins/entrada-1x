@@ -33,7 +33,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/calendar/script/xc2_timestamp.js\"></script>\n";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/elementresizer.js\"></script>\n";
@@ -57,9 +57,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 	 * Fetch all of the events that apply to the current filter set.
 	 */
 	$learning_events = events_fetch_filtered_events(
-			$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"],
-			$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"],
-			$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"],
+			$ENTRADA_USER->getActiveId(),
+			$ENTRADA_USER->getActiveGroup(),
+			$ENTRADA_USER->getActiveRole(),
 			$ENTRADA_USER->getActiveOrganisation(),
 			$_SESSION[APPLICATION_IDENTIFIER]["events"]["sb"],
 			$_SESSION[APPLICATION_IDENTIFIER]["events"]["so"],
@@ -69,7 +69,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			$_SESSION[APPLICATION_IDENTIFIER]["events"]["filters"],
 			true,
 			(isset($_GET["pv"]) ? (int) trim($_GET["pv"]) : 1),
-			$_SESSION[APPLICATION_IDENTIFIER]["events"]["pp"]);
+			$_SESSION[APPLICATION_IDENTIFIER]["events"]["pp"],
+            false,
+            false);
 
 	echo "<h1>".$MODULES[strtolower($MODULE)]["title"]."</h1>";
 

@@ -18,7 +18,7 @@
  *
  * Run this script to connect a course (or multiple courses) to a community,
  * thus making transforming the Community into a "Course Website".
- *   
+ *
  * @author Unit: Medical Education Technology Unit
  * @author Developer: James Ellis <james.ellis@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
@@ -156,7 +156,7 @@ if (!$ERROR) {
 			}
 			$db->AutoExecute("community_pages", $page, "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cpage_id` = ".$db->qstr($page["cpage_id"]));
 			output_error($db->ErrorMsg());
-			
+
 		}
 	}
 }
@@ -178,9 +178,8 @@ if ($results) {
 	}
 }
 
-$query = "	SELECT `pcoord_id` FROM `courses` 
+$query = "	SELECT `pcoord_id` FROM `courses`
 			WHERE `course_id` IN (".$COURSE_IDS_STRING.")";
-$results = $db->GetAll($query);
 $results = $db->GetAll($query);
 if ($results) {
 	foreach ($results as $result) {
@@ -190,7 +189,7 @@ if ($results) {
 	}
 }
 
-$query = "	SELECT * FROM `community_members` 
+$query = "	SELECT * FROM `community_members`
 			WHERE `community_id` = ".$db->qstr($COMMUNITY_ID);
 $results = $db->GetAll($query);
 if ($results) {

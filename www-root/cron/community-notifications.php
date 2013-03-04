@@ -55,7 +55,7 @@ function build_post($post) {
 								"%APPLICATION_NAME%",
 								"%ENTRADA_URL%"
 							);
-			$query 		= "	SELECT a.*, CONCAT_WS(' ', b.firstname, b.lastname) as `fullname`, c.`community_title`, c.`community_url`, d.`page_url`
+			$query 		= "	SELECT a.*, c.`community_id`, CONCAT_WS(' ', b.firstname, b.lastname) as `fullname`, c.`community_title`, c.`community_url`, d.`page_url`
 							FROM `community_".$post["type"]."s` AS a
 							LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS b
 							ON b.`id` = ".$db->qstr($post["author_id"])."
@@ -66,15 +66,30 @@ function build_post($post) {
 							WHERE a.`c".$post["type"]."_id` = ".$db->qstr($post["record_id"]);
 			$result		= $db->GetRow($query);
 			if ($result) {
+				$query = "	SELECT c.`organisation_installation` 
+							FROM `community_courses` AS a 
+							JOIN `courses` AS b 
+							ON a.`course_id` = b.`course_id` 
+							JOIN `".AUTH_DATABASE."`.`organisations` AS c 
+							ON b.`organisation_id` = c.`organisation_id` 
+							WHERE a.`community_id` = ".$db->qstr($result["community_id"]);
+				$course_url = $db->GetOne($query);
+				if ($course_url) {
+					$ENTRADA_URL = $course_url;
+					$COMMUNITY_URL = $course_url.'/community';
+				}else {
+					$ENTRADA_URL = ENTRADA_URL;
+					$COMMUNITY_URL = COMMUNITY_URL;
+				}				
 				$replace	= array(
 									$result["fullname"],
 									$result[$post["type"]."_title"],
 									$result["community_title"],
 									clean_input($result[$post["type"]."_description"],array("notags")),
-									COMMUNITY_URL.$result["community_url"].":".$result["page_url"]."?id=".$post["record_id"],
-									COMMUNITY_URL.$result["community_url"].":".$result["page_url"],
+									$COMMUNITY_URL.$result["community_url"].":".$result["page_url"]."?id=".$post["record_id"],
+									$COMMUNITY_URL.$result["community_url"].":".$result["page_url"],
 									APPLICATION_NAME,
-									ENTRADA_URL
+									$ENTRADA_URL
 								);
 			}
 			break;
@@ -259,7 +274,7 @@ function build_post($post) {
 
 	global $ENTRADA_ACTIVE_TEMPLATE;
 	$NOTIFICATION_MESSAGE["textbody"] = file_get_contents(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_ACTIVE_TEMPLATE."/email/".$post['body']);
-	$mail->setBodyText(clean_input(str_replace($search, $replace, $NOTIFICATION_MESSAGE["textbody"]), array("postclean")));
+		$mail->setBodyText(clean_input(str_replace($search, $replace, $NOTIFICATION_MESSAGE["textbody"]), array("postclean","decode")));
 }
 
 /**

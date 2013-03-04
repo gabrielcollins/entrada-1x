@@ -18,8 +18,6 @@
     get_include_path(),
 )));
 
-define("DEFAULT_ORGANIZATION_CATEGORY_ID", 49);
-
 /**
  * Include the Entrada init code.
  */
@@ -34,7 +32,7 @@ if (isset($_POST["cid"]) && $_SESSION["isAuthorized"]) {
 		if ($category) {
 			$parent_id 						= $category["category_parent"];
 			$category_selected_reverse[]	= $category["category_name"];
-			while ($parent_id != DEFAULT_ORGANIZATION_CATEGORY_ID) {
+			while ($parent_id != CLERKSHIP_TOP_CATEGORY_ID) {
 				$query = "	SELECT * FROM `".CLERKSHIP_DATABASE."`.`categories`
 							WHERE `category_id` = ".$db->qstr($parent_id);
 				$parent_category = $db->GetRow($query);

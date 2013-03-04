@@ -43,24 +43,24 @@ if (!defined("IN_EVENTS")) {
 	 * Clears all open buffers so we can return a plain response for the Javascript.
 	 */
 	ob_clear_open_buffers();
-	
+
 	$options_for = false;
 	$course_id = 0;
-	
+
 	if (isset($_POST["options_for"]) && ($tmp_input = clean_input($_POST["options_for"], array("trim")))) {
 		$options_for = $tmp_input;
 	}
-	
+
 	if (isset($_POST["course_id"]) && ($tmp_input = clean_input($_POST["course_id"], array("int")))) {
 		$course_id = $tmp_input;
 	}
-	
+
 	if (isset($_POST["event_id"]) && ($tmp_input = clean_input($_POST["event_id"], array("int")))) {
 		$event_id = $tmp_input;
 	}
-	
+
 	if ($options_for && $ENTRADA_USER->getActiveOrganisation()) {
-		
+
 		$organisation[$ENTRADA_USER->getActiveOrganisation()] = array("text" => fetch_organisation_title($ENTRADA_USER->getActiveOrganisation()), "value" => "organisation_" . $ENTRADA_USER->getActiveOrganisation(), "category" => true);
 
 		switch ($options_for) {
@@ -88,9 +88,9 @@ if (!defined("IN_EVENTS")) {
 						}
 					}
 				}
-				
+
 				$groups = $organisation;
-				
+
 				$query = "	SELECT a.*
 							FROM `groups` AS a
 							JOIN `group_organisations` AS b
@@ -140,9 +140,9 @@ if (!defined("IN_EVENTS")) {
 						}
 					}
 				}
-				
+
 				$groups = $organisation;
-				
+
 				$query = "	SELECT a.*
 							FROM `course_groups` AS a
 							WHERE a.`active` = '1'
@@ -193,21 +193,21 @@ if (!defined("IN_EVENTS")) {
 						}
 					}
 				}
-				
+
 				$students = $organisation;
 
-				$query = "	SELECT a.`id` AS `proxy_id`, a.`organisation_id`, b.`role`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`
+				$query = "	SELECT a.`id` AS `proxy_id`, b.`organisation_id`, b.`role`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`
 							FROM `".AUTH_DATABASE."`.`user_data` AS a
 							JOIN `".AUTH_DATABASE."`.`user_access` AS b
 							ON a.`id` = b.`user_id`
 							WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-							AND a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+							AND b.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
 							AND b.`account_active` = 'true'
 							AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
 							AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
 							AND b.`group` = 'student'
 							AND a.`grad_year` >= ".$db->qstr((fetch_first_year() - 4)).
-							(($ENTRADA_USER->getGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getProxyId()) : "")."
+							(($ENTRADA_USER->getActiveGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getID()) : "")."
 							GROUP BY a.`id`
 							ORDER BY a.`grad_year` DESC, a.`lastname` ASC, a.`firstname` ASC";
 				$student_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);

@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 // Meta information for this page.
 $PAGE_META["title"]		= "Annual Report Generation";
@@ -118,27 +118,21 @@ function display($results, $db)
             if(isset($result["status_date"]) && strlen($result["status_date"]) == 5) {
 				$month 	= substr($result["status_date"], 0, 1);
 				$year 	= substr($result["status_date"], 1, 4);
-				$formattedRec = $formattedRec . $month . "-" . $year . ", ";
+				if($month == 0) {
+					$month = 1;
+				}
 			} else if(isset($result["status_date"]) && strlen($result["status_date"]) == 6) {
 				$month 	= substr($result["status_date"], 0, 2);
 				$year 	= substr($result["status_date"], 2, 4);
-            	$formattedRec = $formattedRec . $month . "-" . $year . ", ";
-            } else if(isset($result["epub_date"]) && strlen($result["epub_date"]) == 5) {
-				$month 	= substr($result["epub_date"], 0, 1);
-				if($month == 0) {
-					$month = 1;
-				}
-				$year 	= substr($result["epub_date"], 1, 4);
-				$formattedRec = $formattedRec . $month . "-" . $year . " (e-pub), ";
-			} else if(isset($result["epub_date"]) && strlen($result["epub_date"]) == 6) {
-				$month 	= substr($result["epub_date"], 0, 2);
-				if($month == 0) {
-					$month = 1;
-				}
-				$year 	= substr($result["epub_date"], 2, 4);
-            	$formattedRec = $formattedRec . $month . "-" . $year . " (e-pub), ";
-            }
-            
+            	if($month == 0) {
+            		$month = 1;
+				} 
+			}
+			if($result["category"] == "E-Pub") {
+					$formattedRec = $formattedRec . $month . "-" . $year . " (e-pub), ";
+			} else {
+				$formattedRec = $formattedRec . $month . "-" . $year . ", ";
+			}
             if($result["source"] != "") {
                 $formattedRec = $formattedRec . html_encode($result["source"]) . ", ";
             }
@@ -221,7 +215,7 @@ $oncologyGroup = array(4664, 3722, 495, 3334, 737, 805);
 if($clinical_value == false || in_array($proxy_id, $oncologyGroup)) {
 	$DUE_DATE 				= "February 1, " . $NEXT_YEAR;
 } else {
-	$DUE_DATE 				= "March 15, " . $NEXT_YEAR;
+	$DUE_DATE 				= "February 15, " . $NEXT_YEAR;
 }
 
 $PAGE_META["title"]			= "Your Annual Report for " . $REPORT_YEAR;
@@ -987,6 +981,7 @@ else
 						<col class="student_name" />
 						<col class="student_name" />
 						<col class="average_hours" />
+						<col class="average_hours" />
 						<col class="full_description" />
 					</colgroup>
 					<thead>
@@ -995,6 +990,7 @@ else
 							<td class="student_name" id="collevel">Level of Trainee / Description</td>
 							<td class="student_name" id="collocation">Location</td>
 							<td class="average_hours" id="colaverage_hours">Avg. Hrs/Week</td>
+							<td class="average_hours" id="colaverage_hours"> &gt; 75% Research</td>
 							<td class="full_description" id="coldescription">Description</td>		
 						</tr>
 					</thead>
@@ -1018,6 +1014,13 @@ else
 						}
 						echo "</td>\n";
 						echo "	<td class=\"average_hours\">".html_encode($result['average_hours'])."&nbsp;</td>\n";
+						if(isset($result['research_percentage']) && trim($result['research_percentage']) == '1')
+						{
+							$research_percentage = "Yes";
+						} else {
+							$research_percentage = "No";
+						}
+						echo "	<td class=\"average_hours\">".$research_percentage."&nbsp;</td>\n";
 						echo "	<td class=\"full_description\">".html_encode($result['description'])."&nbsp;</td>\n";
 						echo "</tr>\n";
 						$ctr++;
@@ -1265,16 +1268,32 @@ else
 			echo "	<td class=\"full_description\" width=\"49%\">".html_encode($result['agency'])."&nbsp;</td>";
 			echo "	<td class=\"student_name\" width=\"49%\">". html_encode($result['start_month']) ."-".html_encode($result['start_year']) . " / "
 												.((html_encode($result['end_month']) == 0 ? "N/A" : html_encode($result['end_month']) ."-".html_encode($result['end_year'])))."&nbsp;</td>";
+			if($clinical_value == true) {
 			echo "</tr>
 			<thead>
 				<tr>
-					<td class=\"delete\" id=\"colDelete\"></td>
-					<td class=\"full_description\" id=\"colprincipal_investigator\" colspan=\"2\"><b>Principal Investigator</b></td>
+					<td class=\"delete\" id=\"colDelete\" width=\"2%\"></td>
+					<td class=\"full_description\" id=\"colpi\" width=\"49%\"><b>Principal Investigator</b></td>
+					<td class=\"student_name\" id=\"colstatus\" width=\"49%\"><b>Status</b></td>	
 				</tr>
 			</thead>";
+			} else {
+				echo "</tr>
+				<thead>
+					<tr>
+						<td class=\"delete\" id=\"colDelete\" width=\"2%\"></td>
+						<td class=\"full_description\" id=\"colpi\" colspan=\"2\"><b>Principal Investigator</b></td>
+					</tr>
+				</thead>";
+			}
 			echo "<tr>\n";
 			echo "	<td class=\"delete\"></td>\n";					
-			echo "	<td class=\"full_description\" colspan=\"2\">".html_encode($result['principal_investigator'])."&nbsp;</td>";
+			if($clinical_value == true) {
+				echo "	<td class=\"full_description\" width=\"49%\">".html_encode($result['principal_investigator'])."&nbsp;</td>";
+				echo "	<td class=\"student_name\" width=\"49%\">".($result['status'] == "" ? "N/A" : html_encode($result['status']))."&nbsp;</td>";
+			} else {
+				echo "	<td class=\"full_description\" colspan=\"2\">".html_encode($result['principal_investigator'])."&nbsp;</td>";
+			}
 			echo "</tr>
 			<thead>
 				<tr>
@@ -1481,7 +1500,7 @@ else
 	$endDate = $REPORT_YEAR;
 
 	$table = "ar_peer_reviewed_papers";
-	if($_SESSION["details"]["clinical_member"] && $REPORT_YEAR > '2010') {
+	if($ENTRADA_USER->getClinical() && $REPORT_YEAR > '2010') {
 		$roleTable = "ar_lu_pr_roles";
 	} else {
 		$roleTable = "global_lu_roles";
@@ -1637,7 +1656,8 @@ else
 			<tr>
 				<td class="delete" id="colDelete" width="2%">#</td>
 				<td class="course_name" id="coltype" width="23%">Activity Type</td>
-				<td class="full_description" id="coldescription" width="75%">Description</td>	
+				<td class="full_description" id="coldescription" width="50%">Description</td>
+				<td class="full_description" id="coldescription" width="25%">Category</td>
 			</tr>
 		</thead>
 	<tbody>	
@@ -1648,7 +1668,8 @@ else
 			echo "<tr>\n";
 			echo "	<td class=\"delete\" width=\"2%\">".$ctr."&nbsp;</td>\n";					
 			echo "	<td class=\"course_name\" width=\"23%\">".html_encode($result['scholarly_activity_type'])."&nbsp;</td>";
-			echo "	<td class=\"full_description\" width=\"75%\">".html_encode($result['description'])."&nbsp;</td>\n";
+				echo "	<td class=\"full_description\" width=\"50%\">".html_encode($result['description'])."&nbsp;</td>\n";
+				echo "	<td class=\"full_description\" width=\"25%\">".html_encode($result['location'])."&nbsp;</td>\n";
 			echo "</tr>";
 			$ctr++;
 		}
@@ -1684,8 +1705,8 @@ else
 		<thead>
 			<tr>
 				<td class="delete" id="colDelete" width="2%">#</td>
-				<td class="course_name" id="coltype" width="23%">Activity Type</td>
-				<td class="full_description" id="coldescription" width="75%">Description</td>	
+				<td class="course_name" id="coltype" width="23%">Activity Type</td>				
+				<td class="full_description" id="coldescription" width="75%">Description</td>
 			</tr>
 		</thead>
 	<tbody>	

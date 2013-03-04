@@ -212,10 +212,10 @@ if (!defined("IN_NOTICES")) {
 							AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
 							AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
 							AND b.`group` = 'student'
-							AND a.`grad_year` >= ".$db->qstr((fetch_first_year() - 4)).
-							(($ENTRADA_USER->getGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getProxyId()) : "")."
+							AND b.`role` >= ".$db->qstr((fetch_first_year() - 4)).
+							(($ENTRADA_USER->getGroup() == "student") ? " AND a.`id` = ".$db->qstr($ENTRADA_USER->getID()) : "")."
 							GROUP BY a.`id`
-							ORDER BY a.`grad_year` DESC, a.`lastname` ASC, a.`firstname` ASC";
+							ORDER BY b.`role` DESC, a.`lastname` ASC, a.`firstname` ASC";
 				$student_results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 				if ($student_results) {
 					foreach ($student_results as $student) {

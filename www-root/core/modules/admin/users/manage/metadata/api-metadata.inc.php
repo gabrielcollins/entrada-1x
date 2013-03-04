@@ -22,7 +22,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			case 'update':
 				$user = User::get($PROXY_ID);
 				
-				$org_id = $user->getOrganisationID();
+				$org_id = $user->getOrganisationId();
 				$group = $user->getGroup();
 				$role = $user->getRole();
 				$proxy_id = $user->getID();
@@ -94,7 +94,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				$type = MetaDataType::get($cat_id);
 				if ($type) {
 					$user = User::get($PROXY_ID);
-					$org_id = $user->getOrganisationID();
+					$org_id = $user->getOrganisationId();
 					$group = $user->getGroup();
 					$role = $user->getRole();
 					

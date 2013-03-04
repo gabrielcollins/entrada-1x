@@ -37,7 +37,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	if(isset($_GET["id"])) {
 		$EVENT_ID = clean_input($_GET["id"], "int");
@@ -344,7 +344,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					LEFT JOIN `".CLERKSHIP_DATABASE."`.`regions` AS c
 					ON c.`region_id` = a.`region_id`
 					WHERE b.`econtact_type` = 'student'
-					AND b.`etype_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					AND a.`event_type` = 'elective'
 					".$where."
 					ORDER BY a.`event_start` ASC";
@@ -391,7 +391,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 				}
 	
 				if((bool) $result["manage_apartments"]) {
-					$aschedule_id = regionaled_apartment_check($result["event_id"], $_SESSION["details"]["id"]);
+					$aschedule_id = regionaled_apartment_check($result["event_id"], $ENTRADA_USER->getID());
 					$apartment_available = (($aschedule_id) ? true : false);
 				} else {
 					$apartment_available = false;

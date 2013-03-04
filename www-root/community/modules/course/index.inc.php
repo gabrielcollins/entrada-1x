@@ -58,7 +58,7 @@ if ($community_courses) {
 	foreach ($course_events as $course_event) {
 		$event_ids[] = $db->qstr($course_event["event_id"]);
 	}
-
+	
 	switch ($PAGE_URL) {
 		case "" :
 			$query = "	SELECT b.*, CONCAT_WS(', ', b.`lastname`, b.`firstname`) AS `fullname`, c.`account_active`, c.`access_starts`, c.`access_expires`, c.`last_login`, c.`role`, c.`group`
@@ -772,11 +772,13 @@ if ($community_courses) {
 				$filters["course"][] = (int) trim($course_id, '\'');
 			}
 			
+			$_SESSION[APPLICATION_IDENTIFIER]["community_page"][$COMMUNITY_ID]["filters"] = $filters;
+			
 			$results = events_fetch_filtered_events(
-					$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"],
-					$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"],
-					$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"],
-					$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"],
+					$ENTRADA_USER->getActiveId(),
+					$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"],
+					$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"],
+					$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"],
 					$_SESSION[APPLICATION_IDENTIFIER]["community_page"]["sb"],
 					$_SESSION[APPLICATION_IDENTIFIER]["community_page"]["so"],
 					$_SESSION[APPLICATION_IDENTIFIER]["community_page"]["dtype"],
@@ -840,7 +842,7 @@ if ($community_courses) {
 					foreach($results["events"] as $result) {
 						if(((!$result["release_date"]) || ($result["release_date"] <= time())) && ((!$result["release_until"]) || ($result["release_until"] >= time()))) {
 							$attachments	= attachment_check($result["event_id"]);
-							$url			= ENTRADA_URL."/events?rid=".$rid."&community=".$COMMUNITY_ID;
+							$url			= ENTRADA_URL."/events?rid=".$result["event_id"]."&community=".$COMMUNITY_ID;
 							$is_modified	= false;
 
 							/**
@@ -976,21 +978,30 @@ if ($community_courses) {
 			new_sidebar_item("Learning Event Legend", $sidebar_html, "event-legend", "open");
 		break;
 		case (preg_match("/objectives$/", $PAGE_URL) != 0) :
-			$results = $db->GetAll("SELECT `course_id` FROM `community_courses` WHERE `community_id` = ".$db->qstr($COMMUNITY_ID));
 			$course_ids_str = "";
 			$clean_ids_str = "";
 			$course_ids = array();
-			foreach ($results as $course_id) {
-				$course_ids[] = $course_id["course_id"];
-				if ($course_ids_str) {
-					$course_ids_str .= ", ".$db->qstr($course_id["course_id"]);
-					$clean_ids_str .= ",".$course_id["course_id"];
-				} else {
-					$course_ids_str = $db->qstr($course_id["course_id"]);
-					$clean_ids_str = ",".$course_id["course_id"];
+
+			$query = "	SELECT a.`course_id`
+						FROM `community_courses` AS a
+						JOIN `courses` AS b
+						ON a.`course_id` = b.`course_id`
+						WHERE b.`course_active` = '1'
+						AND a.`community_id` = ".$db->qstr($COMMUNITY_ID);
+			$results = $db->GetAll($query);
+			if ($results) {
+				foreach ($results as $course_id) {
+					$course_ids[] = $course_id["course_id"];
+					if ($course_ids_str) {
+						$course_ids_str .= ", ".$db->qstr($course_id["course_id"]);
+						$clean_ids_str .= ",".$course_id["course_id"];
+					} else {
+						$course_ids_str = $db->qstr($course_id["course_id"]);
+						$clean_ids_str = ",".$course_id["course_id"];
+					}
 				}
 			}
-
+			
 			$show_objectives = false;
 			list($objectives,$top_level_id) = courses_fetch_objectives($ENTRADA_USER->getActiveOrganisation(),$course_ids,-1, 1, false);
 
@@ -1080,6 +1091,63 @@ if ($community_courses) {
 					</tbody>
 				</table>			
 				<?php
+		break;
+		case (strpos($PAGE_URL,"assessment_strategies") !== false):
+			
+			if ($ENTRADA_USER->getGroup() == 'student') {
+				$student_sql = "AND a.`cohort` = ".$db->qstr($ENTRADA_USER->getCohort());
+			} else {
+				$student_sql = "";
+			}
+				
+			$query =  "	SELECT a.`cohort`, c.`group_name`, a.`assessment_id`, a.`name`, a.`type`, a.`grade_weighting`, b.`title` AS `characteristic`
+						FROM `assessments` AS a
+						JOIN `assessments_lu_meta` AS b
+						ON a.`characteristic_id` = b.`id`
+						JOIN `groups` AS c
+						ON a.`cohort` = c.`group_id`
+						WHERE `course_id` IN (".implode("', '", $course_ids).")".
+						$student_sql."
+						ORDER BY a.`cohort` DESC, a.`type`";
+
+			$assessments = $db->GetAll($query);
+			
+			if ($assessments) {
+				echo "<h1>Assessments</h1>";
+				
+				foreach ($assessments as $assessment) {
+					$output[$assessment["cohort"]]["assessments"][$assessment["assessment_id"]]["name"] = $assessment["name"];
+					$output[$assessment["cohort"]]["assessments"][$assessment["assessment_id"]]["type"] = $assessment["type"];
+					$output[$assessment["cohort"]]["assessments"][$assessment["assessment_id"]]["characteristic"] = $assessment["characteristic"];
+					$output[$assessment["cohort"]]["assessments"][$assessment["assessment_id"]]["grade_weighting"] = $assessment["grade_weighting"];
+					$output[$assessment["cohort"]]["group_name"] = $assessment["group_name"];
+				}
+				foreach ($output as $course) {
+					echo "<h2>".$course["group_name"]."</h1>";
+					echo "<table width=\"100%\">\n";
+					echo "\t<thead>\n";
+					echo "\t\t<tr>\n";
+					echo "\t\t\t<th width=\"40%\" style=\"text-align:left;\">Assessment Title</th>\n";
+					echo "\t\t\t<th width=\"20%\" style=\"text-align:left;\">Type</th>\n";
+					echo "\t\t\t<th width=\"25%\" style=\"text-align:left;\">Characteristic</th>\n";
+					echo "\t\t\t<th width=\"15%\" style=\"text-align:left;\">Grade Weight</th>\n";
+					echo "\t\t</tr>\n";
+					echo "\t</thead>\n";
+					echo "\t<tbody>\n";
+					foreach ($course["assessments"] as $assessment) {
+						echo "\t<tr>\n";
+						echo "\t\t<td>".$assessment["name"]."</td>\n";
+						echo "\t\t<td>".$assessment["type"]."</td>\n";
+						echo "\t\t<td>".$assessment["characteristic"]."</td>\n";
+						echo "\t\t<td>".$assessment["grade_weighting"]."</td>\n";
+						echo "\t</tr>\n";
+					}
+					echo "\t<tbody>\n";
+					echo "</table>\n";
+				}
+				
+			}
+			
 		break;
 		default :
 		break;

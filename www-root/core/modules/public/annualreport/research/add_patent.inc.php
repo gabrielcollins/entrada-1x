@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
 	$PAGE_META["title"]			= "Add Patents, Agreements and / or Licenses";
@@ -69,7 +69,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				$ERROR++;
 				$ERRORSTR[] = "The <strong>Description</strong> field is required.";
 			}
-			
 			/**
 			 * Required field "year_reported" / Year Reported.
 			 */
@@ -96,8 +95,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($db->AutoExecute("ar_patent_activity", $PROCESSED, "INSERT")) {
 						$EVENT_ID = $db->Insert_Id();
@@ -155,9 +154,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			$HEAD[] = "<script language=\"javascript\" type=\"text/javascript\" src=\"".WEBSITE_URL."/javascript/calendar/script/xc2_inpage.js\"></script>\n";
 			$HEAD[] = "<script language=\"javascript\" type=\"text/javascript\" src=\"".WEBSITE_URL."/javascript/calendar/script/xc2_timestamp.js\"></script>\n";
 
-//			$HEAD[]		= "<script language=\"JavaScript\" type=\"text/javascript\" src=\"".ADMIN_URL."/javascript/picklist.js\"></script>\n";
-//			$ONLOAD[]		= "document.getElementById('other_teacher_listing').style.display = 'none'";
-
 			if($ERROR) {
 				echo display_error();
 			}
@@ -194,7 +190,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				<td></td>
 				<td style="vertical-align: top"><label for="description" class="form-required">Description</label></td>
 				<td><input type="text" id="description" name="description" value="<?php echo html_encode($PROCESSED["description"]); ?>" maxlength="255" style="width: 95%" /></td>
-			</tr>
+			</tr>	
 			<tr>
 				<td colspan="3">&nbsp;</td>
 			</tr>

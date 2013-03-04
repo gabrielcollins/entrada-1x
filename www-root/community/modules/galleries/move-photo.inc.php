@@ -43,7 +43,7 @@ if ($RECORD_ID) {
 			if ($gallery_record) {
 				if ((int) $photo_record["photo_active"]) {
 					if (galleries_photo_module_access($RECORD_ID, "move-photo")) {
-						if ($db->AutoExecute("community_gallery_photos", array("cgallery_id" => $gallery_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`cgphoto_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
+						if ($db->AutoExecute("community_gallery_photos", array("cgallery_id" => $gallery_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`cgphoto_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 							if ($photo_record["gallery_cgphoto_id"] == $RECORD_ID) {
 								if (!$db->AutoExecute("community_galleries", array("gallery_cgphoto_id" => 0), "UPDATE", "`cgallery_id` = ".$db->qstr($photo_record["cgallery_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cpage_id` = ".$db->qstr($PAGE_ID)." AND `gallery_cgphoto_id` = ".$db->qstr($RECORD_ID))) {
 									application_log("error", "Failed to remove the gallery hilite image [".$RECORD_ID."] photo from community [".$COMMUNITY_ID."]. Database said: ".$db->ErrorMsg());
@@ -56,7 +56,7 @@ if ($RECORD_ID) {
 								}
 							}
 
-							@$db->AutoExecute("community_gallery_comments", array("cgallery_id" => $gallery_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`cgphoto_id` = ".$db->qstr($RECORD_ID)." AND `cgallery_id` = ".$db->qstr($photo_record["cgallery_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
+							@$db->AutoExecute("community_gallery_comments", array("cgallery_id" => $gallery_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`cgphoto_id` = ".$db->qstr($RECORD_ID)." AND `cgallery_id` = ".$db->qstr($photo_record["cgallery_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
 							add_statistic("community:".$COMMUNITY_ID.":galleries", "photo_move", "cgphoto_id", $RECORD_ID);
 							communities_log_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID, "community_history_move_photo", true, $gallery_id);
 						} else {

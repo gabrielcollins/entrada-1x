@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/public/clerkship/logbook", "title" => "View Entries");
 
@@ -45,7 +45,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		$PROXY_ID = $_GET["id"];
 		$student = false;
 	} else {
-		$PROXY_ID = $_SESSION["details"]["id"];
+		$PROXY_ID = $ENTRADA_USER->getID();
 		$student = true;
 	}
 	
@@ -141,7 +141,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 			function loadEntry (entry_id) {
 				new Ajax.Updater({ success: 'entry' }, '<?php echo ENTRADA_RELATIVE; ?>/clerkship/logbook?section=entryapi&id='+entry_id, {
 					onCreate: function () {
-						$('entry').innerHTML = '<br/><br/><span class="content-small" style="align: center;">Loading... <img src="<?php echo ENTRADA_URL; ?>/images/indicator.gif" style="vertical-align: middle;" /></span>';
+						$('entry').innerHTML = '<br /><br /><span class="content-small" style="align: center;">Loading... <img src="<?php echo ENTRADA_URL; ?>/images/indicator.gif" style="vertical-align: middle;" /></span>';
 					}
 				});
 				if ($('entry-'+entry_id).hasClassName('flagged') == false) {
@@ -192,7 +192,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					</tr>
 				</tbody>
 			</table>
-			<br/>
+			<br />
 			<?php
 			if ($student) {
 				?>

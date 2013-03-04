@@ -33,7 +33,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		$_SESSION["profile_expand_grid"] = "profile_grid";
 	}
 	?>
-	<h1>Section <?php echo ($_SESSION["details"]["clinical_member"] ? "VII" : "VI"); ?> - Activity Profile</h1>
+	<h1>Section <?php echo ($ENTRADA_USER->getClinical() ? "VII" : "VI"); ?> - Activity Profile</h1>
 	
 	<table id="flex1" style="display:none"></table>
 	
@@ -71,7 +71,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		profile_grid = jQuery("#flex1").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -155,7 +155,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('profile_grid.flexReload()', 1000);

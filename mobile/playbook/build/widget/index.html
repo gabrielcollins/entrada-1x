@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, target-densitydpi=device-dpi" />
+		<link rel="stylesheet" type="text/css" href="js/jquery.mobile.structure-1.2.0.min.css" />
+		<link rel="stylesheet" type="text/css" href="js/jquery.mobile.theme-1.2.0.min.css" />
+		<link rel="stylesheet" type="text/css" href="js/jquery.mobile-1.2.0.min.css" />
+		<link rel="stylesheet" href="js/dhtmlxscheduler_mobile.css" type="text/css" media="screen"/>  
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+        <title>Entrada</title>
+    </head>
+    <body>
+		<div data-role="page" id="agenda" data-theme="b">
+		    <div data-role="header" class="header" data-id="persistent" data-position="fixed">
+		        <h1>Entrada</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a id="agenda_button" href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="agenda" data-transition="none">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="notices" data-transition="none">My Notices</a></li>
+                    </ul>
+                </div>
+		    </div>
+            <div data-role="content" id="content" style="margin:0; padding:0; height:927px;"> 
+			</div>
+		</div>		
+        
+		<div data-role="page" id="events" data-theme="b">
+            <div data-role="header" class="header" data-id="persistent" data-position="fixed">
+                <h1>Entrada</h1>
+                <a href="#settings" data-role="button" data-icon="gear" class="ui-btn-right settings" data-transition="flip">Settings</a>
+                <div data-role="navbar">
+                    <ul>
+                        <li><a href="#agenda" data-role="button" data-icon="home" data-iconpos="top" class="agenda" data-transition="none">My Agenda</a></li>
+                        <li class="notice"><a href="#events" data-role="button" data-icon="info" data-iconpos="top" class="ui-btn-active notices" data-transition="none">My Notices</a></li>                        
+                    </ul>
+                </div>
+            </div>
+            
+            <div data-role="content" id="notice_content">
+				<h1>New Notices</h1>
+            </div>
+			
+			<div data-role="content" id="old_notice_content">
+				<h1>Previously Read Notices</h1>
+            </div>
+        </div>
+        
+        <div data-role="page" id="settings" data-theme="b">
+            <div data-role="header">
+                <h1>Settings</h1>
+                <a href="#agenda" data-role="button" data-icon="delete" class="ui-btn-right ui-btn-active close" data-transition="flip">Close</a>
+            </div>
+            
+            <div data-role="content">	
+                <h1>Entrada Settings</h1>
+                <div data-role="fieldcontain">
+                    <label for="url">Entrada URL:</label>
+                    <input type="text" autocorrect="off" autocapitalize="off" name="url" id="url" value="130.15.42.246/entrada/www-root" />
+                </div>
+					<div data-role="fieldcontain" id="username_field">
+						<label for="username" id="username-label">Username:</label>
+						<input type="text" autocorrect="off" autocapitalize="off" name="username" id="username" value="" />
+					</div>
+					<div data-role="fieldcontain" id="password_field">
+						<label for="password" id="password-label">Password:</label>
+						<input type="password" autocorrect="off" autocapitalize="off" name="password" id="password" value="" />
+					</div>
+                <fieldset data-role="controlgroup">
+                    <legend>Auto-login options:</legend>
+                    <input type="radio" name="login-option" id="save-password" value="1" />
+                    <label for="save-password">Keep me logged in, and remember my password.</label>
+                    
+                    <input type="radio" name="login-option" id="require-password" value="0" checked="checked" />
+                    <label for="require-password">Require me to enter my password each launch.</label>
+                </fieldset>
+				<input type="button" id="save-settings" value="Save Settings" />
+				<input type="button" id="logout" value="Log Out" />
+            </div>
+        </div>
+		<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+		<script type="text/javascript" src="js/jquery.mobile-1.2.0.min.js"></script>
+        <script type="text/javascript" src="cordova-2.2.0.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+		<script type="text/javascript" src="js/dhtmlxscheduler_mobile.js"></script>
+        <script type="text/javascript">
+            app.initialize();
+        </script>
+    </body>
+</html>

@@ -9,7 +9,7 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_MTDTRACKING"))) {
 	header("Location: " . COMMUNITY_URL);
 	exit;
 } else {
-	$PROCESSED["creator_id"] = $_SESSION["details"]["id"];
+	$PROCESSED["creator_id"] = $ENTRADA_USER->getID();
 
 	$PROCESSED["resident_proxy_id"] = clean_input($_POST["resident_proxy_id"], array("notags", "trim", "int"));
 

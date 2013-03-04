@@ -74,8 +74,11 @@ class SimpleCache {
 			}
 			$curArr =& $curArr[$args[$i]];
 		}
-		
-		return $curArr[$args[$numargs-1]];	
+		if (isset($curArr[$args[$numargs-1]])) {
+			return $curArr[$args[$numargs-1]];
+		} else {
+			return;
+		}
 	}
 	
 	/**

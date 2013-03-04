@@ -127,8 +127,8 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 						$query = "SELECT `lprocedure_id`, `lpprocedure_id`, MAX(`number_required`) AS `required`
 									FROM `".CLERKSHIP_DATABASE."`.`logbook_preferred_procedures`
 									WHERE `rotation_id` = ".$db->qstr($rotation["rotation_id"])."
-									AND `grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"]))."
-									AND (`grad_year_max` = 0 OR `grad_year_max` >= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"])).")
+									AND `grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID()))."
+									AND (`grad_year_max` = 0 OR `grad_year_max` >= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID())).")
 									GROUP BY `lprocedure_id`";
 						$required_procedures = $db->GetAll($query);
 						if ($required_procedures) {

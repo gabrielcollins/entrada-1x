@@ -81,7 +81,7 @@ if ($RECORD_ID) {
 				if (!$ERROR) {
 					$PROCESSED["community_id"]	= $COMMUNITY_ID;
 					$PROCESSED["updated_date"]	= time();
-					$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+					$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 					if (!$COMMUNITY_ADMIN) {
 						$PROCESSED["pending_moderation"] = 1;
 					} else {

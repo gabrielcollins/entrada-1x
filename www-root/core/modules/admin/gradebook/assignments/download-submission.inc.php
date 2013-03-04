@@ -18,23 +18,30 @@ if (!$RECORD_ID) {
 		$RECORD_ID = $tmp;
 	}
 }
-if (isset($_GET["sid"]) && $tmp = clean_input($_GET["sid"], "int")) {
-	/** @todo this needs to make sure the user is a teacher for the course if this way is used, otherwise students could add another student's proxy*/
-	$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$ENTRADA_USER->getProxyId();
-	if ($iscontact = $db->GetRow($query)) {
-		$USER_ID = $tmp;
+if ($RECORD_ID) {
+	$query = "	SELECT a.*,b.`organisation_id` 
+				FROM `assignments` a
+				JOIN `courses` b
+				ON a.`course_id` = b.`course_id` 
+				WHERE a.`assignment_id` = ".$db->qstr($RECORD_ID)."
+				AND a.`assignment_active` = '1'";
+	$assignment = $db->GetRow($query);	
+	if (isset($_GET["sid"]) && $tmp = clean_input($_GET["sid"], "int")) {
+		/** @todo this needs to make sure the user is a teacher for the course if this way is used, otherwise students could add another student's proxy*/
+		$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
+		if ($iscontact = $db->GetRow($query)) {
+			$USER_ID = $tmp;
+		} elseif ($assignment && $ENTRADA_ACL->amIAllowed(new CourseResource($assignment["course_id"], $assignment["organisation_id"]), "update")) {
+			$iscontact = true;
+			$USER_ID = $tmp;
+		} else {
+			$USER_ID = false;
+		}
+
 	} else {
 		$USER_ID = false;
-	}
-	
-} else {
-	$USER_ID = false;
-}
-if ($RECORD_ID) {
-	if ($USER_ID) {	
-		
-		$query = "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `assignment_active` = '1'";
-		$assignment = $db->GetRow($query);
+	}	
+	if ($USER_ID) {			
 		if($assignment){
 			$query			= "
 							SELECT a.*, b.`course_id`, b.`assignment_title`
@@ -115,7 +122,7 @@ if ($RECORD_ID) {
 					
 					if ((!$ERROR) || (!$NOTICE)) {
 						$ERROR++;
-						$ERRORSTR[] = "<strong>Unable to download the selected file.</strong><br /><br />The file you have selected cannot be downloaded at this time, ".(($LOGGED_IN) ? "please try again later." : "Please log in to continue.");
+						$ERRORSTR[] = "<strong>Unable to download the selected file.</strong><br /><br />The file you have selected cannot be downloaded at this time, please try again later.";
 					}
 
 					if ($NOTICE) {

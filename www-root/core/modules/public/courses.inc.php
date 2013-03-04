@@ -42,7 +42,7 @@ $BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE, "title" => $module_title
 
 if (($router) && ($router->initRoute())) {
 	$COURSE_ID			= 0;
-	//$ORGANISATION_ID	= $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"];
+	//$ORGANISATION_ID	= $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"];
 	$ORGANISATION_ID = false;
 	if ((isset($_GET["id"])) && ((int) trim($_GET["id"]))) {
 		$COURSE_ID = (int) trim($_GET["id"]);

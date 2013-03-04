@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Clears all open buffers so we can return a simple JSON response.
@@ -53,7 +53,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					WHERE `number` = ".$db->qstr($number);
 		$result = $db->GetRow($query);
 		if ($result) {
-			$result["message"] = "<ul><li>A user with that number has been found in the system, this existing user already has access to this application. Please <a href=\"#\" onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\" style=\"font-weight:700\">click here</a> to enter a different staff / student number.</li></ul>";
+			if ($result["account_active"] == "true") {
+				$result["message"] = "<ul><li>A user with that id has been found in the system, this existing user already has access to this application. Please click <strong><a onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\">here</a></strong> to choose another user.</li></ul>";
+			} else {
+				$result["message"] = "<ul><li>A user with that id has been found in the system, this existing user will be given access to this application if you select &quot;Add User&quot; now, otherwise click <strong><a onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\">here</a></strong> to choose another user.</li></ul>";
+			}
 
 			header("Content-type: application/json");
 			echo json_encode($result);
@@ -67,7 +71,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					WHERE `username` = ".$db->qstr($username);
 		$result = $db->GetRow($query);
 		if ($result) {
-			$result["message"] = "<ul><li>A user with that username has been found in the system, this existing user already has access to this application. Please <a href=\"#\" onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\" style=\"font-weight:700\">click here</a> to enter a different username.</li></ul>";
+			if ($result["account_active"] == "true") {
+				$result["message"] = "<ul><li>A user with that id has been found in the system, this existing user already has access to this application. Please click <strong><a onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\">here</a></strong> to choose another user.</li></ul>";
+			} else {
+				$result["message"] = "<ul><li>A user with that id has been found in the system, this existing user will be given access to this application if you select &quot;Add User&quot; now, otherwise click <strong><a onclick=\"$$('input [type: text]').each(function (e) { if (e.disabled) e.enable().value = ''; }); $('display-notice').remove(); $$('.departments').each( function (e) { e.show(); }); $('prefix').enable(); $('access_finish_date').disabled = !$('access_finish').checked;\">here</a></strong> to choose another user.</li></ul>";
+			}
 
 			header("Content-type: application/json");
 			echo json_encode($result);

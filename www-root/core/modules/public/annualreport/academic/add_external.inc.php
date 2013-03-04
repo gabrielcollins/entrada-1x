@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
 	$PAGE_META["title"]			= "Add Contributions to External Organisations / International Development Projects";
@@ -98,7 +98,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				$ERROR++;
 				$ERRORSTR[] = "The <strong>Prov / State</strong> field is required.";
 			}
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 				/**
 				 * Required field "role" / Role.
 				 */
@@ -175,8 +175,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			}
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];				
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();				
 				
 				if($db->AutoExecute("ar_external_contributions", $PROCESSED, "INSERT")) {
 					$EVENT_ID = $db->Insert_Id();
@@ -334,7 +334,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				</td>
 			</tr>
 			<?php
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 			?>
 			<tr>
 				<td></td>

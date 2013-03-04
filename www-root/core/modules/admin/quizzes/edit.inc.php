@@ -38,7 +38,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if ($RECORD_ID) {
 		$query = "	SELECT a.*
@@ -94,8 +94,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 					/**
 					 * The current quiz author must be in the quiz author list.
 					 */
-					if (!in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $PROCESSED["associated_proxy_ids"])) {
-						array_unshift($PROCESSED["associated_proxy_ids"], $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+					if (!in_array($ENTRADA_USER->getActiveId(), $PROCESSED["associated_proxy_ids"])) {
+						array_unshift($PROCESSED["associated_proxy_ids"], $ENTRADA_USER->getActiveId());
 
 						$NOTICE++;
 						$NOTICESTR[] = "You cannot remove yourself as a <strong>Quiz Author</strong>.";
@@ -117,7 +117,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 								$query		= "	SELECT b.`proxy_id`
 												FROM `attached_quizzes` AS a
 												LEFT JOIN `event_contacts` AS b
-												ON a.`content_type` = 'event' 
+												ON a.`content_type` = 'event'
 												AND a.`content_id` = b.`event_id`
 												LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
 												ON b.`proxy_id` = c.`id`
@@ -136,7 +136,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 
 					if (!$ERROR) {
 						$PROCESSED["updated_date"] = time();
-						$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 						if ($db->AutoExecute("quizzes", $PROCESSED, "UPDATE", "`quiz_id` = ".$db->qstr($RECORD_ID))) {
 							/**
@@ -150,7 +150,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							 */
 							if ((is_array($PROCESSED["associated_proxy_ids"])) && !empty($PROCESSED["associated_proxy_ids"])) {
 								foreach ($PROCESSED["associated_proxy_ids"] as $proxy_id) {
-									if (!$db->AutoExecute("quiz_contacts", array("quiz_id" => $RECORD_ID, "proxy_id" => $proxy_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT")) {
+									if (!$db->AutoExecute("quiz_contacts", array("quiz_id" => $RECORD_ID, "proxy_id" => $proxy_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT")) {
 										$ERROR++;
 										$ERRORSTR[] = "There was an error while trying to attach a <strong>Quiz Author</strong> to this quiz.<br /><br />The system administrator was informed of this error; please try again later.";
 
@@ -398,7 +398,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 											</div>
 											<script type="text/javascript" defer="defer">
 												var deleteQuestion_id = 0;
-												
+
 												document.observe('dom:loaded', function() {
 													try {
 														Sortable.create('quiz-questions-list', { handles : $$('#quiz-questions-list div.question'), onUpdate : updateQuizQuestionOrder });
@@ -420,7 +420,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 															});
 														});
 													} catch (e) {
-														clog(e); 
+														clog(e);
 													}
 												});
 
@@ -540,7 +540,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 									fade:			true,
 									fadeDuration:	0.30
 								});
-		
+
 								// Modal control for copying quiz.
 								new Control.Modal('quiz-control-copy', {
 									overlayOpacity:	0.75,
@@ -549,8 +549,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 									fade:			true,
 									fadeDuration:	0.30
 								});
-							} catch (e) { 
-								clog(e); 
+							} catch (e) {
+								clog(e);
 							}
 						});
 					</script>
@@ -592,10 +592,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 										</ul>
 									</div>
 									<?php
-									$query		= "	SELECT a.*, b.`event_id`, b.`course_id`, b.`eventtype_id`, b.`event_title`, b.`event_start`, b.`event_duration`, c.`course_name`, c.`course_code`
+									$query		= "	SELECT a.*, b.`event_id`, b.`course_id`, b.`event_title`, b.`event_start`, b.`event_duration`, c.`course_name`, c.`course_code`
 													FROM `attached_quizzes` AS a
 													JOIN `events` AS b
-													ON a.`content_type` = 'event' 
+													ON a.`content_type` = 'event'
 													AND	b.`event_id` = a.`content_id`
 													JOIN `courses` AS c
 													ON c.`course_id` = b.`course_id`
@@ -627,7 +627,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 											foreach($results as $result) {
 												$url = ENTRADA_URL."/admin/events?section=content&id=".$result["event_id"];
 												$completed_attempts = $db->GetOne("SELECT COUNT(DISTINCT `proxy_id`) FROM `quiz_progress` WHERE `progress_value` = 'complete' AND `aquiz_id` = ".$db->qstr($result["aquiz_id"]));
-												
+
 												echo "<tr id=\"event-".$result["event_id"]."\" class=\"event\">\n";
 												echo "	<td class=\"modified\">\n";
 												if ($completed_attempts > 0) {
@@ -694,9 +694,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 									$query		= "	SELECT a.*, b.`community_id`, b.`community_url`, b.`community_title`, CONCAT('[', b.`community_title`, '] ', bp.`menu_title`) AS `page_title`, bp.`page_url`
 													FROM `attached_quizzes` AS a
 													JOIN `communities` AS b
-													ON a.`content_type` = 'community_page' 
+													ON a.`content_type` = 'community_page'
 													JOIN `community_pages` AS bp
-													ON a.`content_type` = 'community_page' 
+													ON a.`content_type` = 'community_page'
 													AND	bp.`cpage_id` = a.`content_id`
 													AND bp.`community_id` = b.`community_id`
 													WHERE a.`quiz_id` = ".$db->qstr($RECORD_ID)."
@@ -756,6 +756,100 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							</td>
 						</tr>
 					</tbody>
+
+					<tbody id="assessment-pages">
+						<tr>
+							<td colspan="3">
+								&nbsp;
+							</td>
+						</tr>
+						<tr>
+							<td colspan="3">
+								<a name="assessment_section"></a><h2 id="assessment_section" title="Gradebook Assessment">Gradebook Assessments</h2>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="3">
+								<?php
+								/**
+								 * If there are no questions in this quiz, then
+								 * a generic notice is spit out that gives the
+								 * user information on when they can assign this
+								 * quiz to a learning event.
+								 */
+								if (!(int) count($questions)) {
+									?>
+									<div class="display-generic">
+										Once you create questions for this quiz you will be able to assign it to an assessment in the gradebook.
+									</div>
+									<?php
+								} else {
+									?>
+									<div style="margin-bottom: 10px">
+										<ul class="page-action">
+											<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE; ?>?section=attach&amp;assessment=true&amp;id=<?php echo $RECORD_ID; ?>">Attach To Gradebook Assessment</a></li>
+										</ul>
+									</div>
+									<?php
+
+									$query		= "	SELECT a.*, b.`name`, d.`course_id`, d.`course_name`, d.`course_code`, e.`group_name`
+													FROM `attached_quizzes` AS a
+													LEFT JOIN `assessments` AS b
+													ON a.`content_id` = b.`assessment_id`
+													LEFT JOIN `assessments_lu_meta` AS c
+													ON b.`characteristic_id` = c.`id`
+													LEFT JOIN `courses` AS d
+													ON b.`course_id` = d.`course_id`
+													LEFT JOIN `groups` AS e
+													ON b.`cohort` = e.`group_id`
+													WHERE a.`quiz_id` = ".$db->qstr($RECORD_ID)."
+													AND a.`content_type` = 'assessment'";
+									$results	= $db->GetAll($query);
+									if($results) {
+										?>
+										<table class="tableList" cellspacing="0" summary="List of Community Pages">
+										<colgroup>
+											<col class="modified" />
+											<col class="date" />
+											<col class="phase" />
+											<col class="title" />
+										</colgroup>
+										<thead>
+											<tr>
+												<td class="modified">&nbsp;</td>
+												<td class="date sortedASC"><div class="noLink">Course</div></td>
+												<td class="phase">Cohort</td>
+												<td class="title">Assessment Name</td>
+											</tr>
+										</thead>
+										<tbody>
+											<?php
+											foreach ($results as $result) {
+												$url = ENTRADA_URL."/admin/gradebook/assessments?section=grade&id=".$result["course_id"]."&assessment_id=".$result["content_id"];
+												echo "<tr id=\"assessment-".$result["content_id"]."\">\n";
+												echo "\t<td><a href=\"".$url."\"><img src=\"".ENTRADA_URL."/images/view-stats.gif\" width=\"16\" height=\"16\" alt=\"View results of ".html_encode($result["quiz_title"])."\" title=\"View results of ".html_encode($result["quiz_title"])."\" style=\"vertical-align: middle\" border=\"0\" /></a></td>\n";
+												echo "\t<td><a href=\"".$url."\">".$result["course_name"]." - ".$result["course_code"]."</a></td>\n";
+												echo "\t<td><a href=\"".$url."\" title=\"Intended For Phase ".$result["course_id"]."\">".$result["group_name"]."</a></td>\n";
+												echo "\t<td><a href=\"".$url."\" title=\"Event Title: ".$result["course_id"]."\">".$result["name"]."</a></td>\n";
+												echo "</tr>\n";
+											}
+											?>
+										</tbody>
+										</table>
+										<?php
+									} else {
+										$NOTICESTR = array();
+										$NOTICE = 1;
+										$NOTICESTR[] = "This quiz is not currently attached to any gradebook assessments.<br /><br />To add this quiz to an assessment you are have administrative rights to, click the <strong>Attach To Gradebook Assessment</strong> link above.";
+
+										echo display_notice();
+									}
+								}
+								?>
+							</td>
+						</tr>
+					</tbody>
+
 					</table>
 					<?php
 					/**

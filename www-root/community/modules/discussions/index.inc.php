@@ -112,9 +112,14 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-forum")) {
 				echo "	<td class=\"center\">".$topics["replies"]."</td>\n";
 				echo "	<td class=\"small\">\n";
 				if ((int) $topics["posts"]) {
+					if(defined('COMMUNITY_DISCUSSIONS_ANON') && COMMUNITY_DISCUSSIONS_ANON && !$COMMUNITY_ADMIN && isset($topics["anonymous"]) && $topics["anonymous"]){
+						$display = "Anonymous";
+					} else {
+						$display = '<a href="'.ENTRADA_URL.'/people?profile='.html_encode($topics["username"]).'" style="font-size: 10px">'.html_encode($topics["fullname"]).'</a>';						
+					}										
 					echo "	<strong>Time:</strong> ".date("M d Y, g:ia", $topics["updated_date"])."<br />\n";
 					echo "	<strong>Topic:</strong> <a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-post&amp;id=".$topics["cdtopic_id"]."\">".limit_chars(html_encode($topics["topic_title"]), 25, true)."</a><br />\n";
-					echo "	<strong>By:</strong> <a href=\"".ENTRADA_URL."/people?profile=".html_encode($topics["username"])."\" style=\"font-size: 10px\">".html_encode($topics["fullname"])."</a>\n";
+					echo "	<strong>By:</strong>".$display."\n";
 				} else {
 					echo "	No topics in this forum.\n";
 				}

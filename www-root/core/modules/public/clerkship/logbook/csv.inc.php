@@ -37,20 +37,20 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	
 	ob_clear_open_buffers();
 	
 	if (isset($_GET["id"]) && ((int)$_GET["id"])) {
 		$PROXY_ID = $_GET["id"];
-		if ($_SESSION["details"]["id"] != $PROXY_ID) {
+		if ($ENTRADA_USER->getID() != $PROXY_ID) {
 			$student = false;
 		} else {
 			$student = true;
 		}
 	} else {
-		$PROXY_ID = $_SESSION["details"]["id"];
+		$PROXY_ID = $ENTRADA_USER->getID();
 		$student = true;
 	}
 	/**

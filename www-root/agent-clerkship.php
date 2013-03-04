@@ -84,11 +84,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		<link href="<?php echo ENTRADA_URL; ?>/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 		<link href="<?php echo ENTRADA_URL; ?>/w3c/p3p.xml" rel="P3Pv1" type="text/xml" />
 
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/prototype.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/scriptaculous.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/common.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
 		%HEAD%
 
 		<style type="text/css">
@@ -101,11 +96,39 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 		<script type="text/javascript">
 		function submitCorrection() {
-			document.getElementById('form-submitting').style.display = 'block';
-
-			document.getElementById('correction-form').submit();
-
-			return;
+			var formData = jQuery("#correction-form").serialize();
+			jQuery("#correction-form").remove();
+			jQuery("#form-submitting").show();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-clerkship.php?step=2&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				data: formData,
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+					jQuery("#form-submitting").hide();
+				}
+			});
+			return false;
+		}
+		
+		function newCorrection() {
+			jQuery("#wizard-body, #wizard-footer").remove();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-clerkship.php?step=1&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+				}
+			});
+			return false;
+		}
+		
+		function closeWindow() {
+			jQuery('#clerkship-modal').dialog('close')
 		}
 		</script>
 	</head>
@@ -161,9 +184,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				application_log("error", "Unable to send clerkship schedule update with the correction agent. PHPMailer said: ".$mail->ErrorInfo);
 			}
 			?>
-			<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px; overflow: hidden; white-space: nowrap">
-				<span class="content-heading" style="color: #FFFFFF"><?php echo html_encode($PAGE_META["title"]); ?></span>
-			</div>
 			<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 				<?php
 				if($ERROR) {
@@ -179,14 +199,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 				To send a <strong>new correction</strong> or <strong>close this window</strong> please use the buttons below.
 			</div>
-			<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 100%; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
+			<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 452px; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
 				<table style="width: 452px" cellspacing="0" cellpadding="0" border="0">
 				<tr>
 					<td style="width: 180px; text-align: left">
 						<input type="button" class="button" value="Close" onclick="closeWindow()" />
 					</td>
 					<td style="width: 272px; text-align: right">
-						<input type="button" class="button" value="New Correction" onclick="window.location='<?php echo ENTRADA_URL; ?>/agent-clerkship.php'" />
+						<input type="button" class="button" value="New Correction" onclick="newCorrection();" />
 					</td>
 				</tr>
 				</table>
@@ -198,12 +218,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			?>
 			<form id="correction-form" action="<?php echo ENTRADA_URL; ?>/agent-clerkship.php?step=2" method="post" style="display: inline">
 			<div id="form-processing" style="display: block; position: absolute; top: 0px; left: 0px; width: 485px; height: 555px">
-				<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px">
-					<span class="content-heading" style="color: #FFFFFF"><?php echo html_encode($PAGE_META["title"]); ?></span>
-				</div>
 				<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 					<h2>Your Clerkship Schedule is Important</h2>
-					<table style="width: 100%" cellspacing="1" cellpadding="1" border="0">
+					<table style="width: 452px;" cellspacing="1" cellpadding="1" border="0">
 					<colgroup>
 						<col style="width: 25%" />
 						<col style="width: 75%" />
@@ -212,7 +229,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						<tr>
 							<td colspan="2">
 								<div class="display-notice">
-									<?php if($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"] == "student") : ?>
+									<?php if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == "student") : ?>
 									<strong>Notice:</strong> Keeping the Undergrad office informed of clerkship schedule changes or inconsistencies is very important as this information is used to ensure you can graduate. If you see a problem with your schedule, please let us know immediately using this form.
 									<?php else : ?>
 									<strong>Notice:</strong> If you see an issue with the Clerkship schedule that needs our attention, please use this form to contact the Undergraduate office. Please be as specific as possible when sending in this request.
@@ -241,7 +258,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</tbody>
 					</table>
 				</div>
-				<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 100%; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
+				<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 452px; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
 					<table style="width: 100" cellspacing="0" cellpadding="0" border="0">
 					<tr>
 						<td style="width: 180px; text-align: left">
@@ -254,6 +271,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</table>
 				</div>
 			</div>
+			</form>
 			<div id="form-submitting" style="display: none; position: absolute; top: 0px; left: 0px;  background-color: #FFFFFF; opacity:.90; filter: alpha(opacity=90); -moz-opacity: 0.90">
 				<div style="display: table; width: 485px; height: 555px; _position: relative; overflow: hidden">
 					<div style="_position: absolute; _top: 50%; display: table-cell; vertical-align: middle;">
@@ -265,7 +283,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</div>
 				</div>
 			</div>
-			</form>
 			<?php
 		break;
 	}

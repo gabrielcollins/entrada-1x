@@ -35,7 +35,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_POLLS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$PROCESSED_ANSWERS	= array();
 	$BREADCRUMB[]		= array("url" => ENTRADA_URL."/admin/polls?".replace_query(array("section" => "add")), "title" => "Adding Poll");
@@ -101,7 +101,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_POLLS"))) {
 
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 				if($db->AutoExecute("poll_questions", $PROCESSED, "INSERT")) {
 					if($POLL_ID = $db->Insert_Id()) {

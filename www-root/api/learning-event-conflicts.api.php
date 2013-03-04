@@ -83,9 +83,9 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		$results = $db->GetAll($query);
 	
 		if ($results) {
-			echo "This date is in conflict with existing events being attended by your selected audience. Please ensure you still want to select this timeframe.<br/>";
+			echo "This date is in conflict with existing events being attended by your selected audience. Please ensure you still want to select this timeframe.<br />";
 			foreach ($results as $result) {
-				echo "<a href=\"".ENTRADA_RELATIVE."/events?id=" . $result["event_id"] . "\">" . $result["event_title"] . "</a><br/>";
+				echo "<a href=\"".ENTRADA_RELATIVE."/events?id=" . $result["event_id"] . "\">" . $result["event_title"] . "</a><br />";
 			}
 		}
 	}

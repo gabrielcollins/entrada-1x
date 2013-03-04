@@ -1,0 +1,12 @@
+<loader version="1.0" >
+<application id="Entrada">
+<name>Entrada</name>
+<description>Entrada</description>
+<version>3.0.0.0</version>
+<vendor>Queen's School of Medicine</vendor>
+<fileset Java="1.45">
+<directory></directory>
+<files>Entrada.cod</files>
+</fileset>
+</application>
+</loader>

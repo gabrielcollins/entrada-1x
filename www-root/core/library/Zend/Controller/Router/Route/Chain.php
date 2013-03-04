@@ -15,8 +15,8 @@
  * @category   Zend
  * @package    Zend_Controller
  * @subpackage Router
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
- * @version    $Id: Chain.php 24182 2011-07-03 13:43:05Z adamlundrigan $
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @version    $Id: Chain.php 25071 2012-11-06 19:07:27Z rob $
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -28,7 +28,7 @@ require_once 'Zend/Controller/Router/Route/Abstract.php';
  *
  * @package    Zend_Controller
  * @subpackage Router
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Controller_Router_Route_Chain extends Zend_Controller_Router_Route_Abstract
@@ -72,9 +72,10 @@ class Zend_Controller_Router_Route_Chain extends Zend_Controller_Router_Route_Ab
      */
     public function match($request, $partial = null)
     {
-        $path    = trim($request->getPathInfo(), self::URI_DELIMITER);
-        $subPath = $path;
-        $values  = array();
+        $path      = trim($request->getPathInfo(), self::URI_DELIMITER);
+        $subPath   = $path;
+        $values    = array();
+        $numRoutes = count($this->_routes);
 
         foreach ($this->_routes as $key => $route) {
             if ($key > 0
@@ -99,7 +100,7 @@ class Zend_Controller_Router_Route_Chain extends Zend_Controller_Router_Route_Ab
                 $match = $request;
             }
 
-            $res = $route->match($match, true);
+            $res = $route->match($match, true, ($key == $numRoutes - 1));
             if ($res === false) {
                 return false;
             }

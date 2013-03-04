@@ -26,12 +26,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_MANAGE_USER"))) {
 } else {
 	define("IN_MANAGE_USER_INCIDENTS", true);
 
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage/incidents?id=".$PROXY_ID, "title" => "Manage Incidents");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage/incidents?id=".$PROXY_ID, "title" => "Incidents");
 
 	if (($router) && ($router->initRoute())) {
 		$module_file = $router->getRoute();
 		if ($module_file) {
-			
+
 			require_once($module_file);
 		}
 	} else {

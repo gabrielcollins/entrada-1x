@@ -78,7 +78,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		research_grid = jQuery("#flex1").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -162,7 +162,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('research_grid.flexReload()', 1000);
@@ -187,7 +187,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		peer_reviewed_grid = jQuery("#flex2").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -261,7 +261,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('peer_reviewed_grid.flexReload()', 1000);
@@ -282,7 +282,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		non_peer_reviewed_grid = jQuery("#flex3").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -356,7 +356,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('non_peer_reviewed_grid.flexReload()', 1000);
@@ -377,7 +377,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		book_chapter_mono_grid = jQuery("#flex4").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -451,7 +451,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('book_chapter_mono_grid.flexReload()', 1000);
@@ -472,7 +472,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		poster_reports_grid = jQuery("#flex5").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -546,7 +546,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('poster_reports_grid.flexReload()', 1000);
@@ -567,7 +567,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 			conference_papers_grid = jQuery("#flex6").flexigrid
 			(
 				{
-				url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid_conference.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+				url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid_conference.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 				dataType: 'json',
 				method: 'POST',
 				colModel : [
@@ -641,7 +641,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 							            ({
 							               type: "POST",
 							               dataType: "json",
-							               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+							               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 							             });
 								       	
 								       	window.setTimeout('conference_papers_grid.flexReload()', 1000);
@@ -662,7 +662,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		scholarly_grid = jQuery("#flex7").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -746,7 +746,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('scholarly_grid.flexReload()', 1000);
@@ -767,24 +767,22 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		    }
 		}
 		
-		<?php $fields = "ar_patent_activity,patent_activity_id,patent_activity_type,description,location,year_reported"; ?>
+		<?php $fields = "ar_patent_activity,patent_activity_id,patent_activity_type,description,year_reported"; ?>
 		patent_grid = jQuery("#flex8").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
-				{display: 'Type', name : 'patent_activity_type', width : 150, sortable : true, align: 'left'},
-				{display: 'Description', name : 'description', width : 270, sortable : true, align: 'left'},
-				{display: 'Location', name : 'location', width : 144, sortable : true, align: 'left'},
+				{display: 'Type', name : 'patent_activity_type', width : 175, sortable : true, align: 'left'},
+				{display: 'Description', name : 'description', width : 389, sortable : true, align: 'left'},
 				{display: 'Year', name : 'year_reported', width : 50, sortable : true, align: 'left'},
 				{display: 'Edit', name : 'ctled', width : 25,  sortable : false, align: 'center', process:editPatent}
 				],
 			searchitems : [
 				{display: 'Type', name : 'patent_activity_type'},
 				{display: 'Description', name : 'description'},
-				{display: 'Location', name : 'location'},
 				{display: 'Year', name : 'year_reported', isdefault: true}
 				],
 			sortname: "year_reported",
@@ -826,7 +824,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 			    		// a workaround for a flaw in the demo system (http://dev.jqueryui.com/ticket/4375), ignore!
 						jQuery("#dialog-confirm").dialog("destroy");
 						jQuery('.trSelected', grid).each(function() {  
-	               			var reportYear = jQuery(this).find('div')[3].textContent;
+	               			var reportYear = jQuery(this).find('div')[2].textContent;
 							if(reportYear < <?php echo $AR_CUR_YEAR;?>) {
 		               			// Do not allow the deletion of years that are prior to the current reporting year.
 		               			error = "true";
@@ -855,7 +853,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('patent_grid.flexReload()', 1000);

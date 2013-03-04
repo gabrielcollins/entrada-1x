@@ -38,7 +38,7 @@ require_once("init.inc.php");
 
 ob_start("on_checkout");
 
-$PROCEED_TO = ((isset($_GET["url"])) ? clean_input($_GET["url"], "trim") : ((isset($_SERVER["REQUEST_URI"])) ? clean_input($_SERVER["REQUEST_URI"], "trim") : false));
+$PROCEED_TO = rtrim(((isset($_GET["url"])) ? clean_input($_GET["url"], "trim") : ((isset($_SERVER["REQUEST_URI"])) ? clean_input($_SERVER["REQUEST_URI"], "trim") : false)), "/");
 
 $PATH_INFO = ((isset($_SERVER["PATH_INFO"])) ? clean_input($_SERVER["PATH_INFO"], array("url", "lowercase")) : "");
 $PATH_SEPARATED = explode("/", $PATH_INFO);
@@ -121,12 +121,12 @@ if ($ACTION == "login") {
 				application_log("error", "User[".$username."] tried to access account after being SESSION locked out.");
 			}
 		}
-		
+
 		if (isset($_SESSION["auth"]["login_attempts"]) && $_SESSION["auth"]["login_attempts"] > $LOGIN_ATTEMPTS) {
 			$LOGIN_ATTEMPTS = $_SESSION["auth"]["login_attempts"];
 		}
 	}
-	
+
 	// Only even try to authorized if not locked out
 	if ($ERROR == 0) {
 		$auth = new AuthSystem((((defined("AUTH_DEVELOPMENT")) && (AUTH_DEVELOPMENT != "")) ? AUTH_DEVELOPMENT : AUTH_PRODUCTION));
@@ -136,6 +136,7 @@ if ($ACTION == "login") {
 		$result = $auth->Authenticate(
 			array(
 				"id",
+				"access_id",
 				"prefix",
 				"firstname",
 				"lastname",
@@ -198,10 +199,18 @@ if ($ACTION == "login") {
 
 			application_log("access", "User[".$username."] successfully logged in.");
 
+
+			// If $ENTRADA_USER was previously initialized in init.inc.php before the
+			// session was authorized it is set to false and needs to be re-initialized.
+			if ($ENTRADA_USER == false) {
+				$ENTRADA_USER = User::get($result["ID"]);
+			}
+
 			$_SESSION["isAuthorized"] = true;
 			$_SESSION["details"] = array();
 			$_SESSION["details"]["app_id"] = (int) AUTH_APP_ID;
 			$_SESSION["details"]["id"] = $result["ID"];
+			$_SESSION["details"]["access_id"] = $result["ACCESS_ID"];
 			$_SESSION["details"]["username"] = $username;
 			$_SESSION["details"]["prefix"] = $result["PREFIX"];
 			$_SESSION["details"]["firstname"] = $result["FIRSTNAME"];
@@ -217,17 +226,17 @@ if ($ACTION == "login") {
 			$_SESSION["details"]["private_hash"] = $result["PRIVATE_HASH"];
 			$_SESSION["details"]["allow_podcasting"] = false;
 
-			if ((isset($ENTRADA_CACHE)) && (!AUTH_DEVELOPMENT_MODE)) {
-				if (!($ENTRADA_CACHE->test("acl_".$_SESSION["details"]["id"]))) {
+			if ((isset($ENTRADA_CACHE)) && (!DEVELOPMENT_MODE)) {
+				if (!($ENTRADA_CACHE->test("acl_"  . AUTH_APP_ID . "_" . $ENTRADA_USER->getID()))) {
 					$ENTRADA_ACL = new Entrada_Acl($_SESSION["details"]);
-					$ENTRADA_CACHE->save($ENTRADA_ACL, "acl_".$_SESSION["details"]["id"]);
+					$ENTRADA_CACHE->save($ENTRADA_ACL, "acl_" . AUTH_APP_ID . "_" . $ENTRADA_USER->getID());
 				} else {
-					$ENTRADA_ACL = $ENTRADA_CACHE->load("acl_".$_SESSION["details"]["id"]);
+					$ENTRADA_ACL = $ENTRADA_CACHE->load("acl_" . AUTH_APP_ID . "_" . $ENTRADA_USER->getID());
 				}
 			} else {
 				$ENTRADA_ACL = new Entrada_Acl($_SESSION["details"]);
 			}
-			
+
 			if (isset($result["PRIVATE-ALLOW_PODCASTING"])) {
 				if ((int) trim($result["PRIVATE-ALLOW_PODCASTING"])) {
 					$_SESSION["details"]["allow_podcasting"] = (int) trim($result["PRIVATE-ALLOW_PODCASTING"]);
@@ -264,34 +273,25 @@ if ($ACTION == "login") {
 			$_SESSION["permissions"] = permissions_load();
 
 			$auth->updateLastLogin();
-			
-			// If $ENTRADA_USER was previously initialized in init.inc.php before the 
-			// session was authorized it is set to false and needs to be re-initialized.
-			if ($ENTRADA_USER == false && $_SESSION["isAuthorized"] == true) {
-				$ENTRADA_USER = User::get($_SESSION["details"]["id"]);
-			}
 		}
-		
-		$query = "SELECT `email_updated`, `clinical`, `google_id`, `notifications` FROM `".AUTH_DATABASE."`.`user_data` WHERE `id` = ".$db->qstr($_SESSION["details"]["id"]);
+
+		$query = "SELECT `email_updated`, `google_id`, `notifications` FROM `".AUTH_DATABASE."`.`user_data` WHERE `id` = ".$db->qstr($ENTRADA_USER->getID());
 		$result	= $db->GetRow($query);
-		
 		if (($result) && ($result["google_id"])) {
 			$_SESSION["details"]["google_id"] = $result["google_id"];
 		} else {
 			$_SESSION["details"]["google_id"] = false;
 		}
-		
+
 		if ($result) {
 			$_SESSION["details"]["notifications"] = $result["notifications"];
-			$_SESSION["details"]["clinical_member"] = $result["clinical"];
-			
-			if(!isset($result["email_updated"]) || $result["email_updated"] == "" || (($result["email_updated"] - mktime()) / 86400 >= 365)) {
+			if (!isset($result["email_updated"]) || $result["email_updated"] == "" || (($result["email_updated"] - mktime()) / 86400 >= 365)) {
 				$_SESSION["details"]["email_updated"] = false;
 			} else {
 				$_SESSION["details"]["email_updated"] = true;
 			}
 		}
-		
+
 		if ((!(int) $_SESSION["details"]["privacy_level"]) || (((bool) $GOOGLE_APPS["active"]) && (in_array($_SESSION["details"]["group"], $GOOGLE_APPS["groups"])) && (!$_SESSION["details"]["google_id"]))) {
 			/**
 			 * They need to be re-directed to the firstlogin module.
@@ -322,7 +322,7 @@ if ($ACTION == "login") {
 			} elseif ($remaining_attempts <= (AUTH_MAX_LOGIN_ATTEMPTS - 1)) {
 				$ERRORSTR[$ERROR] .= "<br /><br />You have <strong>".$remaining_attempts." attempt".(($remaining_attempts != 1) ? "s" : "")."</strong> remaining before your account is locked for ".round((AUTH_LOCKOUT_TIMEOUT / 60))." minutes.";
 			}
-			
+
 			application_log("access", $result["MESSAGE"]);
 
 			if (isset($USER_ACCESS_ID)) {
@@ -368,9 +368,18 @@ if ($ACTION == "login") {
 	exit;
 }
 
+if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"] && isset($ENTRADA_USER)) {
+	if (($cached_user = $ENTRADA_CACHE->load("user_".AUTH_APP_ID."_".$ENTRADA_USER->getID())) && $cached_user != $ENTRADA_USER) {
+		$ENTRADA_CACHE->save($ENTRADA_USER, "user_".AUTH_APP_ID."_".$ENTRADA_USER->getID(), array("auth"), 300);
+	}
+}
+
 if ((!isset($_SESSION["isAuthorized"])) || (!(bool) $_SESSION["isAuthorized"])) {
 	if (isset($PATH_SEPARATED[1])) {
 		switch ($PATH_SEPARATED[1]) {
+			case "confirm_observership" :
+				$MODULE = "confirm_observership";
+			break;
 			case "privacy_policy" :
 				$MODULE = "privacy_policy";
 			break;
@@ -432,7 +441,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!(bool) $_SESSION["isAuthorized"])) 
 					FROM `community_members`AS a
 					LEFT JOIN `communities` AS b
 					ON a.`community_id` = b.`community_id`
-					WHERE a.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+					WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 					AND a.`member_active` = 1
 					ORDER BY a.`member_joined`";
 		$result	= $db->GetRow($query);
@@ -476,6 +485,9 @@ define("PARENT_INCLUDED", true);
 require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_ACTIVE_TEMPLATE."/layouts/public/header.tpl.php");
 
 switch ($MODULE) {
+	case "confirm_observership" :
+		require_once(ENTRADA_ABSOLUTE.DIRECTORY_SEPARATOR."default-pages".DIRECTORY_SEPARATOR."confirm_observership.inc.php");
+	break;
 	case "privacy_policy" :
 		require_once(ENTRADA_ABSOLUTE.DIRECTORY_SEPARATOR."default-pages".DIRECTORY_SEPARATOR."privacy_policy.inc.php");
 	break;
@@ -488,8 +500,8 @@ switch ($MODULE) {
 	default :
 		/*
 		$excused_proxy_ids = array();
-		if ($_SESSION["details"]["group"] == "student" && $MODULE != "evaluations" && !in_array($_SESSION["details"]["id"], $excused_proxy_ids)) {
-			$cohort = groups_get_cohort($_SESSION["details"]["id"]);
+		if ($_SESSION["details"]["group"] == "student" && $MODULE != "evaluations" && !in_array($ENTRADA_USER->getID(), $excused_proxy_ids)) {
+			$cohort = groups_get_cohort($ENTRADA_USER->getID());
 			$query = "SELECT * FROM `evaluations` AS a
 						JOIN `evaluation_evaluators` AS b
 						ON a.`evaluation_id` = b.`evaluation_id`
@@ -497,7 +509,7 @@ switch ($MODULE) {
 						(
 							(
 								b.`evaluator_type` = 'proxy_id'
-								AND b.`evaluator_value` = ".$db->qstr($_SESSION["details"]["id"])."
+								AND b.`evaluator_value` = ".$db->qstr($ENTRADA_USER->getID())."
 							)
 							OR
 							(
@@ -512,18 +524,21 @@ switch ($MODULE) {
 						AND a.`evaluation_active` = 1
 						GROUP BY a.`evaluation_id`
 						ORDER BY a.`evaluation_finish` ASC";
-			
+
 			$evaluations = $db->GetAll($query);
-			foreach ($evaluations as $evaluation) {
-				$completed_attempts = evaluations_fetch_attempts($evaluation["evaluation_id"]);
-				if ($evaluation["min_submittable"] > $completed_attempts) {
-					header("Location: ".ENTRADA_URL."/evaluations?section=attempt&id=".$evaluation["evaluation_id"]);
-					exit;
+			if ($evaluations) {
+				foreach ($evaluations as $evaluation) {
+					require_once("Models/evaluation/Evaluation.class.php");
+					$overdue = Evaluation::getUserOverdueEvaluation($evaluation, array("eevaluator_id" => $evaluation["eevaluator_id"]), array("id" => $ENTRADA_USER->getID()));
+					if ($overdue) {
+						header("Location: ".ENTRADA_URL."/evaluations?section=attempt&id=".$evaluation["evaluation_id"]);
+						exit;
+					}
 				}
 			}
 		}
 		*/
-		
+
 		/**
 		 * Initialize Entrada_Router so it can load the requested modules.
 		 */
@@ -539,14 +554,23 @@ switch ($MODULE) {
 			if ((isset($_SESSION["permissions"])) && (is_array($_SESSION["permissions"])) && (count($_SESSION["permissions"]) > 1)) {
 				$sidebar_html  = "<form id=\"masquerade-form\" action=\"".ENTRADA_URL."\" method=\"get\">\n";
 				$sidebar_html .= "<label for=\"permission-mask\">Available permission masks:</label><br />";
-				$sidebar_html .= "<select id=\"permission-mask\" name=\"mask\" style=\"width: 160px\" onchange=\"window.location='".ENTRADA_URL."/".$MODULE."/?".str_replace("&#039;", "'", replace_query(array("mask" => "'+this.options[this.selectedIndex].value")))."\">\n";
-				foreach ($_SESSION["permissions"] as $proxy_id => $result) {
-					$sidebar_html .= "<option value=\"".(($proxy_id == $_SESSION["details"]["id"]) ? "close" : $result["permission_id"])."\"".(($proxy_id == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"])."</option>\n";
+				$sidebar_html .= "<select id=\"permission-mask\" name=\"mask\" style=\"width: 100%\" onchange=\"window.location='".ENTRADA_URL."/".$MODULE."/?".str_replace("&#039;", "'", replace_query(array("mask" => "'+this.options[this.selectedIndex].value")))."\">\n";
+				$display_masks = false;
+				$added_users = array();
+				foreach ($_SESSION["permissions"] as $access_id => $result) {
+					if (is_int($access_id) && ((isset($result["mask"]) && $result["mask"]) || $access_id == $ENTRADA_USER->getDefaultAccessId()) && array_search($result["id"], $added_users) === false) {
+						if (isset($result["mask"]) && $result["mask"]) {
+							$display_masks = true;
+						}
+						$added_users[] = $result["id"];
+						$sidebar_html .= "<option value=\"".(($access_id == $ENTRADA_USER->getDefaultAccessId()) ? "close" : $result["permission_id"])."\"".(($result["id"] == $ENTRADA_USER->getActiveId()) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"]) . "</option>\n";
+					}
 				}
 				$sidebar_html .= "</select>\n";
 				$sidebar_html .= "</form>\n";
-
-				new_sidebar_item("Permission Masks", $sidebar_html, "permission-masks", "open");
+				if ($display_masks) {
+					new_sidebar_item("Permission Masks", $sidebar_html, "permission-masks", "open");
+				}
 				unset($query);
 			}
 
@@ -574,26 +598,32 @@ require_once(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_ACTIVE_TEMPLATE."/layouts/p
  */
 if ((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
 	add_task_sidebar();
-	
-	$sidebar_html  = "<a href=\"javascript: sendFeedback('".ENTRADA_URL."/agent-feedback.php?enc=".feedback_enc()."')\"><img src=\"".ENTRADA_URL."/images/feedback.gif\" width=\"48\" height=\"48\" alt=\"Give Feedback\" border=\"0\" align=\"right\" hspace=\"3\" vspace=\"5\" /></a>";
-	$sidebar_html .= "Giving feedback is a very important part of application development. Please <a href=\"javascript: sendFeedback('".ENTRADA_URL."/agent-feedback.php?enc=".feedback_enc()."')\" style=\"font-size: 11px; font-weight: bold\">click here</a> to send us any feedback you may have about <u>this</u> page.<br /><br />\n";
-	new_sidebar_item("Feedback", $sidebar_html, "page-feedback", "open");
+
+	system_feedback_sidebar($ENTRADA_USER->getGroup());
 
 	/**
 	 * Create the Organisation side bar.
 	 * If the org request attribute is set then change the current org id for this user.
 	 */
-	if ($ENTRADA_USER->getAllOrganisations() && count($ENTRADA_USER->getAllOrganisations()) > 1) {
+	if (($ENTRADA_USER->getAllOrganisations() && count($ENTRADA_USER->getAllOrganisations()) > 1) || ($ENTRADA_USER->getOrganisationGroupRole() && max(array_map('count', $ENTRADA_USER->getOrganisationGroupRole())) > 1)) {
+		$org_group_role = $ENTRADA_USER->getOrganisationGroupRole();
 		$sidebar_html = "<ul class=\"menu none\">\n";
 		foreach ($ENTRADA_USER->getAllOrganisations() as $key => $organisation_title) {
 			if ($key == $ENTRADA_USER->getActiveOrganisation()) {
-				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key)) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?organisation_id=" . $key . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				if ($org_group_role && !empty($org_group_role)) {
+					foreach($org_group_role[$key] as $group_role) {
+						if ($group_role["access_id"] == $ENTRADA_USER->getAccessId()) {
+							$sidebar_html .= "<li style=\"padding-left: 15px;\"><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key, "ua_id" => $group_role["access_id"])) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode(ucfirst($group_role["group"]) . " - " . ucfirst($group_role["role"])) . "</span></a></li>\n";
+						} else {
+							$sidebar_html .= "<li style=\"padding-left: 15px;\"><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key, "ua_id" => $group_role["access_id"])) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode(ucfirst($group_role["group"]) . " - " . ucfirst($group_role["role"])) . "</span></a></li>\n";						}
+					}
+				}
 			} else {
-				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key)) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/" . $MODULE . "/" . "?organisation_id=" . $key . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
 			}
 		}
 		$sidebar_html .= "</ul>\n";
-
 		new_sidebar_item("Organisations", $sidebar_html, "org-switch", "open", SIDEBAR_PREPEND);
 	}
 }

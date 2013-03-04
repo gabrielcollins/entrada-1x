@@ -30,7 +30,7 @@ if ($RECORD_ID) {
 	$folder_record	= $db->GetRow($query);
 	if ($folder_record) {
 		
-		$query = "SELECT COUNT(*) FROM `community_share_files` WHERE `cshare_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `file_active` = 1";
+		$query = "SELECT COUNT(*) FROM `community_share_files` WHERE `cshare_id` = ".$db->qstr($RECORD_ID)." AND `community_id` = ".$db->qstr($COMMUNITY_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `file_active` = 1";
 		
 		
 		if ( !$db->GetOne($query) || ($COMMUNITY_MEMBER && $folder_record["allow_member_read"]) || (!$COMMUNITY_MEMBER && $folder_record["allow_troll_read"]) || $COMMUNITY_ADMIN){
@@ -172,10 +172,10 @@ if ($RECORD_ID) {
 						if (!$ERROR) {
 							$PROCESSED["cshare_id"]		= $RECORD_ID;
 							$PROCESSED["community_id"]	= $COMMUNITY_ID;
-							$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+							$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 							$PROCESSED["file_active"]	= 1;
 							$PROCESSED["updated_date"]	= time();
-							$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 							
 
 							unset($PROCESSED["csfile_id"]);

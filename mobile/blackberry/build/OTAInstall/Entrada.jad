@@ -1,0 +1,102 @@
+RIM-COD-SHA1-9: e9 0f 2f a5 ca fe 42 c6 fd b2 33 a3 40 79 50 8a f3 ef 53 ce
+RIM-COD-SHA1-8: 8a 3b 55 80 58 73 31 b3 a0 79 8b 26 35 d1 e6 b3 f8 c4 1a fa
+RIM-COD-SHA1-7: 67 5c 12 3f 7e 13 00 99 07 7b ea 18 45 c6 ed 24 e8 ea c2 d9
+RIM-COD-SHA1-6: 71 08 07 bc 49 00 c5 17 14 f4 32 bb 58 c6 e8 80 22 b0 62 42
+RIM-COD-Size-27: 65716
+RIM-COD-SHA1-5: da ee 76 07 e7 66 20 a7 a1 ba ec 9d 86 66 f7 b8 e6 99 31 e3
+RIM-COD-Size-26: 55932
+RIM-COD-SHA1-4: 63 e0 84 0b 54 d1 5b 9c aa a1 3f 0f 11 3d 10 ab 74 5d 9d 4a
+RIM-COD-Size-25: 44204
+RIM-COD-SHA1-3: 58 d8 ac a6 b6 2c 0c ce 55 73 1c d2 67 4b 6e 60 fb 4d 9e 3e
+RIM-COD-Size-24: 31040
+RIM-COD-SHA1-2: d5 56 79 f2 9a 14 22 b6 5b 57 b8 df f2 d7 47 c1 71 a4 c7 cf
+RIM-COD-Size-23: 44340
+RIM-COD-SHA1-1: 14 43 41 46 7f e2 5b 19 8d 43 8f d9 f4 51 c0 e8 66 cb 49 58
+RIM-COD-Size-22: 56460
+RIM-COD-Size-21: 56396
+RIM-COD-Size-20: 45376
+RIM-COD-URL-19: Entrada-19.cod
+RIM-COD-URL-18: Entrada-18.cod
+RIM-COD-URL-17: Entrada-17.cod
+RIM-COD-URL-16: Entrada-16.cod
+RIM-COD-URL-15: Entrada-15.cod
+RIM-COD-URL-14: Entrada-14.cod
+RIM-COD-URL-13: Entrada-13.cod
+RIM-COD-URL-12: Entrada-12.cod
+RIM-COD-Size: 71128
+RIM-MIDlet-Icon-2-1: ____HOVER_ICON_res/icon/blackberry/icon-80.png,focused
+RIM-COD-URL-11: Entrada-11.cod
+RIM-MIDlet-Icon-Count-2: 1
+RIM-COD-URL-10: Entrada-10.cod
+RIM-MIDlet-Icon-Count-1: 1
+MIDlet-Vendor: Queen's School of Medicine
+RIM-MIDlet-Icon-1-1: res/icon/blackberry/____HOVER_ICON_icon-80.png,focused
+Manifest-Version: 1.0
+RIM-MIDlet-Flags-1: 0
+RIM-COD-Size-19: 57284
+RIM-COD-Size-18: 50532
+RIM-COD-Size-17: 57996
+RIM-COD-Size-16: 50524
+RIM-COD-Size-15: 54056
+RIM-COD-Size-14: 51472
+RIM-COD-Size-13: 50528
+RIM-COD-Size-12: 50528
+RIM-COD-Size-11: 54904
+RIM-COD-Size-10: 57840
+MIDlet-Version: 3.0.0.0
+MicroEdition-Profile: MIDP-2.0
+RIM-COD-SHA1-27: cd 4c 84 8e 4e ae be 2f 1d df 91 fb da 57 ee 50 8c 2e 69 7e
+RIM-COD-SHA1-26: d7 9b 3c 53 f3 d8 23 e3 e1 f1 38 55 c7 0b a6 c3 68 de c4 82
+RIM-COD-SHA1-25: b4 b9 ed 3c 1a 00 53 75 12 1d 91 7d db 34 ac 13 ef 6f 10 72
+RIM-COD-SHA1-24: 9e d4 83 09 c2 83 67 ef 5b 8e 83 f8 4c 61 4d 24 e3 88 6e 43
+RIM-COD-SHA1-23: eb a4 d9 8f d9 3d 78 11 e6 a1 7b 34 c4 04 58 c6 8d ba 42 ed
+RIM-COD-SHA1-22: 8e a8 ca dc 9a 13 70 15 3c 8c c1 77 3a fb a0 9b 19 93 69 5b
+RIM-COD-SHA1-21: 16 43 46 b4 1f 37 af f9 f6 fb 17 a9 b3 d3 db 54 ea ee bc d6
+RIM-COD-SHA1-20: 56 f6 00 69 00 b1 2b 01 c2 8f 8f b6 80 f4 49 6f d9 46 7b 19
+RIM-COD-URL: Entrada.cod
+RIM-COD-Creation-Time: 1357248224
+MicroEdition-Configuration: CLDC-1.1
+MIDlet-Jar-URL: Entrada.jar
+RIM-COD-SHA1-19: 96 a6 90 d7 8c 7a c3 9b 33 61 7f f3 6d bf e5 09 dc 05 1a 6a
+RIM-COD-SHA1-18: 84 11 50 b7 ad 2b df 19 19 79 6a db ea bd f1 d6 c7 f3 8a 19
+RIM-COD-SHA1-17: 67 b2 e7 a9 40 3e d7 58 61 47 f7 c7 b6 c6 93 6c 87 f5 71 46
+RIM-COD-SHA1-16: 91 80 5e 47 ef 42 3d b9 df 08 1f 5c 21 86 24 98 55 46 08 9a
+RIM-COD-SHA1-15: 4b 82 b8 c1 34 80 e1 34 8c 46 9e 39 f6 c9 34 0f de 72 cc 3c
+RIM-COD-SHA1-14: d7 47 89 a9 54 35 60 e0 93 0e f0 b8 e1 be 9f 85 b4 db 1a 5e
+RIM-COD-SHA1-13: 6c e8 f3 f2 87 7e 87 64 92 ef 0f 48 2b 4d 25 65 41 45 73 e5
+RIM-COD-SHA1-12: 52 ae 63 43 31 61 29 13 2a 74 f4 30 c4 4a 53 b6 fb 0d c2 0f
+RIM-COD-Size-9: 61688
+RIM-COD-SHA1-11: 7d 51 15 30 05 ac 92 81 97 65 b2 c1 2d 2d 94 b5 32 9c a8 95
+RIM-COD-Size-8: 63332
+RIM-COD-SHA1-10: 71 04 30 e5 83 72 80 0e 2a fc dc 1a d3 f9 19 d9 bd ff d9 d5
+RIM-COD-Size-7: 69648
+MIDlet-Description: Entrada
+RIM-COD-Size-6: 65112
+RIM-COD-Size-5: 61864
+RIM-COD-Size-4: 70980
+RIM-COD-Size-3: 72100
+RIM-COD-Size-2: 72040
+RIM-COD-Size-1: 66616
+MIDlet-1: Entrada,res/icon/blackberry/icon-80.png,rim:foreground;WIDGET;
+MIDlet-Name: Entrada
+RIM-COD-SHA1: a6 8e 13 86 ec 6c 60 7d 72 b9 82 3c 62 e7 bc 97 12 f1 b1 d1
+RIM-COD-Module-Dependencies: net_rim_cldc,net_rim_bb_web_jse_api,net_rim_xml_org,net_rim_bb_browser_field2_api,net_rim_os,net_rim_bbapi_push,net_rim_bbapi_messagelist,net_rim_pdap,net_rim_bbapi_mailv2,net_rim_bbapi_phone,net_rim_bbapi_invoke,net_rim_bbapi_browser,net_rim_networkapi,net_rim_bb_browser_field_api,net_rim_locationapi,net_rim_xml
+MIDlet-Jar-Size: 1687300
+RIM-COD-URL-9: Entrada-9.cod
+RIM-COD-URL-8: Entrada-8.cod
+RIM-COD-URL-7: Entrada-7.cod
+RIM-COD-URL-6: Entrada-6.cod
+RIM-COD-URL-5: Entrada-5.cod
+RIM-COD-URL-4: Entrada-4.cod
+RIM-COD-URL-3: Entrada-3.cod
+RIM-COD-URL-2: Entrada-2.cod
+RIM-COD-URL-1: Entrada-1.cod
+RIM-COD-URL-27: Entrada-27.cod
+RIM-COD-URL-26: Entrada-26.cod
+RIM-COD-Module-Name: Entrada
+RIM-COD-URL-25: Entrada-25.cod
+RIM-COD-URL-24: Entrada-24.cod
+RIM-COD-URL-23: Entrada-23.cod
+RIM-COD-URL-22: Entrada-22.cod
+RIM-COD-URL-21: Entrada-21.cod
+RIM-COD-URL-20: Entrada-20.cod

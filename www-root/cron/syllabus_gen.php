@@ -338,7 +338,10 @@ function course_objectives_formatted($objectives, $parent_id, $top_level_id, $ed
 
 			
 			// Gradebook
-			$query =  "SELECT `assessments`.`course_id`, `assessments`.`assessment_id`, `assessments`.`name`, `assessments`.`grade_weighting`, `assessments`.`order` FROM `assessments`
+			$query =  "SELECT `assessments`.`course_id`, `assessments`.`assessment_id`, `assessments`.`name`, `assessments`.`grade_weighting`, `assessments`.`order`, b.`title`
+						FROM `assessments`
+						JOIN `assessments_lu_meta` AS b
+						ON `assessments`.`characteristic_id` = b.`id`
 						WHERE `cohort` = " . $db->qstr($cohort)."
 						AND `course_id` = ". $db->qstr($course_id)."
 						ORDER BY `order` ASC";
@@ -347,32 +350,55 @@ function course_objectives_formatted($objectives, $parent_id, $top_level_id, $ed
 			if ($results) {
 				echo "<!-- NEW PAGE -->";
 				echo "<h2>Gradebook</h2>";
-				echo "<table>";
+
 				$query =  "SELECT `assessments`.`course_id`, SUM(`assessments`.`grade_weighting`) AS `grade_weighting` FROM `assessments`
 							WHERE `cohort` =". $db->qstr($cohort)." 
 							AND `course_id` =". $db->qstr($course_id);
 
 				$total_grade_weights = $db->GetAll($query);
 				foreach ($results as $result) {
-					$url = ENTRADA_URL."/admin/gradebook/assessments?section=grade&amp;id=".$COURSE_ID."&amp;assessment_id=".$result["assessment_id"];
-					echo "<tr id=\"assessment-".$result["assessment_id"]."\" class=\"assessment\">";
-					echo "	<td class=\"modified\" width=\"20\"><input type=\"hidden\" name=\"order[".$result["assessment_id"]."][]\" value=\"sortorder\" class=\"order\" /><img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"19\" height=\"19\" alt=\"\" title=\"\" /></td>";
-					echo "<td>".$result["name"]."</td>";
-					echo "<td colspan=\"2\">&nbsp;&nbsp;&nbsp;".$result["grade_weighting"]. "%</td>"; 
-					echo "</tr>";
+					$query = "	SELECT a.`objective_type`, b.`objective_name`
+								FROM `assessment_objectives` AS a
+								JOIN `global_lu_objectives` AS b
+								ON a.`objective_id` = b.`objective_id`
+								WHERE a.`assessment_id` = ".$db->qstr($result["assessment_id"])."
+								ORDER BY a.`objective_type`";
+					$objectives = $db->GetArray($query);
+					
+					foreach ($objectives as $objective) {
+						$flat_objectives[$objective["objective_type"]][] = $objective["objective_name"];
+					}
+					
+					echo "<div><strong>".$result["name"]."</strong></div>";
+					echo "<div>Grade Weight: ".$result["grade_weighting"]. "%</div>"; 
+					echo "<div>Assessment Type: ".$result["title"]."</div>"; 
+
+					if (!empty($flat_objectives["curricular_objective"])) {
+						echo "<div>Objectives: ";
+						echo implode(", ", $flat_objectives["curricular_objective"]);
+						echo "</div>";
+					}
+
+					if (!empty($flat_objectives["clinical_presentation"])) {
+						echo "<div>MCC Presentations: ";
+						echo implode(", ", $flat_objectives["clinical_presentation"]);
+						echo "</div>";
+					}
+					
+					echo "<br />";
+						
+					unset($flat_objectives);
+					unset($objectives);
 				}
-				echo "<tr>";
-				echo "<td style=\"border-bottom: 0\"></td>";
-				echo "<td style=\"border-bottom: 0\"></td>";
+				
 				foreach ($total_grade_weights as $total_grade_weight) {
 					if ($total_grade_weight["grade_weighting"] < '100') {
-						echo "<td style=\"color: #ff2431; border-bottom: 0\">". $total_grade_weight["grade_weighting"]."%</td>";
+						echo "<div><strong>Total Grade Weight:</strong> <font color=\"#ff2431\">". $total_grade_weight["grade_weighting"]."%</font></div>";
 					} else {
-						echo "<td style=\"border-bottom: 0\">&nbsp;&nbsp;&nbsp;". $total_grade_weight["grade_weighting"]."%</td>";
+						echo "<div><strong>Total Grade Weight:</strong> ". $total_grade_weight["grade_weighting"]."%</div>";
 					}
 				}
-				echo "</tr>";
-				echo "</table>";
+				
 			}
 			
 			
@@ -443,7 +469,7 @@ function course_objectives_formatted($objectives, $parent_id, $top_level_id, $ed
 
 			if (count($output)) {
 				echo "<h1>Learning Event Types</h1>";
-				echo "<img src=\"".ENTRADA_URL."/cron/syllabus_gen.php?mode=graph&course_id=".$course_id."&start_date=".$start_date."&end_date=".$end_date."\" />";
+				echo "<img src=\"".str_replace("https","http",ENTRADA_URL)."/cron/syllabus_gen.php?mode=graph&course_id=".$course_id."&start_date=".$start_date."&end_date=".$end_date."\" />";
 				foreach ($output as $course_id => $result) {
 					$STATISTICS					= array();
 					$STATISTICS["labels"]		= array();
@@ -594,6 +620,7 @@ function course_objectives_formatted($objectives, $parent_id, $top_level_id, $ed
 							echo "<div>\n";
 							echo "<strong>".html_encode($event["event_title"])."</strong>";
 							echo (!empty($event["objectives"]) ? "<br />\nObjectives: ".implode(" - ", $objectives)."<br />" : "&nbsp;")."\n";
+							echo (!empty($event["presentations"]) ? "\nMCC Presentations: ".implode(", ", $event["presentations"])."<br />" : "&nbsp;")."\n";
 							echo (!empty($event["event_description"]) ? "<div><br />".limit_chars(nl2br(strip_tags($event["event_description"])),376)."</div>\n" : "" );
 							echo "</div><br />";
 						}

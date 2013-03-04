@@ -54,31 +54,22 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					WHERE a.`id` = ".$db->qstr($FILE_ID);
 		$result	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
 		if($result) {
-			$accesses		= $result["accesses"];
-			$access_method	= (int) $result["access_method"];
-			$filename		= $result["file_name"];
-			$filetype		= $result["file_type"];
-			$filesize		= $result["file_size"];
+			if ($ENTRADA_ACL->amIAllowed(new CourseResource($result['course_id'], $result['organisation_id']), 'read')) {
+				$accesses		= $result["accesses"];
+				$access_method	= (int) $result["access_method"];
+				$filename		= $result["file_name"];
+				$filetype		= $result["file_type"];
+				$filesize		= $result["file_size"];
 
-			$is_administrator = false;
+				$is_administrator = false;
 
-			if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($result["course_id"], $result["organisation_id"]), "update")) {
-				$is_administrator = true;
-			}
-
-			if ((!$is_administrator) && ((int) $result["valid_from"]) && ($result["valid_from"] > time())) {
-				$TITLE	= "Not Available: ".html_encode($result["file_name"]);
-				$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) is not available for downloading until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
-
-				$template_html = fetch_template("global/external");
-				if ($template_html) {
-					echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
+				if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($result["course_id"], $result["organisation_id"]), "update")) {
+					$is_administrator = true;
 				}
-				exit;
-			} else {
-				if((!$is_administrator) && ((int) $result["valid_until"]) && ($result["valid_until"] < time())) {
+
+				if ((!$is_administrator) && ((int) $result["valid_from"]) && ($result["valid_from"] > time())) {
 					$TITLE	= "Not Available: ".html_encode($result["file_name"]);
-					$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) was only available for download until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+					$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) is not available for downloading until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_from"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 					$template_html = fetch_template("global/external");
 					if ($template_html) {
@@ -86,59 +77,79 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					}
 					exit;
 				} else {
-					if((@file_exists(FILE_STORAGE_PATH."/C".$FILE_ID)) && (@is_readable(FILE_STORAGE_PATH."/C".$FILE_ID))) {
-						$filesize	= @filesize(FILE_STORAGE_PATH."/C".$FILE_ID);
-						$fc			= @fopen(FILE_STORAGE_PATH."/C".$FILE_ID, "rb");
-
-						/**
-						 * Determine method that the file should be accessed (downloaded or viewed)
-						 * and send the proper headers to the client.
-						 */
-						switch($access_method) {
-							case 1 :
-								header("Pragma: public");
-								header("Expires: 0");
-								header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-								header("Content-Type: ".$result["file_type"]."");
-								header("Content-Disposition: inline; filename=\"".$result["file_name"]."\"");
-								header("Content-Length: ".$filesize);
-								header("Content-Transfer-Encoding: binary");
-							break;
-							case 0 :
-							default :
-								header("Pragma: public");
-								header("Expires: 0");
-								header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-								header("Content-Type: application/force-download");
-								header("Content-Type: application/octet-stream");
-								header("Content-Type: ".$result["file_type"]."");
-								header("Content-Disposition: attachment; filename=\"".$result["file_name"]."\"");
-								header("Content-Length: ".$filesize);
-								header("Content-Transfer-Encoding: binary");
-							break;
-						}
-						
-						while(!feof($fc)) {
-							echo fread($fc, 10240);
-						}
-						
-						fclose($fc);
-
-						$db->Execute("UPDATE `course_files` SET `accesses` = '".($accesses + 1)."' WHERE `id` = ".$db->qstr($FILE_ID));
-
-						add_statistic("courses", "file_download", "file_id", $FILE_ID);
-						exit;
-					} else {
-						$TITLE	= "Not Found: ".html_encode($result["file_name"]);
-						$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) does not exist in the filesystem.<br /><br />Please contact a system administrator or the course directory listed on the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+					if((!$is_administrator) && ((int) $result["valid_until"]) && ($result["valid_until"] < time())) {
+						$TITLE	= "Not Available: ".html_encode($result["file_name"]);
+						$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) was only available for download until <strong>".date(DEFAULT_DATE_FORMAT, $result["valid_until"])."</strong>.<br /><br />For further information or to contact a teacher, please see the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
 
 						$template_html = fetch_template("global/external");
 						if ($template_html) {
 							echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
 						}
 						exit;
+					} else {
+						if((@file_exists(FILE_STORAGE_PATH."/C".$FILE_ID)) && (@is_readable(FILE_STORAGE_PATH."/C".$FILE_ID))) {
+							$filesize	= @filesize(FILE_STORAGE_PATH."/C".$FILE_ID);
+							$fc			= @fopen(FILE_STORAGE_PATH."/C".$FILE_ID, "rb");
+
+							/**
+							* Determine method that the file should be accessed (downloaded or viewed)
+							* and send the proper headers to the client.
+							*/
+							switch($access_method) {
+								case 1 :
+									header("Pragma: public");
+									header("Expires: 0");
+									header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+									header("Content-Type: ".$result["file_type"]."");
+									header("Content-Disposition: inline; filename=\"".$result["file_name"]."\"");
+									header("Content-Length: ".$filesize);
+									header("Content-Transfer-Encoding: binary");
+								break;
+								case 0 :
+								default :
+									header("Pragma: public");
+									header("Expires: 0");
+									header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+									header("Content-Type: application/force-download");
+									header("Content-Type: application/octet-stream");
+									header("Content-Type: ".$result["file_type"]."");
+									header("Content-Disposition: attachment; filename=\"".$result["file_name"]."\"");
+									header("Content-Length: ".$filesize);
+									header("Content-Transfer-Encoding: binary");
+								break;
+							}
+
+							while(!feof($fc)) {
+								echo fread($fc, 10240);
+							}
+
+							fclose($fc);
+
+							$db->Execute("UPDATE `course_files` SET `accesses` = '".($accesses + 1)."' WHERE `id` = ".$db->qstr($FILE_ID));
+
+							add_statistic("courses", "file_download", "file_id", $FILE_ID);
+							exit;
+						} else {
+							$TITLE	= "Not Found: ".html_encode($result["file_name"]);
+							$BODY	= display_notice(array("The file that you are trying to download (<strong>".html_encode($result["file_name"])."</strong>) does not exist in the filesystem.<br /><br />Please contact a system administrator or the course directory listed on the <a href=\"".ENTRADA_URL."/courses?id=".$result["course_id"]."\" style=\"font-weight: bold\">course website</a>."));
+
+							$template_html = fetch_template("global/external");
+							if ($template_html) {
+								echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
+							}
+							exit;
+						}
 					}
 				}
+			} else {
+				$TITLE	= "Not Authorized";
+				$BODY	= display_notice(array("The file that you are trying to access is only accessible by authorized users."));
+
+				$template_html = fetch_template("global/external");
+				if ($template_html) {
+					echo str_replace(array("%DEFAULT_CHARSET%", "%ENTRADA_URL%", "%TITLE%", "%BODY%"), array(DEFAULT_CHARSET, ENTRADA_URL, $TITLE, $BODY), $template_html);
+				}
+				exit;
 			}
 		} else {
 			$TITLE	= "Not Found";

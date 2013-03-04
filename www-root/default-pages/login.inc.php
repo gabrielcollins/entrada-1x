@@ -1,14 +1,28 @@
 <?php
 /**
- * Online Course Resources [Pre-Clerkship]
- * @author Unit: Medical Education Technology Unit
- * @author Director: Dr. Benjamin Chen <bhc@post.queensu.ca>
- * @author Developer: Matt Simpson <simpson@post.queensu.ca>
- * @version 3.0
- * @copyright Copyright 2006 Queen's University, MEdTech Unit
+ * Entrada [ http://www.entrada-project.org ]
  *
- * $Id: login.inc.php 1078 2010-03-26 17:09:35Z simpson $
-*/
+ * Entrada is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Entrada is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * The main login page for Entrada.
+ *
+ * @author Organisation: Queen's University
+ * @author Unit: School of Medicine
+ * @author Developer: Matt Simpson <simpson@queensu.ca>
+ * @copyright Copyright 2008 Queen's University. All Rights Reserved.
+ *
+ */
 
 if(!defined("PARENT_INCLUDED")) exit;
 

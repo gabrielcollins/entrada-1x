@@ -163,15 +163,14 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 
 <div id="module-header">
 	<?php
-	if ($total_pages > 1) {
+	if (isset($total_pages) && $total_pages > 1) {
 		echo "<div id=\"pagination-links\">\n";
 		echo "Pages: ".$pagination->GetPageLinks();
 		echo "</div>\n";
 	}
-
 	?>
 	<a href="<?php echo COMMUNITY_URL."/feeds".$COMMUNITY_URL.":".$PAGE_URL."/rss"; ?>" class="feeds rss">Subscribe to RSS</a>
-	<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
+	<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $LOGGED_IN && $_SESSION["details"]["notifications"]) { ?>
 		<div id="notifications-toggle" style="display: inline; padding-top: 4px;"></div>
 		<script type="text/javascript">
 		function promptNotifications(enabled) {
@@ -213,7 +212,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 				}
 			);
 		}
-		
+
 		</script>
 		<?php
 		$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$COMMUNITY_ID."&type=announcement&action=view')";
@@ -371,8 +370,9 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete")) {
 				echo	strip_tags($result["announcement_description"], $ALLOWED_HTML_TAGS);
 				echo "</div>\n";
 				echo "</div>";
-				
-				add_statistic("community:".$COMMUNITY_ID.":announcements", "view", "cannouncement_id", $result["cannouncement_id"]);
+				if ($LOGGED_IN) {
+					add_statistic("community:".$COMMUNITY_ID.":announcements", "view", "cannouncement_id", $result["cannouncement_id"]);
+				}
 				
 			}
 		} else {

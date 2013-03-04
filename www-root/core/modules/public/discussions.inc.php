@@ -32,7 +32,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 
 	$PROCESSED		= array();
@@ -50,21 +50,12 @@ if(!defined("PARENT_INCLUDED")) {
 
 	if((isset($_GET["event_id"])) && ((int) trim($_GET["event_id"]))) {
 		$EVENT_ID = (int) trim($_GET["event_id"]);
+	} elseif((isset($_GET["rid"])) && ((int) trim($_GET["rid"]))) {
+		$EVENT_ID = (int) trim($_POST["event_id"]);
+	} elseif((isset($_GET["drid"])) && ((int) trim($_GET["drid"]))) {
+		$EVENT_ID = (int) trim($_POST["event_id"]);
 	} elseif((isset($_POST["event_id"])) && ((int) trim($_POST["event_id"]))) {
 		$EVENT_ID = (int) trim($_POST["event_id"]);
-	}
-
-	if(isset($_GET["rid"])) {
-		$RESULT_ID	= (int) trim($_GET["rid"]);
-
-		if(isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["events"]["previous_query"]["query"])) {
-			$USE_QUERY = true;
-		}
-	} elseif(isset($_GET["drid"])) {
-		$RESULT_ID	= (int) trim($_GET["drid"]);
-		if(isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["dashboard"]["previous_query"]["query"])) {
-			$USE_QUERY = true;
-		}
 	}
 
 	switch($ACTION) {
@@ -75,16 +66,19 @@ if(!defined("PARENT_INCLUDED")) {
 					$result	= $db->GetRow($query);
 					if($result) {
 						$PROCESSED["event_id"]				= $EVENT_ID;
-						$PROCESSED["proxy_id"]				= $_SESSION["details"]["id"];
+						$PROCESSED["proxy_id"]				= $ENTRADA_USER->getID();
 						$PROCESSED["parent_id"]				= 0;
 						$PROCESSED["discussion_title"]		= "RE: ".$result["event_title"];
 						$PROCESSED["discussion_comment"]	= $DISCUSSION_COMMENT;
 						$PROCESSED["discussion_active"]		= 1;
 						$PROCESSED["updated_date"]			= time();
-						$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 
 						if(!$db->AutoExecute("event_discussions", $PROCESSED, "INSERT")) {
 							application_log("error", "Unable to add discussion comment to event id [".$EVENT_ID."]");
+						} elseif (($EDISCUSSION_ID = $db->Insert_Id()) && defined("NOTIFICATIONS_ACTIVE") && NOTIFICATIONS_ACTIVE) {
+							require_once("Models/notifications/NotificationUser.class.php");
+							NotificationUser::addAllNotifications("event_discussion", $EVENT_ID, 0, $ENTRADA_USER->getID(), $EDISCUSSION_ID);
 						}
 					}
 				}

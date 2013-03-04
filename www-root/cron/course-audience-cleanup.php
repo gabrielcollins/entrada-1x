@@ -1,13 +1,14 @@
 <?php
 /**
- * Online Course Resources [Pre-Clerkship]
- * @author Unit: Medical Education Technology Unit
- * @author Director: Dr. Benjamin Chen <bhc@post.queensu.ca>
- * @author Developer: Matt Simpson <simpson@post.queensu.ca>
- * @version 3.0
- * @copyright Copyright 2006 Queen's University, MEdTech Unit
+ * Entrada [ http://www.entrada-project.org ]
  *
- * $Id: community-quota.php 1103 2010-04-05 15:20:37Z simpson $
+ * Cron job responsible for cleaning up the course audience members.
+ *
+ * @author Organisation: Queen's University
+ * @author Unit: School of Medicine
+ * @author Developer: Brandon Thorn <bt37@queensu.ca>
+ * @copyright Copyright 2011 Queen's University. All Rights Reserved.
+ *
 */
 
 @set_time_limit(0);
@@ -27,14 +28,11 @@ $today = mktime(0, 0, 0, date("m"), date("d"), date("y"));
 
 $query = "	SELECT * FROM `course_audience` WHERE `enroll_finish` < ".$db->qstr($today)." AND `enroll_finish` != 0 AND `audience_active` = 1";
 $results = $db->GetAll($query);
-
 if ($results) {
 	foreach($results as $result){
-		$query = " UPDATE `course_audience` SET `audience_active` = 0 WHERE `caudience_id` = ".$db->qstr($result["caudience_id"]);
+		$query = "UPDATE `course_audience` SET `audience_active` = 0 WHERE `caudience_id` = ".$db->qstr($result["caudience_id"]);
 		if(!$db->Execute($query)){
 			echo "Unable to de-activate id: ".$result["caudience_id"];
 		}
 	}
 }
-
-?>

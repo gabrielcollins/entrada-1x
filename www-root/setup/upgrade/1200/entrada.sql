@@ -34,14 +34,14 @@ ALTER TABLE `student_observerships` add column (
   `preceptor_firstname` varchar(256) default NULL,
   `preceptor_lastname` varchar(256) default NULL,
   `preceptor_proxy_id` int(12) unsigned default NULL);
-  
+
 ALTER TABLE `student_mspr` ADD COLUMN `carms_number` int(10) unsigned default NULL;
 ALTER TABLE `student_mspr` CHANGE `generated` `generated` BIGINT(64) NULL DEFAULT NULL;
 ALTER TABLE `student_mspr` CHANGE `closed` `closed` BIGINT(64) NULL DEFAULT NULL;
 
 INSERT INTO `communities_modules` (`module_id`,`module_shortname`,`module_version`,`module_title`,`module_description`,`module_active`,`module_permissions`,`updated_date`,`updated_by`)
 VALUES (7, 'quizzes', '1.0.0', 'Quizzes', 'This module allows communities to create their own quizzes for summative or formative evaluation.', 1, 'a:1:{s:5:\"index\";i:0;}', 1216256830, 3499);
-	
+
 INSERT INTO `community_modules` (`community_id`, `module_id`, `module_active`)
 SELECT `community_id`, 7, 1 FROM `communities` WHERE `community_active` = 1;
 
@@ -268,7 +268,7 @@ INSERT INTO `ar_lu_on_call_locations` (`id`,`on_call_location`) VALUES ('', 'Oth
 
 ALTER TABLE `assessments` ADD COLUMN `grade_weighting` int(11) NOT NULL default '0' AFTER `numeric_grade_points_total`;
 
-CREATE TABLE `assessment_exceptions` (
+CREATE TABLE IF NOT EXISTS `assessment_exceptions` (
   `aexception_id` int(12) NOT NULL auto_increment,
   `assessment_id` int(12) NOT NULL,
   `proxy_id` int(12) NOT NULL,

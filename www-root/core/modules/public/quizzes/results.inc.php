@@ -75,14 +75,14 @@ if ($RECORD_ID) {
 				$is_administrator	= true;
 			}
 		} else {			
-			$query	= "SELECT * FROM `community_members` WHERE `community_id` = ".$db->qstr($quiz_record["community_id"])." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `member_active` = '1' AND `member_acl` = '1'";
+			$query	= "SELECT * FROM `community_members` WHERE `community_id` = ".$db->qstr($quiz_record["community_id"])." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `member_active` = '1' AND `member_acl` = '1'";
 			$result	= $db->GetRow($query);
 			if ($result) {				
 				$is_administrator = true;
 			}
 		}
 
-		if (($is_administrator) || ($quiz_record["proxy_id"] == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])) {
+		if (($is_administrator) || ($quiz_record["proxy_id"] == $ENTRADA_USER->getActiveId())) {
 			$respondent_name = get_account_data("firstlast", $quiz_record["proxy_id"]);
 			if ($QUIZ_TYPE == "event") {
 				$BREADCRUMB[]	= array("url" => ENTRADA_URL."/events?id=".$quiz_record["event_id"], "title" => limit_chars($quiz_record["content_title"], 32));

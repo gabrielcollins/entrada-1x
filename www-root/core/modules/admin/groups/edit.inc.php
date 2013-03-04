@@ -35,7 +35,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// ERROR CHECKING
 
@@ -51,8 +51,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 			foreach ($proxy_ids as $proxy_id) {
 				$added_proxy_ids[] = (int) $proxy_id;
 			}
-			$PROCESSED["updated_date"]	= time();
-			$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+
+            $PROCESSED["entrada_only"] = 1;
+			$PROCESSED["updated_date"] = time();
+			$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 			$count = $added = 0;
 			foreach($proxy_ids as $proxy_id) {
@@ -69,7 +71,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 					}
 				}
 			}
-			
+
 			if(!$count) {
 				$ERROR++;
 				$ERRORSTR[] = "You must select a user(s) to add to this group. Please be sure that you select at least one user to add this event to from the interface.";
@@ -79,24 +81,24 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 		break;
 		default :
 			// No error checking for step 1.
-		break;	
+		break;
 	}
-	
+
 	// PAGE DISPLAY
 	switch ($STEP) {
 		case "2" :			// Step 2
             $SUCCESS++;
-            $SUCCESSSTR[] = "You have successfully added this member"; 
+            $SUCCESSSTR[] = "You have successfully added this member";
 			echo display_success($SUCCESSSTR);
 		break;
-	
+
 		default :			// Step 1
 			$group_ids = array();
-			
-			
+
+
 /**
  * @todo What the heck is this? Will who ever did this, please fix this. It's crap.
- * 
+ *
  */
 			if(isset($PROCESSED["group_id"]) && (int)$PROCESSED["group_id"]) {
 				$GROUP_ID = $PROCESSED["group_id"];
@@ -117,9 +119,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 				header("Location: ".ENTRADA_URL."/admin/groups");
 				exit;
 			}
-								
+
 			$group_ids = $_SESSION["ids"];
-			
+
 			$query = "	SELECT * FROM `groups`
 						WHERE `group_id` IN (".implode(", ", $group_ids).")
 						ORDER By `group_name`";
@@ -131,7 +133,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 			if (!$GROUP_ID) {
 				$GROUP_ID = $results[0]["group_id"]; // $group_ids[0];
 			}
-			
+
 
 			$query = "	SELECT a.*, b.`organisation_id` FROM `groups` AS a
 						LEFT JOIN `group_organisations` AS b
@@ -158,10 +160,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 			$ONLOAD[]	= "showgroup('".$group_name."',".$GROUP_ID.")";
 
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/groups?section=edit", "title" => "Edit");
-			
+
 			?>
 			<h1>Editing Groups</h1>
-			
+
 			<h2>Selected Groups</h2>
 			<form action="<?php echo ENTRADA_URL; ?>/admin/<?php echo "$MODULE"; ?>?section=edit&step=1" method="post" id="addMembersForm">
 				<input type="hidden" id="step" name="step" value="1" />
@@ -204,11 +206,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 				</table>
 			</form>
 			<?php
-			
+
 //			$orgs = array_keys($ENTRADA_USER->getAllOrganisations());
 //			$query = "SELECT * FROM `group_organisations` WHERE `group_id` =".$db->qstr($GROUP_ID)." AND `organisation_id` IN (".implode(",",$orgs).")";
 //			print_r($ENTRADA_USER->getAllOrganisations());
-//			if ($result = $db->GetAll($query)) {	
+//			if ($result = $db->GetAll($query)) {
 			?>
 			<h2>View Selected Group Members</h2>
 			<form action="<?php echo ENTRADA_URL; ?>/admin/groups?section=manage" method="post">
@@ -245,11 +247,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 					?>
 					</tbody>
 				</table>
-				
+
 				<div id="delbutton" style="padding-top: 15px; text-align: right; display:none">
 					<input type="submit" class="button" value="Delete/Activate" style="vertical-align: middle" />
 				</div>
-				
+
 				<input type="hidden" name="members" value="1" />
 			</form>
 			<br />
@@ -281,13 +283,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 								<td>
 									<div id="group_name_title"></div>
 								</td>
-							</tr>			
+							</tr>
 							<tr>
 								<td colspan="2" style="vertical-align: top">
 									<div class="member-add-type" id="existing-member-add-type">
 									<?php
 										$nmembers_results	= false;
-	
+
 										$nmembers_query	= "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(' ', a.`firstname`, a.`lastname`) AS `fullname`, a.`username`, a.`organisation_id`, b.`group`, b.`role`
 															FROM `".AUTH_DATABASE."`.`user_data` AS a
 															LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
@@ -298,7 +300,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 															AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
 															GROUP BY a.`id`
 															ORDER BY a.`lastname` ASC, a.`firstname` ASC";
-	
+
 										//Fetch list of categories
 										$query	= "SELECT `organisation_id`,`organisation_title` FROM `".AUTH_DATABASE."`.`organisations` ORDER BY `organisation_title` ASC";
 										$organisation_results	= $db->GetAll($query);
@@ -310,7 +312,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 												}
 											}
 										}
-	
+
 										$current_member_list	= array();
 										$query		= "SELECT `proxy_id` FROM `group_members` WHERE `group_id` = ".$db->qstr($GROUP_ID)." AND `member_active` = '1'";
 										$results	= $db->GetAll($query);
@@ -321,13 +323,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 												}
 											}
 										}
-	
+
 										$nmembers_results = $db->GetAll($nmembers_query);
 										if($nmembers_results) {
 											$members = $member_categories;
-	
+
 											foreach($nmembers_results as $member) {
-	
+
 												$organisation_id = $member['organisation_id'];
 												$group = $member['group'];
 												$role = $member['role'];
@@ -337,7 +339,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 													$members[$organisation_id]['options'][$group."all"] = array('text' => $group. ' > all', 'value' => $organisation_id.'|'.$group.'|all');
 												}
 											}
-	
+
 											$added_ids = array();
 											$added_people = array();
 											$key_value = 1;
@@ -379,7 +381,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 													'selectboxname'=>'group and role',
 													'default-option'=>'-- Select Group & Role --',
 													'category_check_all'=>true));
-	
+
 										} else {
 											echo "No One Available [1]";
 										}
@@ -417,12 +419,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 					<input type="hidden" id="add_group_id" name="add_group_id" value="" />
 				</form>
 			</div>
-				
-		<?php			
+
+		<?php
 //		} else {
 //			add_error("You do not have access to change edit this group.");
 //			echo display_error();
-//		} 
+//		}
 		?>
 		<script type="text/javascript">
 
@@ -445,12 +447,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 					}
 				}
 			}
-		} else { 
+		} else {
 			?>
 			var people = [[]];
 			var ids = [[]];
-			<?php 
-		} 
+			<?php
+		}
 		?>
 		var disablestatus = 0;
 
@@ -490,7 +492,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 
 			if ($('group_members_category_select').selectedIndex != 0) {
 				$('group_members_scroll').update(new Element('div', {'style':'width: 100%; height: 100%; background: transparent url(<?php echo ENTRADA_URL;?>/images/loading.gif) no-repeat center'}));
-	
+
 				//Grab the new contents
 				var updater = new Ajax.Updater('group_members_scroll', '<?php echo ENTRADA_URL."/admin/groups?section=membersapi";?>',{
 					method:'post',
@@ -540,7 +542,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 			$('group_id').value = group;
 			$('addMembersForm').submit();
 		}
-		function showgroup(name,group) {					
+		function showgroup(name,group) {
 			$('group_name_title').update(new Element('div',{'style':'font-size:14px; font-weight:600; color:#153E7E'}).update('Group: '+name));
 			$('add_group_id').value = group;
 		}
@@ -561,7 +563,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 				disablestatus = 1;
 				toggleDisabled($('additions'),true);
 				$('delbutton').style.display = 'block';
-				$('additions').fade({ duration: 0.3, to: 0.25 }); 
+				$('additions').fade({ duration: 0.3, to: 0.25 });
 			} else if (!$$('.delchk:checked').length&&disablestatus) {
 				disablestatus = 0;
 				toggleDisabled($('additions'),false);
@@ -572,6 +574,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GROUPS"))) {
 		</script>
 		<br /><br />
 		<?php
-		break;	
+		break;
 	}
 }

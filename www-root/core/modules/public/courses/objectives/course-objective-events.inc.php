@@ -84,7 +84,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 			echo "<h1>".html_encode($course_name)."</h2>";
 
 			echo "<h2>".$objective["objective_name"]."</h2>\n";
-			echo "<div class=\"content-small\">".$objective["objective_description"]."</div><br/>";
+			echo "<div class=\"content-small\">".$objective["objective_description"]."</div><br />";
 			$query = "	SELECT * FROM `event_objectives` AS a
 						JOIN `events` AS b
 						ON a.`event_id` = b.`event_id`

@@ -39,7 +39,7 @@ if (!defined("IN_MTDTRACKING")) {
 
 	session_start();
 
-	$proxy_id = $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+	$proxy_id = $ENTRADA_USER->getActiveId();
 	$PROCESSED["service_id"] = validate_integer_field($_GET["service_id"]);
 
 	if (isset($_POST["sortname"]) && $_POST["sortname"] != '') {

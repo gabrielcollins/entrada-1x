@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$EXTERNAL_CONTRIBUTIONS_ID = $_GET["rid"];
 	
@@ -42,7 +42,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 	$_SESSION["academic_expand_grid"] = "external_grid";
 	
 	if($EXTERNAL_CONTRIBUTIONS_ID) {
-		$query	= "SELECT * FROM `ar_external_contributions` WHERE `external_contributions_id`=".$db->qstr($EXTERNAL_CONTRIBUTIONS_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_external_contributions` WHERE `external_contributions_id`=".$db->qstr($EXTERNAL_CONTRIBUTIONS_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/academic?section=edit_external", "title" => "Edit Contributions to External Organisations / International Development Projects");
@@ -125,7 +125,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 							$ERRORSTR[] = "The <strong>Prov / State</strong> field is required.";
 						}
 					}
-					if($_SESSION["details"]["clinical_member"]) {
+					if($ENTRADA_USER->getClinical()) {
 						/**
 						 * Required field "role" / Role.
 						 */
@@ -184,8 +184,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						
 						if($db->AutoExecute("ar_external_contributions", $PROCESSED, "UPDATE", "`external_contributions_id`=".$db->qstr($EXTERNAL_CONTRIBUTIONS_ID))) {
 								switch($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
@@ -286,7 +286,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					$ONLOAD[]					= "setMaxLength();";
 					?>
 					Describe the nature and number of days for each of the following activities involving the application of professional effort and expertise on behalf of organizations or communities external to the University:<br /><br />
-					<?php if($_SESSION["details"]["clinical_member"]) { ?>
+					<?php if($ENTRADA_USER->getClinical()) { ?>
 					<font size="1">(i)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Activity, either alone or in combination with other activities, exceeds 20% of the time required by the Member's full-time academic duties.<br /> 
 					(ii)&nbsp;&nbsp;&nbsp;&nbsp;Any activity, for which prior permission described in the Collective Agreement Section 19.4.2, has been granted.<br />
 					(iii)&nbsp;&nbsp;&nbsp;Teaching at another university or institution<br />
@@ -369,7 +369,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					}
 					?>
 					<?php
-					if($_SESSION["details"]["clinical_member"]) {
+					if($ENTRADA_USER->getClinical()) {
 					?>
 					<tr>
 						<td></td>

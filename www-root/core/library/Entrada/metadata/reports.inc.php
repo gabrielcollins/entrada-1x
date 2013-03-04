@@ -110,7 +110,7 @@ function getBiographicalFeature(User $user, $feature) {
 			$country = $user->getCountry();
 			$country_name = $country->getName();
 			
-			$feat_str = html_encode($address)."<br/>".html_encode($city);
+			$feat_str = html_encode($address)."<br />".html_encode($city);
 			if ($prov_name) $feat_str .= ", ".html_encode($prov_name);
 			$feat_str .= "<br />";
 			$feat_str .= html_encode($country_name);

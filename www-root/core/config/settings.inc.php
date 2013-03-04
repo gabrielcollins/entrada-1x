@@ -69,6 +69,8 @@ define("DATABASE_PASS", $config->database->password);							// The password for 
 
 define("ADODB_DIR", ENTRADA_ABSOLUTE."/core/library/Entrada/adodb");
 
+define("ACADEMIC_YEAR_START_DATE", "September 1");								// The start month and day of your academic year.
+
 define("CLERKSHIP_DATABASE", $config->database->clerkship_database);			// The name of the database that stores the clerkship schedule information.
 define("CLERKSHIP_SITE_TYPE", 1);												// The value this application will use for site types in the clerkship logbook module. This will be removed/replaced by functional logic to decide which site type to use in the future - for now, leave this as 1.
 define("CLERKSHIP_EMAIL_NOTIFICATIONS", true);									// Whether email notifications will be sent out to the Program Coordinator of the Rotation's related course
@@ -81,6 +83,7 @@ define("CLERKSHIP_SIX_WEEKS_PAST", 4);
 define("CLERKSHIP_ROTATION_ENDED", 3);
 define("CLERKSHIP_ONE_WEEK_PRIOR", 2);
 define("CLERKSHIP_ROTATION_PERIOD", 1);
+define("CLERKSHIP_TOP_CATEGORY_ID", 49);
 $CLERKSHIP_REQUIRED_WEEKS = 14;
 $CLERKSHIP_CATEGORY_TYPE_ID = 13;
 $CLERKSHIP_EVALUATION_FORM = "http://url_of_your_schools_precptor_evaluation_of_clerk_form.pdf";
@@ -238,7 +241,7 @@ GOOGLENOTIFICATION;
  */
 define("DEFAULT_WEATHER_FETCH", "http://weather.yahooapis.com/forecastrss?u=c&w=%LOCATIONCODE%");
 
-$WEATHER_LOCATION_CODES = array("4145" => "Kingston, Ontario");				// These are the weather.com weather city / airport weather codes that are fetched and stored for use on the Dashboard.
+$WEATHER_LOCATION_CODES = array("4145" => "Kingston, Ontario");					// These are the weather.com weather city / airport weather codes that are fetched and stored for use on the Dashboard.
 
 define("LOG_DIRECTORY", $config->entrada_storage . "/logs");					// Full directory path to the logs directory without a trailing slash.
 
@@ -264,7 +267,8 @@ define("ANNUALREPORT_STORAGE", $config->entrada_storage."/annualreports");		// F
 
 define("STORAGE_USER_PHOTOS", $config->entrada_storage . "/user-photos");		// Full directory path where user profile photos are stored without trailing slash.
 define("FILE_STORAGE_PATH", $config->entrada_storage . "/event-files");			// Full directory path where off-line files are stored without trailing slash.
-define("MSPR_STORAGE",$config->entrada_storage . "/msprs");					//Full directory path where student Medical School Performance Reports should be sotred
+define("MSPR_STORAGE",$config->entrada_storage . "/msprs");						//Full directory path where student Medical School Performance Reports should be sotred
+define("SEARCH_INDEX_PATH",$config->entrada_storage . "/search-indexes");		//Full directory path where student Medical School Performance Reports should be sotred
 
 define("SENDMAIL_PATH", "/usr/sbin/sendmail -t -i");							// Full path and parametres to sendmail.
 
@@ -272,7 +276,7 @@ define("DEBUG_MODE", true);														// Some places have extra debug code to
 define("SHOW_LOAD_STATS", false);												// Do you want to see the time it takes to load each page?
 
 define("APPLICATION_NAME", "Entrada");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
-define("APPLICATION_VERSION", "1.3.0");											// The current filesystem version of Entrada.
+define("APPLICATION_VERSION", "1.4.0");											// The current filesystem version of Entrada.
 define("APPLICATION_IDENTIFIER", "app-".AUTH_APP_ID);							// PHP does not allow session key's to be integers (sometimes), so we have to make it a string.
 
 $DEFAULT_META["title"] = "Entrada: An eLearning Ecosystem";
@@ -324,6 +328,9 @@ define("COMMUNITY_NOTIFY_LIMIT", 100);											// Per batch email mailout limi
 define("COMMUNITY_MAIL_LIST_MEMBERS_LIMIT", 100);								// Per batch google requests limit
 
 define("COMMUNITY_NOTIFICATIONS_ACTIVE", false);
+define("COMMUNITY_DISCUSSIONS_ANON", true);
+define("NOTIFICATIONS_ACTIVE", false);
+define("DISCUSSIONS_ANON", true);
 
 /**
  * Array containing valid Podcast mime types as required by Apple.
@@ -476,23 +483,6 @@ $MODULES["regionaled"] = array("title" => "Regional Education", "resource" => "r
 $MODULES["reports"] = array("title" => "System Reports", "resource" => "reportindex", "permission" => "read");
 $MODULES["settings"] = array("title" => "System Settings", "resource" => "configuration", "permission" => "update");
 $MODULES["annualreport"] = array("title" => "Annual Reports", "resource" => "annualreportadmin", "permission" => "read");
-
-/**
- * System groups define which system groups & role combinations are allowed to
- * access this system. Note the student and alumni groups have many roles.
- */
-$SYSTEM_GROUPS = array();
-for($i = (date("Y") + (date("m") < 7 ? 3 : 4)); $i >= 2004; $i--) {
-	$SYSTEM_GROUPS["student"][] = $i;
-}
-for($i = (date("Y") + (date("m") < 7 ? 3 : 4)); $i >= 1997; $i--) {
-	$SYSTEM_GROUPS["alumni"][] = $i;
-}
-$SYSTEM_GROUPS["faculty"] = array("faculty", "lecturer", "director", "admin");
-$SYSTEM_GROUPS["resident"] = array("resident", "lecturer");
-$SYSTEM_GROUPS["staff"] = array("staff", "admin", "pcoordinator");
-$SYSTEM_GROUPS["medtech"] = array("staff", "admin");
-$SYSTEM_GROUPS["guest"] = array("communityinvite");
 
 /*	Registered Groups, Roles and Start Files for Administrative modules.
 	Example usage:

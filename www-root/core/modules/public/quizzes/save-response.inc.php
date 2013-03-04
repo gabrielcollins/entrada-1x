@@ -83,7 +83,7 @@ if ($RECORD_ID) {
 				$query				= "	SELECT *
 										FROM `quiz_progress`
 										WHERE `aquiz_id` = ".$db->qstr($RECORD_ID)."
-										AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+										AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										AND `progress_value` = 'complete'
 										ORDER BY `updated_date` ASC";
 				$completed_record	= $db->GetAll($query);
@@ -102,14 +102,14 @@ if ($RECORD_ID) {
 					$query				= "	SELECT *
 											FROM `quiz_progress`
 											WHERE `aquiz_id` = ".$db->qstr($RECORD_ID)."
-											AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+											AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 											AND `progress_value` = 'inprogress'
 											ORDER BY `updated_date` ASC";
 					$progress_record	= $db->GetRow($query);
 					if ($progress_record) {
 						$quiz_progress_array	= array (
 													"updated_date" => time(),
-													"updated_by" => $_SESSION["details"]["id"]
+													"updated_by" => $ENTRADA_USER->getID()
 												);
 
 						if ($db->AutoExecute("quiz_progress", $quiz_progress_array, "UPDATE", "`qprogress_id` = ".$db->qstr($progress_record["qprogress_id"]))) {
@@ -160,7 +160,7 @@ if ($RECORD_ID) {
 						$query	= "	SELECT *
 									FROM `quiz_progress`
 									WHERE `aquiz_id` = ".$db->qstr($RECORD_ID)."
-									AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+									AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 									AND `updated_date` >= ".$db->qstr(strtotime("-30 minutes"))."
 									AND `progress_value` = 'complete'";
 						$progress_record = $db->GetRow($query);

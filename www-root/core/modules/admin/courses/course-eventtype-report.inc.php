@@ -37,5 +37,5 @@ $results	= $db->GetAll($query);
 	
 	?>
 </table>
-<br/>
+<br />
 Return to <?php echo "<a href=\"".ENTRADA_URL."/admin/courses?id=".$COURSE_ID."&section=content\">".$results[0]['course_name']."</a>";?>

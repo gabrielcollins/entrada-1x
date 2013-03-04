@@ -62,7 +62,12 @@ unset($tmp_action_type);
  * Ensure that the selected evaluation is in the system.
  */
 if($EVALUATION_ID) {
-	$query				= "SELECT * FROM `evaluations` WHERE `evaluation_id` = ".$db->qstr($EVALUATION_ID);
+	$query				= "SELECT a.*, c.`target_shortname` FROM `evaluations` AS a
+							JOIN `evaluation_forms` AS b
+							ON a.`eform_id` = b.`eform_id`
+							JOIN `evaluations_lu_targets` AS c
+							ON b.`target_id` = c.`target_id`
+							WHERE a.`evaluation_id` = ".$db->qstr($EVALUATION_ID);
 	$evaluation_details	= $db->GetRow($query);
 	if($evaluation_details) {
 		$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/evaluations?".replace_query(array("section" => "edit", "id" => $EVALUATION_ID)), "title" => "Show Progress");
@@ -133,6 +138,20 @@ if($EVALUATION_ID) {
         if($ERROR) {
                 echo display_error();
         }
+		
+		
+		$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.dataTables.min.js\"></script>";
+		$HEAD[] = "<script type=\"text/javascript\">
+		jQuery(document).ready(function() {
+			jQuery('#attempts').dataTable(
+				{    
+					'bPaginate': false,
+					'bInfo': false
+				}
+			);
+		});
+		</script>";
+		
         if ($ENTRADA_ACL->amIAllowed(new EventResource($evaluation_details["evaluation_id"]), 'update')) {
             echo "<div class=\"no-printing\">\n";
             echo "	<div style=\"float: right; margin-top: 8px\">\n";
@@ -155,19 +174,26 @@ if($EVALUATION_ID) {
                 			AND a.`evaluator_value` = g.`group_id`
                 			LEFT JOIN `group_members` AS gm
                 			ON g.`group_id` = gm.`group_id`
+							LEFT JOIN `course_groups` AS cg
+							ON a.`evaluator_type` = 'cgroup_id'
+							AND a.`evaluator_value` = cg.`cgroup_id`
+							LEFT JOIN `course_group_audience` AS cga
+							ON cg.`cgroup_id` = cga.`cgroup_id`
 	            			JOIN `".AUTH_DATABASE."`.`user_data` AS b
 	            			ON ((
 		            			a.`evaluator_type` = 'proxy_id'
 		            			AND a.`evaluator_value` = b.`id`
 							) OR (
 								gm.`proxy_id` = b.`id`
+							) OR (
+								cga.`proxy_id` = b.`id`
 							))
 							AND ba.`user_id` = b.`id`
 	            			WHERE a.`evaluation_id` = ".$db->qstr($EVALUATION_ID);
 	            $evaluation_evaluators = $db->GetAll($query);
 	        	if ($evaluation_evaluators) {
 	                ?>
-	                <table class="tableList" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Evaluation Members">
+	                <table id="attempts" class="tableList" style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Evaluation Members">
 	                <colgroup>
                         <col class="modified" />
                         <col class="target" />
@@ -216,11 +242,23 @@ if($EVALUATION_ID) {
               			} else  {
               				$inprogress = false;
               			}
+						$evaluation_targets_list = Evaluation::getTargetsArray($EVALUATION_ID, $evaluation_evaluator["eevaluator_id"], $evaluation_evaluator["proxy_id"]);
+						$max_submittable = $evaluation_details["max_submittable"];
+						if ($evaluation_targets_list) {
+							$evaluation_targets_count = count($evaluation_targets_list);
+							if (array_search($evaluation_details["target_shortname"], array("preceptor", "rotation_core", "rotation_elective")) !== false && $evaluation_details["max_submittable"]) {
+								$max_submittable = ($evaluation_targets_count * (int) $evaluation_details["max_submittable"]);
+							} elseif ($evaluation_details["target_shortname"] == "peer" && $evaluation_details["max_submittable"] == 0) {
+								$max_submittable = $evaluation_targets_count;
+							}
+						} else {
+							$target_name = "";
+						}
                         echo "<tr>\n";
                         echo "	<td>&nbsp;</td>\n";
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
                         echo "	<td>".($inprogress ? "In Progress" : ($last_completed ? "Completed" : "Not Started"))."</td>\n";
-                        echo "	<td>".$count." / ".$evaluation_details["max_submittable"]."</td>\n";
+                        echo "	<td>".$count." / ".$max_submittable."</td>\n";
                         echo "	<td>".(isset($last_completed) && $last_completed ? date(DEFAULT_DATE_FORMAT, $last_completed) : "Not Started")."</td>\n";
                         echo "</tr>\n";
 	                }
@@ -237,14 +275,14 @@ if($EVALUATION_ID) {
             } else {
             	
             	?>
-            	<br/>
+            	<br />
             	<h2 style="margin-top: 0px">Complete Attempts</h2>
             	<?php
 	            /**
 	             * Get the total number of results using the generated queries above and calculate the total number
 	             * of pages that are available based on the results per page preferences.
 	             */	           
-	           $query = "SELECT a.*, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`, c.`etarget_id`
+	           $query = "SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`, c.`etarget_id`
 	            			FROM `evaluation_progress` AS c
                 			JOIN `evaluation_evaluators` AS a
                 			ON a.`evaluation_id` = c.`evaluation_id`
@@ -266,7 +304,7 @@ if($EVALUATION_ID) {
 	            			
 	            			UNION
 	            			
-	            			SELECT a.*, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`, c.`etarget_id`
+	            			SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`, c.`etarget_id`
 	            			FROM `evaluation_progress` AS c
                 			JOIN `evaluation_evaluators` AS a
                 			ON a.`evaluation_id` = c.`evaluation_id`
@@ -289,6 +327,33 @@ if($EVALUATION_ID) {
 	            			WHERE c.`evaluation_id` = ".$db->qstr($EVALUATION_ID)."
 	            			AND a.`evaluator_type` = 'cohort'
 	            			AND g.`group_type` = 'cohort'
+                			AND c.`progress_value` = 'complete'
+	            			GROUP BY c.`eprogress_id`
+							
+							UNION
+							
+	            			SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`, c.`etarget_id`
+	            			FROM `evaluation_progress` AS c
+                			JOIN `evaluation_evaluators` AS a
+                			ON a.`evaluation_id` = c.`evaluation_id`
+                			JOIN `course_groups` AS cg
+                			ON a.`evaluator_value` = cg.`cgroup_id`
+                			JOIN `course_group_audience` AS cga
+                			ON cg.`cgroup_id` = cga.`cgroup_id`
+                			AND cga.`active` = 1
+                			AND cga.`proxy_id` = c.`proxy_id`
+	            			JOIN `".AUTH_DATABASE."`.`user_data` AS b
+	            			ON a.`evaluator_value` = cg.`cgroup_id`
+                			AND b.`id` = c.`proxy_id`
+                			JOIN `".AUTH_DATABASE."`.`user_access` AS ba
+                			ON ba.`app_id` = ".$db->qstr(AUTH_APP_ID)."
+							AND ba.`user_id` = b.`id`
+                			LEFT JOIN `evaluation_targets` AS d
+                			ON d.`etarget_id` = c.`etarget_id`
+                			LEFT JOIN `evaluations_lu_targets` AS e
+                			ON d.`target_id` = e.`target_id`
+	            			WHERE c.`evaluation_id` = ".$db->qstr($EVALUATION_ID)."
+	            			AND a.`evaluator_type` = 'cgroup_id'
                 			AND c.`progress_value` = 'complete'
 	            			GROUP BY c.`eprogress_id`
 	            			ORDER BY `etarget_id`, `lastname`, `firstname`, `ordered_date`";
@@ -316,7 +381,15 @@ if($EVALUATION_ID) {
 	                <tbody>
 	                <?php
 	                foreach($evaluation_evaluators as $evaluation_evaluator) {
-	                	$target_name = fetch_evaluation_target_title($evaluation_evaluator);
+						if (in_array($evaluation_evaluator["target_shortname"], array("rotation_core", "rotation_elective", "preceptor"))) {
+							$query = "SELECT `event_id` FROM `evaluation_progress_clerkship_events`
+										WHERE `eprogress_id` = ".$db->qstr($evaluation_evaluator["eprogress_id"]);
+							$event_id = $db->GetOne($query);
+							if ($event_id) {
+								$evaluation_evaluator["target_record_id"] = $event_id;
+							}
+						}
+	                	$target_name = fetch_evaluation_target_title($evaluation_evaluator["target_record_id"], 1, $evaluation_evaluator["target_shortname"]);
                         echo "<tr>\n";
                         echo "	<td>&nbsp;</td>\n";
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
@@ -336,14 +409,14 @@ if($EVALUATION_ID) {
 	                    echo display_notice(array("No evaluators have completed this evaluation at this time."));
 	            }
             	?>
-            	<br/>
+            	<br />
             	<h2 style="margin-top: 0px">Incomplete Attempts</h2>
             	<?php
 	            /**
 	             * Get the total number of results using the generated queries above and calculate the total number
 	             * of pages that are available based on the results per page preferences.
 	             */
-	           $query = "SELECT a.*, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`
+	           $query = "SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`
 	            			FROM `evaluation_progress` AS c
                 			JOIN `evaluation_evaluators` AS a
                 			ON a.`evaluation_id` = c.`evaluation_id`
@@ -365,7 +438,7 @@ if($EVALUATION_ID) {
 	            			
 	            			UNION
 	            			
-	            			SELECT a.*, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`
+	            			SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`
 	            			FROM `evaluation_progress` AS c
                 			JOIN `evaluation_evaluators` AS a
                 			ON a.`evaluation_id` = c.`evaluation_id`
@@ -390,6 +463,33 @@ if($EVALUATION_ID) {
 	            			AND g.`group_type` = 'cohort'
                 			AND c.`progress_value` = 'inprogress'
 	            			GROUP BY gm.`proxy_id`
+	            			
+							UNION
+
+	            			SELECT a.*, c.`target_record_id`, CONCAT_WS(' ', b.`firstname`, b.`lastname`) AS `fullname`, b.`lastname`, b.`firstname`, a.`updated_date` AS `ordered_date`, c.`progress_value`, c.`updated_date`, d.`target_value`, e.`target_shortname`, b.`id` AS `proxy_id`
+	            			FROM `evaluation_progress` AS c
+                			JOIN `evaluation_evaluators` AS a
+                			ON a.`evaluation_id` = c.`evaluation_id`
+                			JOIN `course_groups` AS cg
+                			ON a.`evaluator_value` = cg.`cgroup_id`
+                			JOIN `course_group_audience` AS cga
+                			ON cg.`cgroup_id` = cga.`cgroup_id`
+                			AND cga.`active` = 1
+	            			JOIN `".AUTH_DATABASE."`.`user_data` AS b
+	            			ON a.`evaluator_value` = cg.`cgroup_id`
+                			AND b.`id` = cga.`proxy_id`
+                			AND c.`proxy_id` = b.`id`
+                			JOIN `".AUTH_DATABASE."`.`user_access` AS ba
+                			ON ba.`app_id` = ".$db->qstr(AUTH_APP_ID)."
+							AND ba.`user_id` = b.`id`
+                			LEFT JOIN `evaluation_targets` AS d
+                			ON d.`etarget_id` = c.`etarget_id`
+                			LEFT JOIN `evaluations_lu_targets` AS e
+                			ON d.`target_id` = e.`target_id`
+	            			WHERE c.`evaluation_id` = ".$db->qstr($EVALUATION_ID)."
+	            			AND a.`evaluator_type` = 'cgroup_id'
+                			AND c.`progress_value` = 'inprogress'
+	            			GROUP BY cga.`proxy_id`
 	            			ORDER BY `lastname`, `firstname`, `ordered_date`";
 	            $evaluation_evaluators = $db->GetAll($query);
 	            
@@ -415,7 +515,15 @@ if($EVALUATION_ID) {
 	                <tbody>
 	                <?php
 	                foreach($evaluation_evaluators as $evaluation_evaluator) {
-	                	$target_name = fetch_evaluation_target_title($evaluation_evaluator);
+						if (in_array($evaluation_evaluator["target_shortname"], array("rotation_core", "rotation_elective", "preceptor"))) {
+							$query = "SELECT `event_id` FROM `evaluation_progress_clerkship_events`
+										WHERE `eprogress_id` = ".$db->qstr($evaluation_evaluator["eprogress_id"]);
+							$event_id = $db->GetOne($query);
+							if ($event_id) {
+								$evaluation_evaluator["target_record_id"] = $event_id;
+							}
+						}
+	                	$target_name = fetch_evaluation_target_title($evaluation_evaluator["target_record_id"], 1, $evaluation_evaluator["target_shortname"]);
                         echo "<tr>\n";
                         echo "	<td>&nbsp;</td>\n";
                         echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";
@@ -435,7 +543,7 @@ if($EVALUATION_ID) {
 	                    echo display_notice(array("No evaluators have a current attempt in progress for this evaluation."));
 	            }
 	            ?>
-            	<br/>
+            	<br />
             	<h2 style="margin-top: 0px">Evaluators With No Attempts</h2>
             	<?php
 	            /**
@@ -446,16 +554,23 @@ if($EVALUATION_ID) {
 	            			FROM `evaluation_evaluators` AS a
                 			LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS ba
                 			ON ba.`app_id` = ".$db->qstr(AUTH_APP_ID)."
-                			JOIN `groups` AS g
+                			LEFT JOIN `groups` AS g
                 			ON a.`evaluator_type` = 'cohort'
                 			AND a.`evaluator_value` = g.`group_id`
-                			JOIN `group_members` AS gm
+                			LEFT JOIN `group_members` AS gm
                 			ON g.`group_id` = gm.`group_id`
                 			AND gm.`member_active`
+                			LEFT JOIN `course_groups` AS cg
+                			ON a.`evaluator_type` = 'cgroup_id'
+                			AND a.`evaluator_value` = cg.`cgroup_id`
+                			LEFT JOIN `course_group_audience` AS cga
+                			ON cg.`cgroup_id` = cga.`cgroup_id`
+                			AND cga.`active`
 	            			JOIN `".AUTH_DATABASE."`.`user_data` AS b
 	            			ON ba.`user_id` = b.`id`
 	            			AND (
 	            					gm.`proxy_id` = b.`id`
+									OR cga.`proxy_id` = b.`id`
 	            					OR (
 	            							b.`id` = a.`evaluator_value` 
 	            							AND a.`evaluator_type` = 'proxy_id'
@@ -494,7 +609,19 @@ if($EVALUATION_ID) {
 	                <?php
 	                foreach($evaluation_evaluators as $evaluation_evaluator) {
 	                	if (array_search($evaluation_evaluator["proxy_id"], $ignore_list) === false) {
-		                	$target_name = fetch_evaluation_target_title($evaluation_evaluator);
+							$evaluation_targets_list = Evaluation::getTargetsArray($EVALUATION_ID, $evaluation_evaluator["eevaluator_id"], $evaluation_evaluator["proxy_id"]);
+							if ($evaluation_targets_list) {
+								$evaluation_targets_count = count($evaluation_targets_list);
+								if (array_search($evaluation_details["target_shortname"], array("preceptor", "rotation_core", "rotation_elective")) !== false && $evaluation_details["max_submittable"]) {
+									$evaluation_details["max_submittable"] = ($evaluation_targets_count * (int) $evaluation_details["max_submittable"]);
+								}
+								$target_name = fetch_evaluation_target_title($evaluation_targets_list[0], $evaluation_targets_count, $evaluation_details["target_shortname"]);
+								if ($evaluation_details["target_shortname"] == "peer" && $evaluation_details["max_submittable"] == 0) {
+									$evaluation_details["max_submittable"] = $evaluation_targets_count;
+								}
+							} else {
+								$target_name = "";
+							}
 	                        echo "<tr>\n";
 	                        echo "	<td>&nbsp;</td>\n";
 	                        echo "	<td>".$evaluation_evaluator["fullname"]."</td>\n";

@@ -20,7 +20,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			echo "<select name=\"curriculum_period\" id = \"period_select\" onchange=\"addPeriod(this.options[this.selectedIndex].value,this.options[this.selectedIndex].text,this.selectedIndex)\">";
 			echo "<option value=\"0\">-- Select a Period --</option>";
 			foreach ($periods as $period) {
-				echo "<option value = \"".$period["cperiod_id"]."\">".date("F jS,Y",$period["start_date"])." to ".date("F jS,Y",$period["start_date"])."</option>";
+				echo "<option value = \"".$period["cperiod_id"]."\">".date("F jS,Y",$period["start_date"])." to ".date("F jS,Y",$period["finish_date"])."</option>";
 			}
 			echo "</select>";
 		} else {

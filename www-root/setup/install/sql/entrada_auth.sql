@@ -12,11 +12,13 @@ CREATE TABLE IF NOT EXISTS `acl_permissions` (
   `update` tinyint(1) DEFAULT NULL,
   `delete` tinyint(1) DEFAULT NULL,
   `assertion` varchar(50) DEFAULT NULL,
-  PRIMARY KEY  (`permission_id`)
+  PRIMARY KEY  (`permission_id`),
+  KEY `entity_type` (`entity_type`,`entity_value`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`, `entity_value`, `app_id`, `create`, `read`, `update`, `delete`, `assertion`) VALUES
 ('community', NULL, NULL, NULL, 1, 1, 1, NULL, NULL, 'NotGuest'),
+('course', NULL, 'group', 'student', 1, NULL, 0, NULL, NULL, 'CourseEnrollment'),
 ('course', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'ResourceOrganisation&NotGuest'),
 ('dashboard', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'NotGuest'),
 ('discussion', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'NotGuest'),
@@ -33,6 +35,8 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('evaluationformquestion', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('event', NULL, 'role', 'pcoordinator', 1, 1, NULL, NULL, NULL, 'CourseOwner'),
 ('event', NULL, 'role', 'pcoordinator', 1, NULL, NULL, 1, 1, 'EventOwner'),
+('event', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'EventEnrollment&NotGuest'),
+('event', NULL, 'group', 'student', 1, NULL, 0, NULL, NULL, 'NotEventEnrollment'),
 ('eventcontent', NULL, 'role', 'pcoordinator', 1, NULL, NULL, 1, NULL, 'EventOwner'),
 ('coursecontent', NULL, 'role', 'director', 1, NULL, NULL, 1, NULL, 'CourseOwner'),
 ('coursecontent', NULL, 'role', 'lecturer', 1, NULL, NULL, 1, NULL, 'CourseOwner'),
@@ -48,6 +52,7 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('resourceorganisation', 1, 'organisation:group:role', '1:faculty:admin', 1, 1, NULL, NULL, NULL, NULL),
 ('resourceorganisation', 1, 'organisation:group:role', '1:staff:admin', 1, 1, NULL, NULL, NULL, NULL),
 ('resourceorganisation', 1, 'organisation:group:role', '1:staff:pcoordinator', 1, 1, NULL, NULL, NULL, NULL),
+('resourceorganisation', NULL, NULL, NULL, 1, NULL, NULL, 0, NULL, NULL),
 ('poll', NULL, 'role', 'admin', 1, 1, NULL, 1, 1, NULL),
 ('poll', NULL, 'role', 'pcoordinator', 1, 1, NULL, 1, 1, NULL),
 ('quiz', NULL, 'group:role', 'faculty:director', 1, NULL, NULL, 1, 1, 'QuizOwner'),
@@ -75,8 +80,8 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('photo', NULL, 'group', 'staff', 1, NULL, 1, NULL, NULL, NULL),
 ('clerkshipschedules', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, NULL),
 ('clerkshipschedules', NULL, 'group', 'staff', 1, NULL, 1, NULL, NULL, NULL),
-('reportindex', NULL, 'organisation:group:role', '1:staff:admin', '1', NULL, '1', NULL, NULL, NULL),
-('report', NULL, 'organisation:group:role', '1:staff:admin', '1', NULL, '1', NULL, NULL, NULL),
+('reportindex', NULL, 'organisation:group:role', '1:staff:admin', 1, NULL, 1, NULL, NULL, NULL),
+('report', NULL, 'organisation:group:role', '1:staff:admin', 1, NULL, 1, NULL, NULL, NULL),
 ('assistant_support', NULL, 'group:role', 'faculty:director', 1, 1, 1, 1, 1, NULL),
 ('assistant_support', NULL, 'group:role', 'faculty:clerkship', 1, 1, 1, 1, 1, NULL),
 ('assistant_support', NULL, 'group:role', 'faculty:admin', 1, 1, 1, 1, 1, NULL),
@@ -91,30 +96,34 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('gradebook', NULL, 'role', 'pcoordinator', 1, NULL, 1, NULL, NULL, 'GradebookOwner'),
 ('gradebook', NULL, 'group:role', 'faculty:admin', 1, NULL, 1, NULL, NULL, 'GradebookOwner'),
 ('gradebook', NULL, 'group:role', 'faculty:director', 1, NULL, 1, NULL, NULL, 'GradebookOwner'),
-('dashboard', NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, 'NotGuest'),
-('regionaled', NULL, 'group', 'resident', '1', NULL, '1', NULL, NULL, 'HasAccommodations'),
-('regionaled', NULL, 'group', 'student', '1', NULL, '1', NULL, NULL, 'HasAccommodations'),
-('regionaled_tab', NULL, 'group', 'resident', '1', NULL, '1', NULL, NULL, 'HasAccommodations'),
+('dashboard', NULL, NULL, NULL, 1, NULL, NULL, 1, NULL, 'NotGuest'),
+('regionaled', NULL, 'group', 'resident', 1, NULL, 1, NULL, NULL, 'HasAccommodations'),
+('regionaled', NULL, 'group', 'student', 1, NULL, 1, NULL, NULL, 'HasAccommodations'),
+('regionaled_tab', NULL, 'group', 'resident', 1, NULL, 1, NULL, NULL, 'HasAccommodations'),
 ('awards', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('mspr', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('mspr', NULL, 'group', 'student', 1, NULL, 1, 1, NULL, NULL),
 ('user', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('incident', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
-('task', NULL, 'group:role', 'staff:admin', NULL, 1, 1, 1, 1, 'ResourceOrganisation'),
-('task', NULL, 'group:role', 'faculty:director', NULL, NULL, 1, 1, 1, 'TaskOwner'),
-('task', NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'TaskRecipient'),
-('task', NULL, 'role', 'pcoordinator', NULL, NULL, 1, 1, 1, 'TaskOwner'),
-('task', NULL, 'group:role', 'faculty:director', NULL, 1, NULL, NULL, NULL, 'CourseOwner'),
-('task', NULL, 'role', 'pcoordinator', NULL, 1, NULL, NULL, NULL,'CourseOwner'),
-('taskverification', NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, 'TaskVerifier'),
-('task', NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'TaskVerifier'),
-('tasktab', NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'ShowTaskTab'),
-('mydepartment', NULL, 'group', 'faculty', NULL, 1, 1, 1, 1, 'DepartmentHead'),
-('myowndepartment', NULL, 'user', '1', NULL, 1, 1, 1, 1, NULL),
-('annualreportadmin', NULL, 'group:role', 'medtech:admin', NULL, 1, 1, 1, 1, NULL),
-('gradebook', NULL, 'group', 'student', NULL, NULL, 1, NULL, NULL, NULL),
+('task', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, 'ResourceOrganisation'),
+('task', NULL, 'group:role', 'faculty:director', 1, NULL, 1, 1, 1, 'TaskOwner'),
+('task', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'TaskRecipient'),
+('task', NULL, 'role', 'pcoordinator', 1, NULL, 1, 1, 1, 'TaskOwner'),
+('task', NULL, 'group:role', 'faculty:director', 1, 1, NULL, NULL, NULL, 'CourseOwner'),
+('task', NULL, 'role', 'pcoordinator', 1, 1, NULL, NULL, NULL,'CourseOwner'),
+('taskverification', NULL, NULL, NULL, 1, NULL, NULL, 1, NULL, 'TaskVerifier'),
+('task', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'TaskVerifier'),
+('tasktab', NULL, NULL, NULL, 1, NULL, 1, NULL, NULL, 'ShowTaskTab'),
+('mydepartment', NULL, 'group', 'faculty', 1, 1, 1, 1, 1, 'DepartmentHead'),
+('myowndepartment', NULL, 'user', 1, 1, 1, 1, 1, 1, NULL),
+('annualreportadmin', NULL, 'group:role', 'medtech:admin', 1, 1, 1, 1, 1, NULL),
+('gradebook', NULL, 'group', 'student', 1, NULL, 1, NULL, NULL, NULL),
 ('metadata', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
-('evaluation', NULL, 'group', 'faculty', 1, 0, 1, 0, 0, 'IsEvaluated');
+('evaluation', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, 'IsEvaluated'),
+('evaluation', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, 'EvaluationReviewer'),
+('evaluationform', NULL, 'group', 'faculty', 1, 1, 1, 1, NULL, 'EvaluationFormAuthor'),
+('evaluationquestion', NULL, 'group', 'faculty', 1, 1, 1, 1, NULL, NULL),
+('evaluationquestion', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL);
 
 CREATE TABLE IF NOT EXISTS `departments` (
   `department_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
@@ -126,7 +135,9 @@ CREATE TABLE IF NOT EXISTS `departments` (
   `department_address2` varchar(128) NOT NULL DEFAULT '',
   `department_city` varchar(64) NOT NULL DEFAULT 'Kingston',
   `department_province` varchar(64) NOT NULL DEFAULT 'ON',
+  `province_id` int(12) NOT NULL DEFAULT '9',
   `department_country` varchar(64) NOT NULL DEFAULT 'CA',
+  `country_id` int(12) NOT NULL DEFAULT '39',
   `department_postcode` varchar(16) NOT NULL DEFAULT '',
   `department_telephone` varchar(32) NOT NULL DEFAULT '',
   `department_fax` varchar(32) NOT NULL DEFAULT '',
@@ -134,6 +145,8 @@ CREATE TABLE IF NOT EXISTS `departments` (
   `department_url` text NOT NULL,
   `department_desc` text,
   `department_active` int(1) NOT NULL DEFAULT '1',
+  `updated_date` bigint(64) unsigned NOT NULL,
+  `updated_by` int(12) unsigned NOT NULL,
   PRIMARY KEY  (`department_id`),
   UNIQUE KEY `organisation_id` (`organisation_id`,`entity_id`,`department_title`),
   KEY `department_active` (`department_active`),
@@ -208,11 +221,17 @@ CREATE TABLE IF NOT EXISTS `organisations` (
   `organisation_url` text NOT NULL,
   `organisation_desc` text,
   `template` varchar(32) NOT NULL DEFAULT 'default',
-  PRIMARY KEY  (`organisation_id`)
+  `aamc_institution_id` varchar(32) DEFAULT NULL,
+  `aamc_institution_name` varchar(255) DEFAULT NULL,
+  `aamc_program_id` varchar(32) DEFAULT NULL,
+  `aamc_program_name` varchar(255) DEFAULT NULL,
+  `organisation_active` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`organisation_id`),
+  KEY `organisation_active` (`organisation_active`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-INSERT INTO `organisations` (`organisation_id`, `organisation_title`, `organisation_address1`, `organisation_address2`, `organisation_city`, `organisation_province`, `organisation_country`, `organisation_postcode`, `organisation_telephone`, `organisation_fax`, `organisation_email`, `organisation_url`, `organisation_desc`) VALUES
-(1, 'Your University', 'University Avenue', '', 'Kingston', 'ON', 'CA', 'K7L3N6', '613-533-2000', '', '', 'http://www.yourschool.ca', NULL);
+INSERT INTO `organisations` (`organisation_id`, `organisation_title`, `organisation_address1`, `organisation_address2`, `organisation_city`, `organisation_province`, `organisation_country`, `organisation_postcode`, `organisation_telephone`, `organisation_fax`, `organisation_email`, `organisation_url`, `organisation_desc`, `organisation_active`) VALUES
+(1, 'Your University', 'University Avenue', '', 'Kingston', 'ON', 'CA', 'K7L3N6', '613-533-2000', '', '', 'http://www.yourschool.ca', NULL, 1);
 
 CREATE TABLE IF NOT EXISTS `password_reset` (
   `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
@@ -271,6 +290,7 @@ CREATE TABLE IF NOT EXISTS `user_access` (
   `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(12) unsigned NOT NULL DEFAULT '0',
   `app_id` int(12) unsigned NOT NULL DEFAULT '0',
+  `organisation_id` INT(12) unsigned NOT NULL DEFAULT '0',
   `account_active` enum('true','false') NOT NULL DEFAULT 'true',
   `access_starts` bigint(64) NOT NULL DEFAULT '0',
   `access_expires` bigint(64) NOT NULL DEFAULT '0',
@@ -295,8 +315,8 @@ CREATE TABLE IF NOT EXISTS `user_access` (
   KEY `user_app_id` (`user_id`,`app_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-INSERT INTO `user_access` (`id`, `user_id`, `app_id`, `account_active`, `access_starts`, `access_expires`, `last_login`, `last_ip`, `login_attempts`, `locked_out_until`, `role`, `group`, `extras`, `private_hash`, `notes`) VALUES
-(1, 1, 1, 'true', 1216149930, 0, 0, '', NULL, NULL, 'admin', 'medtech', 'YToxOntzOjE2OiJhbGxvd19wb2RjYXN0aW5nIjtzOjM6ImFsbCI7fQ==', MD5(CONCAT(rand(), CURRENT_TIMESTAMP)), '');
+INSERT INTO `user_access` (`id`, `user_id`, `app_id`, `organisation_id`, `account_active`, `access_starts`, `access_expires`, `last_login`, `last_ip`, `login_attempts`, `locked_out_until`, `role`, `group`, `extras`, `private_hash`, `notes`) VALUES
+(1, 1, 1, 1, 'true', 1216149930, 0, 0, '', NULL, NULL, 'admin', 'medtech', 'YToxOntzOjE2OiJhbGxvd19wb2RjYXN0aW5nIjtzOjM6ImFsbCI7fQ==', MD5(CONCAT(rand(), CURRENT_TIMESTAMP)), '');
 
 CREATE TABLE IF NOT EXISTS `user_data` (
   `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
@@ -415,16 +435,72 @@ CREATE TABLE IF NOT EXISTS `user_data_resident` (
   PRIMARY KEY (`proxy_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `user_organisations` (
-	`id` int(12) NOT NULL AUTO_INCREMENT, 
-	`organisation_id` int(3) NOT NULL, 
-	`proxy_id` int(12) NOT NULL, 
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+CREATE TABLE IF NOT EXISTS `system_groups` (
+  `id` INT NOT NULL AUTO_INCREMENT ,
+  `group_name` VARCHAR(45) NOT NULL ,
+  PRIMARY KEY (`id`) )
+ENGINE = MyISAM DEFAULT CHARSET=utf8;
 
-INSERT INTO `user_organisations` (`organisation_id`, `proxy_id`)
-SELECT '1', a.`id`
-FROM `user_data` AS a
-JOIN `user_access` AS b
-ON b.`user_id` = a.`id`
-WHERE b.`app_id` = '1';
+INSERT INTO `system_groups` (`group_name`) VALUES
+('student'),
+('alumni'),
+('faculty'),
+('resident'),
+('staff'),
+('medtech'),
+('guest');
+
+CREATE TABLE IF NOT EXISTS `system_roles` (
+  `id` INT NOT NULL AUTO_INCREMENT ,
+  `role_name` VARCHAR(45) NOT NULL ,
+  `groups_id` INT NOT NULL ,
+  PRIMARY KEY (`id`, `groups_id`) )
+ENGINE = MyISAM DEFAULT CHARSET=utf8;
+
+INSERT INTO `system_roles` (`role_name`, `groups_id`) VALUES
+((YEAR(CURRENT_DATE())+4),1),
+((YEAR(CURRENT_DATE())+3),1),
+((YEAR(CURRENT_DATE())+2),1),
+((YEAR(CURRENT_DATE())+1),1),
+((YEAR(CURRENT_DATE())),1),
+((YEAR(CURRENT_DATE())-1),1),
+((YEAR(CURRENT_DATE())-2),1),
+((YEAR(CURRENT_DATE())-3),1),
+((YEAR(CURRENT_DATE())-4),1),
+((YEAR(CURRENT_DATE())+4),2),
+((YEAR(CURRENT_DATE())+3),2),
+((YEAR(CURRENT_DATE())+2),2),
+((YEAR(CURRENT_DATE())+1),2),
+((YEAR(CURRENT_DATE())),2),
+((YEAR(CURRENT_DATE())-1),2),
+((YEAR(CURRENT_DATE())-2),2),
+((YEAR(CURRENT_DATE())-3),2),
+((YEAR(CURRENT_DATE())-4),2),
+('faculty',3),
+('lecturer',3),
+('director',3),
+('admin',3),
+('resident',4),
+('lecturer',4),
+('staff',5),
+('pcoordinator',5),
+('admin',5),
+('staff',6),
+('admin',6),
+('communityinvite',7);
+
+CREATE  TABLE IF NOT EXISTS `system_group_organisation` (
+  `groups_id` INT NOT NULL ,
+  `organisation_id` INT(12) UNSIGNED NOT NULL ,
+  PRIMARY KEY (`groups_id`, `organisation_id`) )
+ENGINE = MyISAM DEFAULT CHARSET=utf8;
+
+INSERT INTO `system_group_organisation` (`organisation_id`, `groups_id`)
+VALUES
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 4),
+(1, 5),
+(1, 6),
+(1, 7);

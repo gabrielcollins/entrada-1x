@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	// Meta information for this page.
 	$PAGE_META["title"]			= "Add Service Contributions on Behalf of Queen's University";
@@ -119,7 +119,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				$ERRORSTR[] = "The <strong>Hours Committed</strong> field is required.";
 			}
 			
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 				/**
 				 * Required field "start_month" / Start			 
 				 */
@@ -229,8 +229,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 			}
 			if(!$ERROR) {
 				$PROCESSED["updated_date"]	= time();
-				$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-				$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+				$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+				$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 				
 				if($PROCESSED["commitment_type"] == "variable") {
 					$PROCESSED["time_commitment"] = 0;
@@ -354,7 +354,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 				<input type="radio" id="commitment_type_variable" name="commitment_type" value="variable"<?php echo (($PROCESSED["commitment_type"] == "variable") ? " checked=\"checked\"" : ""); ?> onclick="setUnsetResults(this)" /> Variable</td>
 			</tr>
 			<?php
-			if($_SESSION["details"]["clinical_member"]) {
+			if($ENTRADA_USER->getClinical()) {
 			?>
 			<tr>
 				<td></td>

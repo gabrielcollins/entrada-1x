@@ -3,7 +3,7 @@ require_once("Models/utility/AttentionRequirable.interface.php");
 require_once("MSPR.class.php");
 require_once("Models/utility/Collection.class.php");
 
-$ORGANISATION_ID = $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"];
+$ORGANISATION_ID = $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"];
 
 
 class MSPRs extends Collection {

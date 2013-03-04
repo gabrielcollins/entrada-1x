@@ -47,7 +47,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_GRADEBOOK",	true);
 	
@@ -204,7 +204,16 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			$mode = "INSERT";
 			$where = false;
 		}
+		
+		$query = "SELECT `grade_threshold`
+				  FROM `assessments`
+				  WHERE `assessment_id` = ".$db->qstr($ASSESSMENT_ID);
+		$result = $db->GetRow($query);
 
+		if ($result && $GRADE_VALUE < $result["grade_threshold"]) {
+			$grade["threshold_notified"] = "0";
+		}
+		
 		if($db->AutoExecute("assessment_grades", $grade, $mode, $where)) {
 			if ($mode == "UPDATE") {
 				application_log("success", "Successfully updated grade for assessment_id [".$ASSESSMENT_ID."] for proxy_id [".$PROXY_ID."].");

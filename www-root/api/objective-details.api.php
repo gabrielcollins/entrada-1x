@@ -48,7 +48,7 @@ if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				}
 				
 				$PROCESSED["updated_date"]			= time();
-				$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 
 				if(!$db->AutoExecute("course_objectives", $PROCESSED, "UPDATE", "`objective_id` = ".$db->qstr($OBJECTIVE_ID)." AND `course_id` IN (".$COURSE_IDS.")")) {
 					application_log("error", "Unable to update objective id [".$OBJECTIVE_ID."] in course ids [".$COURSE_IDS."]. Database said: ".$db->ErrorMsg());
@@ -75,7 +75,7 @@ if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				
 				$PROCESSED["updated_date"]			= time();
 				$PROCESSED["objective_id"]			= $OBJECTIVE_ID;
-				$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 				if ((count(explode(",", $COURSE_IDS)))) {
 					$COURSE_IDS = explode(",", $COURSE_IDS);
 					foreach ($COURSE_IDS as $COURSE_ID) {

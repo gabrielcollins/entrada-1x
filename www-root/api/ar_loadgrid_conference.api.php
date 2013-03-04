@@ -28,7 +28,7 @@
 require_once("init.inc.php");
 
 if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) { 
-	$proxy_id 	= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+	$proxy_id 	= $ENTRADA_USER->getActiveId();
 	$args		= html_decode($_GET["t"]);
 	
 	if(isset($_POST["sortname"]) && $_POST["sortname"] != '') {

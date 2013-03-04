@@ -27,7 +27,7 @@ if (!defined("PARENT_INCLUDED")) {
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed('electives', 'update')) {
+} elseif (!$ENTRADA_ACL->amIAllowed('course', 'update',false)) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/".$MODULE."\\'', 15000)";
 
 	$ERROR++;
@@ -35,7 +35,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_COURSE_GROUPS",	true);
 
@@ -44,7 +44,10 @@ if (!defined("PARENT_INCLUDED")) {
 	$SECTION		= "groups";
 	$ACTION			= "index";
 	$PREFERENCES	= preferences_load($MODULE);
-
+	
+	/**
+	 * $ACTION used to clean up edit page and make it clear what you're doing
+	 */	
 	if (isset($_GET["action"])) {
 		if (trim($_GET["action"]) != "") {
 			$ACTION = clean_input($_GET["action"], "url");
@@ -56,15 +59,24 @@ if (!defined("PARENT_INCLUDED")) {
 	} elseif((isset($_POST["step"])) && ((int) trim($_POST["step"]))) {
 		$STEP = (int) trim($_POST["step"]);
 	}
-
+	
+	/**
+	 * Course ID, must be present for any page to work
+	 */
 	if((isset($_GET["id"])) && ((int) trim($_GET["id"]))) {
 		$COURSE_ID	= (int) trim($_GET["id"]);
 	}
-
-	if((isset($_GET["gid"])) && ((int) trim($_GET["gid"]))) {
+	
+	/**
+	 * Group ID, must be present for any page to work (even if its not needed for that action, it is for navigation)
+	 */
+	if ((isset($_GET["gid"])) && ((int) trim($_GET["gid"]))) {
 		$GROUP_ID	= (int) trim($_GET["gid"]);
+	} elseif ((isset($_POST["gid"])) && ((int) trim($_POST["gid"]))) {
+		$GROUP_ID	= (int) trim($_POST["gid"]);
 	}
 	
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "content", "id" => $COURSE_ID, "step" => false)), "title" => "Edit " . $module_singular_name." Content");
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/courses/groups?id=".$COURSE_ID, "title" => "Manage " . $module_singular_name . " Groups");
 	
 	if (($router) && ($router->initRoute())) {

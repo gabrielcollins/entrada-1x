@@ -64,7 +64,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	$STEP					= 1;
 	$ENCODED_INFORMATION	= "";
 
-	$MEDTECH_PROXYID		= ((isset($_SESSION["details"]["id"]) && (int) $_SESSION["details"]["id"]) ? (int) $_SESSION["details"]["id"] : 0); // This must be in all files once authenticated.
+	$MEDTECH_PROXYID		= ((isset($ENTRADA_USER) && (int) $ENTRADA_USER->getID()) ? (int) $ENTRADA_USER->getID() : 0); // This must be in all files once authenticated.
 
 	if((isset($_GET["step"])) && ((int) trim($_GET["step"]))) {
 		$STEP = (int) trim($_GET["step"]);
@@ -98,11 +98,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		<link href="<?php echo ENTRADA_URL; ?>/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 		<link href="<?php echo ENTRADA_URL; ?>/w3c/p3p.xml" rel="P3Pv1" type="text/xml" />
 
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/prototype.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/scriptaculous.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/common.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
 		%HEAD%
 
 		<style type="text/css">
@@ -115,11 +110,39 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 		<script type="text/javascript">
 		function submitFeedback() {
-			document.getElementById('form-submitting').style.display = 'block';
-
-			document.getElementById('feedback-form').submit();
-
-			return;
+			var formData = jQuery("#feedback-form").serialize();
+			jQuery("#feedback-form").remove();
+			jQuery("#form-submitting").show();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-feedback.php?step=2&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				data: formData,
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+					jQuery("#form-submitting").hide();
+				}
+			});
+			return false;
+		}
+		
+		function newFeedback() {
+			jQuery("#wizard-body, #wizard-footer").remove();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-feedback.php?step=1&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+				}
+			});
+			return false;
+		}
+		
+		function closeWindow() {
+			jQuery('#feedback-modal').dialog('close')
 		}
 		</script>
 	</head>
@@ -186,9 +209,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				application_log("error", "Unable to report missing / incorrect undergraduate teaching with the feedback agent. PHPMailer said: ".$mail->ErrorInfo);
 			}
 			?>
-			<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px; overflow: hidden; white-space: nowrap">
-				<span class="content-heading" style="color: #FFFFFF"><?php echo $PAGE_META["title"]; ?></span>
-			</div>
 			<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 				<?php
 				if($ERROR) {
@@ -223,9 +243,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			?>
 			<form id="feedback-form" action="<?php echo ENTRADA_URL; ?>/agent-undergrad-teaching.php?step=2&amp;enc=<?php echo $ENCODED_INFORMATION; ?>" method="post" style="display: inline">
 			<div id="form-processing" style="display: block; position: absolute; top: 0px; left: 0px; width: 485px; height: 555px">
-				<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px">
-					<span class="content-heading" style="color: #FFFFFF"><?php echo $PAGE_META["title"]; ?></span>
-				</div>
 				<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 					<h2>Your Feedback is Important</h2>
 					<table style="width: 100%" cellspacing="1" cellpadding="1" border="0">
@@ -277,6 +294,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</table>
 				</div>
 			</div>
+			</form>
 			<div id="form-submitting" style="display: none; position: absolute; top: 0px; left: 0px;  background-color: #FFFFFF; opacity:.90; filter: alpha(opacity=90); -moz-opacity: 0.90">
 				<div style="display: table; width: 485px; height: 555px; _position: relative; overflow: hidden">
 					<div style="_position: absolute; _top: 50%; display: table-cell; vertical-align: middle;">
@@ -288,7 +306,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</div>
 				</div>
 			</div>
-			</form>
 			<?php
 		break;
 	}

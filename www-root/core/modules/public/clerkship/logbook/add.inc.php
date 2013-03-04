@@ -37,7 +37,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook", "title" => "Manage Logbook");
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/clerkship/logbook?section=add", "title" => "Adding Patient Encounter");
@@ -193,7 +193,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 		
 		if (!$ERROR && (!isset($_POST["allow_save"]) || $_POST["allow_save"])) {
 			
-			$PROCESSED["proxy_id"] = $_SESSION["details"]["id"];
+			$PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
 			$PROCESSED["updated_date"] = time();
 			
 			if ($db->AutoExecute("`".CLERKSHIP_DATABASE."`.`logbook_entries`", $PROCESSED, "INSERT")) {
@@ -291,9 +291,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					This reflection should be a short entry explaining your experiences with the patient. 
 					It should be no more than approximately 100 words, and you may use initials to refer to the patient, 
 					but no complete data such as their name or record number.
-					<br/><br/>
+					<br /><br />
 					For example: 
-					<br/><br/>
+					<br /><br />
 					I spent the evening following Ms. J's labour and participated in her delivery. I was able to do 
 					a cervical exam and now feel much more confident in my ability to do this task.  I found that 
 					reviewing my Phase II E notes about normal delivery was very useful to reinforce this experience 
@@ -348,7 +348,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 						$query	= "SELECT a.* FROM `".CLERKSHIP_DATABASE."`.`events` AS a 
 									LEFT JOIN `".CLERKSHIP_DATABASE."`.`event_contacts` AS b 
 									ON a.`event_id` = b.`event_id` 
-									WHERE b.`etype_id` = ".$db->qstr($_SESSION["details"]["id"])." 
+									WHERE b.`etype_id` = ".$db->qstr($ENTRADA_USER->getID())." 
 									AND a.`event_id` = ".$db->qstr(((int)$PROCESSED["event_id"]))." 
 									AND a.`event_type` = 'clinical'";
 						$found	= ($db->GetRow($query) ? true : false);
@@ -359,7 +359,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 						$query		= "SELECT a.* FROM `".CLERKSHIP_DATABASE."`.`events` AS a 
 										LEFT JOIN `".CLERKSHIP_DATABASE."`.`event_contacts` AS b 
 										ON a.`event_id` = b.`event_id` 
-										WHERE b.`etype_id` = ".$db->qstr($_SESSION["details"]["id"])." 
+										WHERE b.`etype_id` = ".$db->qstr($ENTRADA_USER->getID())." 
 										AND a.`event_type` = 'clinical'";
 						$results	= $db->GetAll($query);
 						if ($results) {
@@ -502,7 +502,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					<td style="vertical-align: top">
 						<div style="position: relative; text-align: left;">
 							<label for="objective_id" class="form-required">Clinical Presentations</label>
-							<br/><br/>
+							<br /><br />
 							<span style="display: none;" id="objective-loading" class="content-small">Loading... <img src="<?php echo ENTRADA_URL; ?>/images/indicator.gif" style="vertical-align: middle;" /></span>
 						</div>
 					</td>
@@ -515,7 +515,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 										LEFT JOIN `".CLERKSHIP_DATABASE."`.`categories` AS c
 										ON a.`category_id` = c.`category_id`
 										WHERE b.`econtact_type` = 'student'
-										AND b.`etype_id` = ".$db->qstr($_SESSION["details"]["id"])."
+										AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getID())."
 										AND a.`event_finish` < ".$db->qstr(time())."
 										GROUP BY c.`rotation_id`";
 						$rotations = $db->GetAll($query);
@@ -544,7 +544,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 							if ($required_objectives) {
 								$query = "SELECT `lentry_id` FROM `".CLERKSHIP_DATABASE."`.`logbook_entries`
 											WHERE `entry_active` = '1' 
-											AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"]);
+											AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 								$entry_ids = $db->GetAll($query);
 							    $entry_ids_string = "";
 							    foreach ($entry_ids as $entry_id) {
@@ -583,13 +583,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 							$query = "SELECT `lprocedure_id`, MAX(`number_required`) AS `required`
 										FROM `".CLERKSHIP_DATABASE."`.`logbook_preferred_procedures`
 										WHERE `rotation_id` IN (".$past_rotations.")
-										AND `grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"]))."
+										AND `grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID()))."
 										GROUP BY `lprocedure_id`";
 							$required_procedures = $db->GetAll($query);
 							if ($required_procedures) {
 								$query = "SELECT `lentry_id` FROM `".CLERKSHIP_DATABASE."`.`logbook_entries`
 											WHERE `entry_active` = '1' 
-											AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"]);
+											AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 								$entry_ids = $db->GetAll($query);
 							    $entry_ids_string = "";
 							    foreach ($entry_ids as $entry_id) {
@@ -810,7 +810,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 					<td style="vertical-align: top;">
 						<div style="position: relative; text-align: left;">
 							<label for="procedure_id" class="form-required">Clinical Tasks</label>
-							<br/><br/>
+							<br /><br />
 							<span style="display: none;" id="procedure-loading" class="content-small">Loading... <img src="<?php echo ENTRADA_URL; ?>/images/indicator.gif" style="vertical-align: middle;" /></span>
 						</div>
 					</td>
@@ -821,18 +821,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 											LEFT JOIN `".CLERKSHIP_DATABASE."`.`logbook_preferred_procedures` AS b
 											ON b.`lprocedure_id` = a.`lprocedure_id`
 											WHERE a.`lprocedure_id` IN (".$procedure_ids.")
-											AND b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"]));
+											AND b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID()));
 								$deficient_procedures = $db->GetAll($query);
 								if ($rotation) {
 									$query = "SELECT DISTINCT a.* FROM `".CLERKSHIP_DATABASE."`.`logbook_lu_procedures` AS a
 												LEFT JOIN `".CLERKSHIP_DATABASE."`.`logbook_preferred_procedures` AS b
 												ON b.`lprocedure_id` = a.`lprocedure_id`
 												WHERE b.`rotation_id` = ".$db->qstr($rotation_id)."
-												AND b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"]));
+												AND b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID()));
 									$preferred_procedures = $db->GetAll($query);
 									if ($preferred_procedures) {
 										?>
-										<input type="radio" name="procedure_display_type" id="procedure_display_type_rotation" onclick="showRotationProcedures()" checked="checked" /> <label for="procedure_display_type_rotation">Show only clinical tasks for <span id="rotation_title_display" style="font-weight: bold"><?php echo $rotation["rotation_title"]; ?></span></label><br/>
+										<input type="radio" name="procedure_display_type" id="procedure_display_type_rotation" onclick="showRotationProcedures()" checked="checked" /> <label for="procedure_display_type_rotation">Show only clinical tasks for <span id="rotation_title_display" style="font-weight: bold"><?php echo $rotation["rotation_title"]; ?></span></label><br />
 										<input type="radio" name="procedure_display_type" id="procedure_display_type_all" onclick="showAllProcedures()" /> <label for="procedure_display_type_all">Show all clinical tasks</label><br />
 										<?php
 										if ($deficient_procedures) {
@@ -874,7 +874,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 							$query = "SELECT a.* FROM `".CLERKSHIP_DATABASE."`.`logbook_lu_procedures` AS a
 										LEFT JOIN `".CLERKSHIP_DATABASE."`.`logbook_preferred_procedures` AS b
 										ON b.`lprocedure_id` = a.`lprocedure_id`
-										WHERE b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $_SESSION["details"]["id"]))."
+										WHERE b.`grad_year_min` <= ".$db->qstr(get_account_data("grad_year", $ENTRADA_USER->getID()))."
 										GROUP BY a.`lprocedure_id`
 										ORDER BY a.`procedure`";
 							$results = $db->GetAll($query);

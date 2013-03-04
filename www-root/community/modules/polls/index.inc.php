@@ -50,7 +50,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 </div>
 
 <div style="padding-top: 10px; clear: both">
-	<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
+	<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $LOGGED_IN && $_SESSION["details"]["notifications"]) { ?>
 		<div id="notifications-toggle" style="position: absolute; padding-top: 4px;"></div>
 		<script type="text/javascript">
 		function promptNotifications(enabled) {
@@ -144,7 +144,11 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 				$allowVote  = FALSE;
 				$voteInfo	= communities_polls_latest($result["cpolls_id"]);
 				$specificMembers = communities_polls_specific_access($result['cpolls_id']);
-				$vote_record = communities_polls_votes_cast_by_member($result["cpolls_id"], $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+				if ($LOGGED_IN) {
+					$vote_record = communities_polls_votes_cast_by_member($result["cpolls_id"], $ENTRADA_USER->getActiveId());
+				} else {
+					$vote_record = array("votes" => 0);
+				}
 				$allow_main_load = false;
 
 				if ((($result["release_date"]) && ($result["release_date"] > time())) || (($result["release_until"]) && ($result["release_until"] < time()))) {
@@ -157,7 +161,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 				|| (!(int) $community_details["community_registration"] && (int)$result['allow_troll_vote'] == 1)))
 				{
 					// Check to see if only specific members can vote before checking if they've voted
-					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 					{
 						// Check for multiple votes
 						if ($result["allow_multiple"] == 0)
@@ -165,7 +169,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 							$query	= "SELECT `proxy_id` FROM `community_polls_responses`, `community_polls_results`
 							WHERE `cpolls_id` = ".$result['cpolls_id']."
 							AND `community_polls_responses`.`cpresponses_id` = `community_polls_results`.`cpresponses_id`
-							AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."";
+							AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."";
 							
 							if ($multiResults = $db->GetAll($query))
 							{
@@ -188,7 +192,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 								FROM `community_polls_responses`, `community_polls_results`
 								WHERE `cpolls_id` = ".$result['cpolls_id']."
 								AND `community_polls_responses`.`cpresponses_id` = `community_polls_results`.`cpresponses_id`
-								AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."";
+								AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."";
 								
 								$multiResults = $db->GetRow($query);
 								
@@ -216,7 +220,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 				|| (!(int) $community_details["community_protected"] && (int)$result['allow_public_results'] == 1)
 				|| (!(int) $community_details["community_registration"] && (int)$result['allow_troll_results'] == 1))
 				{
-					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 					{
 						$allow_main_load = true;
 						if ((int)$voteInfo["votes_cast"] > 0) {
@@ -228,7 +232,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 				|| (!(int) $community_details["community_protected"] && (int)$result['allow_public_results_after'] == 1)
 				|| (!(int) $community_details["community_registration"] && (int)$result['allow_troll_results_after'] == 1))
 				{
-					if (((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers))))
+					if (((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers))))
 					{
 						$allow_main_load = true;
 						if (isset($vote_record["votes"]) && (int)$vote_record["votes"] > 0) {
@@ -240,7 +244,7 @@ if (communities_module_access($COMMUNITY_ID, $MODULE_ID, "delete-poll")) {
 				|| (!(int) $community_details["community_protected"] && (int)$result['allow_public_read'] == 1)
 				|| (!(int) $community_details["community_registration"] && (int)$result['allow_troll_read'] == 1))
 				{
-					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $specificMembers)))
+					if ((count($specificMembers) == 0) || (is_array($specificMembers) && in_array($ENTRADA_USER->getActiveId(), $specificMembers)))
 					{
 						$allow_main_load = true;
 					}

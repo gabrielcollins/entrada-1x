@@ -122,7 +122,7 @@ if (!defined("IN_MANAGE")) {
 
 			if (!$ERROR) {
 				$PROCESSED["updated_last"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 				$PROCESSED["aschedule_status"] = "published";
 
 				/**

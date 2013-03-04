@@ -37,10 +37,10 @@ if(!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_PUBLIC_GRADEBOOK",	true);
-	
+
 	//$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.min.js\"></script>\n";
 	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.modal.js\"></script>\n";
 	$JQUERY[] = "<link href=\"".ENTRADA_URL."/css/jquery/flexigrid.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
@@ -48,10 +48,10 @@ if(!defined("PARENT_INCLUDED")) {
 	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.editable.js\"></script>\n";
 	//$JQUERY[] = "<script type=\"text/javascript\">jQuery.noConflict(); var ENTRADA_URL = '".ENTRADA_URL."';</script>";
 	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/gradebook.js\"></script>\n";
-	
+
 	$ASSESSMENT_TYPES = array("Formative", "Summative", "Narrative");
-	
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook", "title" => "Gradebooks");
+
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook", "title" => "My Gradebooks");
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);
@@ -61,7 +61,7 @@ if(!defined("PARENT_INCLUDED")) {
 		} else {
 			$COURSE_ID = 0;
 		}
-		
+
 		$module_file = $router->getRoute();
 		if ($module_file) {
 			require_once($module_file);

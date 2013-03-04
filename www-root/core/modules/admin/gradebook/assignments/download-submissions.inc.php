@@ -19,19 +19,27 @@ if (!$RECORD_ID) {
 	}
 }
 
-$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$ENTRADA_USER->getProxyId();
-if ($iscontact = $db->GetRow($query)) {
-	$USER_ID = $tmp;
-} else {
-	$USER_ID = false;
-}
-
 if ($RECORD_ID) {
-	if ($USER_ID) {	
-		
-		$query = "SELECT a.*, b.`course_code` FROM `assignments` AS a JOIN `courses` AS b ON a.`course_id` = b.`course_id` WHERE a.`assignment_id` = ".$db->qstr($RECORD_ID)." AND a.`assignment_active` = '1'";
-		$assignment = $db->GetRow($query);
-		if ($assignment) {
+	$query = "	SELECT a.*,b.`organisation_id`,b.`course_code` 
+				FROM `assignments` a
+				JOIN `courses` b
+				ON a.`course_id` = b.`course_id` 
+				WHERE a.`assignment_id` = ".$db->qstr($RECORD_ID)."
+				AND a.`assignment_active` = '1'";
+	$assignment = $db->GetRow($query);	
+
+	/** @todo this needs to make sure the user is a teacher for the course if this way is used, otherwise students could add another student's proxy*/
+	$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
+	if ($iscontact = $db->GetRow($query)) {
+		$USER_ID = $tmp;
+	} elseif ($assignment && $ENTRADA_ACL->amIAllowed(new CourseResource($assignment["course_id"], $assignment["organisation_id"]), "update")) {
+		$iscontact = true;	
+	} else {
+		$iscontact = false;
+	}
+
+	if ($iscontact) {			
+		if($assignment){
 
 			/**
 			 * Download the latest version.
@@ -44,7 +52,7 @@ if ($RECORD_ID) {
 							JOIN `assignment_files` AS b
 							ON a.`afile_id` = b.`afile_id`
 							AND b.`file_type` = 'submission'
-							WHERE a.`assignment_id` = ".$RECORD_ID." 
+							WHERE a.`assignment_id` = ".$db->qstr($RECORD_ID)." 
 							GROUP BY a.`afile_id`
 						)";
 			$result	= $db->GetAll($query);
@@ -52,18 +60,21 @@ if ($RECORD_ID) {
 			if ( !file_exists($dir) ) {
 			  mkdir ($dir, 0777);
 			}
-			$zip_file_name = $assignment["course_code"]."_".str_replace(' ', '_', $assignment["assignment_title"]).'.zip';
+			$zip_file_name = str_replace('/','_',$assignment["course_code"])."_".str_replace(' ', '_', $assignment["assignment_title"]).'.zip';
 			$zipname = $dir."/".$zip_file_name;
 			if ($result) {
 
 				$zip = new ZipArchive();
 				$res = $zip->open($zipname,ZIPARCHIVE::OVERWRITE);
-				if($res !== true) {
+				if ($res !== true) {
 					$ERROR++;
-					$ERRORSTR[] = "<strong>Unable to create the file archive.</strong><br /><br />The archive of files was not created. Try again or contact ____________.";
-				}else{
-						foreach($result as $file){
-							$zip->addFile(FILE_STORAGE_PATH."/A".$file["afversion_id"],$file["number"]."_".$file["username"]."_".$file["file_filename"]);
+					$ERRORSTR[] = "<strong>Unable to create the file archive.</strong><br /><br />The archive of files was not created. Please try again later.";
+				} else {
+						foreach ($result as $file){
+							$submission_file = FILE_STORAGE_PATH."/A".$file["afversion_id"];
+							if ( (@file_exists($submission_file)) && (@is_readable($submission_file))) {
+								$zip->addFile($submission_file,$file["number"]."_".$file["username"]."_".$file["file_filename"]);	
+							}							
 						}
 
 						$file_version = array();
@@ -115,10 +126,7 @@ if ($RECORD_ID) {
 					exit;
 				}
 
-			}else{
-				echo 'error';
 			}
-
 			if ((!$ERROR) && (!$NOTICE)) {
 				$ERROR++;
 				$ERRORSTR[] = "<strong>Unable to download the selected file.</strong><br /><br />The file you have selected cannot be downloaded at this time, ".(($LOGGED_IN) ? "please try again later." : "Please log in to continue.");

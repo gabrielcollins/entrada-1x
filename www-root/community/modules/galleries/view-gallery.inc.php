@@ -149,7 +149,7 @@ if ($RECORD_ID) {
 					AND a.`community_id` = ".$db->qstr($COMMUNITY_ID)."
 					AND a.`photo_active` = '1'
 					".((!$LOGGED_IN) ? " AND c.`allow_public_read` = '1'" : (($COMMUNITY_MEMBER) ? ((!$COMMUNITY_ADMIN) ? " AND c.`allow_member_read` = '1'" : "") : " AND c.`allow_troll_read` = '1'"))."
-					".((!$COMMUNITY_ADMIN) ? " AND ((a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]).") OR (a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "");
+					".((!$COMMUNITY_ADMIN) ? ($LOGGED_IN ? " AND ((a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId()).") OR " : " AND (")."(a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "");
 			$result	= $db->GetRow($query);
 			if ($result) {
 				$TOTAL_ROWS	= $result["total_rows"];
@@ -204,7 +204,7 @@ if ($RECORD_ID) {
 			</div>
 
 			<div style="padding-top: 10px; clear: both">
-				<?php if (COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
+				<?php if ($LOGGED_IN && COMMUNITY_NOTIFICATIONS_ACTIVE && $_SESSION["details"]["notifications"]) { ?>
 					<div id="notifications-toggle" style="position: absolute; padding-top: 14px;"></div>
 					<script type="text/javascript">
 					function promptNotifications(enabled) {
@@ -273,7 +273,7 @@ if ($RECORD_ID) {
 							AND a.`community_id` = ".$db->qstr($COMMUNITY_ID)."
 							AND a.`photo_active` = '1'
 							".((!$LOGGED_IN) ? " AND c.`allow_public_read` = '1'" : (($COMMUNITY_MEMBER) ? ((!$COMMUNITY_ADMIN) ? " AND c.`allow_member_read` = '1'" : "") : " AND c.`allow_troll_read` = '1'"))."
-							".((!$COMMUNITY_ADMIN) ? " AND ((a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]).") OR (a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
+							".((!$COMMUNITY_ADMIN) ? ($LOGGED_IN ? " AND ((a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId()).") OR " : " AND (")."(a.`release_date` = '0' OR a.`release_date` <= ".$db->qstr(time()).") AND (a.`release_until` = '0' OR a.`release_until` > ".$db->qstr(time())."))" : "")."
 							ORDER BY %s
 							LIMIT %s, %s";
 				$query		= sprintf($query, $SORT_BY, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER]["cid_".$COMMUNITY_ID][$PAGE_URL]["pp"]);
@@ -302,7 +302,7 @@ if ($RECORD_ID) {
 							echo "	<a href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-photo&amp;id=".$result["cgphoto_id"]."\">".communities_galleries_fetch_thumbnail($result["cgphoto_id"])."</a>";
 							echo "	<div class=\"content-small\">\n";
 							echo "	<strong id=\"photo-".$result["cgphoto_id"]."-title\">".html_encode(limit_chars($result["photo_title"], 26))."</strong>";
-							echo "	<br/>";
+							echo "	<br />";
 							echo ((galleries_photo_module_access($result["cgphoto_id"], "edit-photo")) ? " (<a class=\"action\" href=\"".COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=edit-photo&amp;id=".$result["cgphoto_id"]."\">edit</a>)" : "");
 							echo ((galleries_photo_module_access($result["cgphoto_id"], "delete-photo")) ? " (<a class=\"action\" href=\"javascript:photoDelete('".$result["cgphoto_id"]."')\">delete</a>)" : "");
 							if ($community_galleries_select != "") {
@@ -333,7 +333,9 @@ if ($RECORD_ID) {
 				?>
 			</div>
 			<?php
-			add_statistic("community:".$COMMUNITY_ID.":galleries", "gallery_view", "cgallery_id", $RECORD_ID);
+			if ($LOGGED_IN) {
+				add_statistic("community:".$COMMUNITY_ID.":galleries", "gallery_view", "cgallery_id", $RECORD_ID);
+			}
 		} else {
 			if ($ERROR) {
 				echo display_error();

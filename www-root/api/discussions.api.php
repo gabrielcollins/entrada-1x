@@ -41,7 +41,7 @@ if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				$query	= "SELECT * FROM `event_discussions` WHERE `ediscussion_id` = ".$db->qstr($EDISCUSSION_ID);
 				$result	= $db->GetRow($query);
 				if($result) {
-					if($result["proxy_id"] == $_SESSION["details"]["id"]) {
+					if($result["proxy_id"] == $ENTRADA_USER->getID()) {
 						$discussion_comment	= clean_input($_POST["discussion_comment"], array("notags", "trim"));
 
 						if($discussion_comment == "") {
@@ -52,7 +52,7 @@ if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 						}
 						
 						$PROCESSED["updated_date"]			= time();
-						$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 
 						if(!$db->AutoExecute("event_discussions", $PROCESSED, "UPDATE", "ediscussion_id = ".$db->qstr($EDISCUSSION_ID))) {
 							application_log("error", "Unable to update discussion id [".$EDISCUSSION_ID."]. Database said: ".$db->ErrorMsg());
@@ -78,10 +78,10 @@ if((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 				$query	= "SELECT * FROM `event_discussions` WHERE `ediscussion_id` = ".$db->qstr($EDISCUSSION_ID);
 				$result	= $db->GetRow($query);
 				if($result) {
-					if($result["proxy_id"] == $_SESSION["details"]["id"]) {
+					if($result["proxy_id"] == $ENTRADA_USER->getID()) {
 						$PROCESSED["discussion_active"]		= 0;
 						$PROCESSED["updated_date"]			= time();
-						$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 
 						if(!$db->AutoExecute("event_discussions", $PROCESSED, "UPDATE", "ediscussion_id = ".$db->qstr($EDISCUSSION_ID))) {
 							application_log("error", "Unable to update discussion id [".$EDISCUSSION_ID."]. Database said: ".$db->ErrorMsg());

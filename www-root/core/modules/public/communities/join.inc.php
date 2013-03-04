@@ -58,7 +58,7 @@ if($COMMUNITY_ID) {
 		$query	= "
 				SELECT * FROM `community_members`
 				WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)."
-				AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+				AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			if($result["member_active"] == 1) {
@@ -88,7 +88,7 @@ if($COMMUNITY_ID) {
 					$ALLOW_MEMBERSHIP = false;
 
 					if(($community_details["community_members"] != "") && ($community_members = @unserialize($community_details["community_members"])) && (is_array($community_members)) && (count($community_members))) {
-						if(in_array($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"], $community_members)) {
+						if(in_array($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"], $community_members)) {
 							$ALLOW_MEMBERSHIP = true;
 						} else {
 							foreach($community_members as $member_group) {
@@ -96,9 +96,9 @@ if($COMMUNITY_ID) {
 									$pieces = explode("_", $member_group);
 
 									if((isset($pieces[0])) && ($group = trim($pieces[0]))) {
-										if($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"] == $group) {
+										if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"] == $group) {
 											if((isset($pieces[1])) && ($role = trim($pieces[1]))) {
-												if($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"] == $role) {
+												if($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"] == $role) {
 													$ALLOW_MEMBERSHIP = true;
 													break;
 												}
@@ -115,16 +115,16 @@ if($COMMUNITY_ID) {
 
 					if(!$ALLOW_MEMBERSHIP) {
 						$ERROR++;
-						$ERRORSTR[] = "Your account (".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]." &rarr; ".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"].") does not meet the group requirements setup by the community administrators.";
+						$ERRORSTR[] = "Your account (".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]." &rarr; ".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"].") does not meet the group requirements setup by the community administrators.";
 						$display_admin_list = true;
-						application_log("notice", "User id ".$_SESSION["details"]["id"]." was not have the proper group requirements to join community id ".$COMMUNITY_ID);
+						application_log("notice", "User id ".$ENTRADA_USER->getID()." was not have the proper group requirements to join community id ".$COMMUNITY_ID);
 					}
 				break;
 				case 3 :	// Selected Community Registration
 					$ALLOW_MEMBERSHIP = false;
 
 					if(($community_details["community_members"] != "") && ($community_members = @unserialize($community_details["community_members"])) && (is_array($community_members)) && (count($community_members))) {
-						$query	= "SELECT * FROM `community_members` WHERE `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])." AND `member_active` = '1' AND `community_id` IN ('".implode("', '", $community_members)."')";
+						$query	= "SELECT * FROM `community_members` WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())." AND `member_active` = '1' AND `community_id` IN ('".implode("', '", $community_members)."')";
 						$result	= $db->GetRow($query);
 						if($result) {
 							$ALLOW_MEMBERSHIP = true;
@@ -135,7 +135,7 @@ if($COMMUNITY_ID) {
 						$ERROR++;
 						$ERRORSTR[] = "Your account does not meet the community membership requirements setup by the community administrators.";
 						$display_admin_list = true;
-						application_log("notice", "User id ".$_SESSION["details"]["id"]." was not have the proper community membership requirements to join community id ".$COMMUNITY_ID);
+						application_log("notice", "User id ".$ENTRADA_USER->getID()." was not have the proper community membership requirements to join community id ".$COMMUNITY_ID);
 					}
 				break;
 				case 4 :	// Private Community
@@ -177,7 +177,7 @@ if($COMMUNITY_ID) {
 				switch($STEP) {
 					case 2 :
 						$PROCESSED["community_id"]	= $COMMUNITY_ID;
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						$PROCESSED["member_active"]	= 1;
 						$PROCESSED["member_joined"]	= time();
 						$PROCESSED["member_acl"]	= 0;
@@ -204,7 +204,7 @@ if($COMMUNITY_ID) {
 							$ERROR++;
 							$ERRORSTR[]	= "<strong>Failed to join ".html_encode($community_details["community_title"]).".</strong><br /><br />We were unable to register you in this community. The MEdTech Unit has been informed of this error, please try again later.";
 
-							application_log("error", "Unable to register ".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]." in community id ".$COMMUNITY_ID.". Database said: ".$db->ErrorMsg());
+							application_log("error", "Unable to register ".$ENTRADA_USER->getActiveId()." in community id ".$COMMUNITY_ID.". Database said: ".$db->ErrorMsg());
 						}
 					break;
 					default :
@@ -218,7 +218,7 @@ if($COMMUNITY_ID) {
 						if($SUCCESS) {
 							echo display_success();
 							if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
-								community_notify($COMMUNITY_ID, $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], "join", ENTRADA_URL."/people?id=".$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"], $COMMUNITY_ID);
+								community_notify($COMMUNITY_ID, $ENTRADA_USER->getActiveId(), "join", ENTRADA_URL."/people?id=".$ENTRADA_USER->getActiveId(), $COMMUNITY_ID);
 							}
 						}
 						if($ERROR) {

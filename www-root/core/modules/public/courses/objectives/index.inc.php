@@ -34,6 +34,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 	echo "<h1>Competencies by " . $module_singular_name . "</h1>";
 	$objectives = objectives_build_course_competencies_array();
 	
+	if (strpos($_SERVER["HTTP_USER_AGENT"], "MSIE") !== false) {
+		$is_ie = true;
+	}
+	
 	if (!empty($objectives["courses"]) && !empty($objectives["competencies"])) {
 		?>
 		<style type="text/css">
@@ -63,12 +67,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 				<tr style="height: 200px;">
 					<td class="modified">&nbsp;</td>
 					<td class="title" style="padding-bottom: 20px; border-right: none;"><h3>Courses</h3></td>
-					<td class="title" style="padding: 0 0 80px 50px;width:177px;"><h3 class="vertical-text">Competencies</h3></td>
+					<td class="title middle bottom" style="padding: 0 0 10px 10px;white-space:normal!important;text-align:left;"><h3 class="vertical-text" style="<?php echo ($is_ie) ? "height:200px;" : "" ; ?>white-space:normal!important;">Competencies</h3></td>
 
 					<?php
 						foreach ($objectives["competencies"] as $competency_id => $competency) {
 							?>
-							<td class="title middle bottom"><div class="vertical-text"><?php echo "<a href=\"".ENTRADA_URL."/courses/objectives?section=competency-courses&id=".$competency_id."\" style=\"text-decoration: none;\">".$competency."</a>"; ?></div></td>
+							<td class="title middle bottom" <?php echo ($is_ie) ? "style=\"white-space:normal!important;\"" : "" ; ?>><div class="vertical-text" <?php echo ($is_ie) ? "style=\"white-space:normal!important;height:200px;\"" : "" ; ?>><a href="<?php echo ENTRADA_URL; ?>/courses/objectives?section=competency-courses&id=<?php echo $competency_id; ?>" style="text-decoration: none;<?php echo ($is_ie) ? "height:200px;display:block;" : "" ; ?>"><?php echo $competency; ?></a></div></td>
 							<?php
 						}
 					?>
@@ -80,10 +84,9 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 					} else {
 						echo "<tr>";
 					}
-					if (isset($course["total_in_term"]) && $course["total_in_term"]) {
-						echo "<td class=\"term\" style=\"border-bottom: 5px solid white;\" rowspan=\"".$course["total_in_term"]."\"><div class=\"vertical-text\">".$course["term_name"]."</div></td>";
-					}
-					?>
+					if (isset($course["total_in_term"]) && $course["total_in_term"]) { ?>
+						<td class="term" style="border-bottom: 5px solid white;" rowspan="<?php echo $course["total_in_term"] ; ?>"><div class="vertical-text" <?php echo ($is_ie) ? "style=\"height:100px\"" : "" ; ?>><?php echo $course["term_name"]; ?></div></td>
+					<?php } ?>
 						<td class="objectives" colspan="2"><?php echo "<a href=\"".ENTRADA_URL."/courses/objectives?section=course-objectives&cid=".$course_id."\" style=\"text-decoration: none;\">".html_encode($course["course_name"])."</a>"; ?></td>
 						<?php
 						foreach ($course["competencies"] as $COMPETENCY_ID => $competency) {

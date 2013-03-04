@@ -38,7 +38,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	/**
 	 * Meta information for this page if they are able to use this module.
@@ -169,11 +169,9 @@ if (!defined("PARENT_INCLUDED")) {
 											FROM `".AUTH_DATABASE."`.`user_data` AS a
 											LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 											ON b.`user_id` = a.`id`
-											LEFT JOIN `".AUTH_DATABASE."`.`user_organisations` AS c
-											ON c.`proxy_id` = a.`id`
 											AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
 											WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											AND c.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
+											AND b.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
 											AND b.`group` ".($PROCESSED["group"] == "staff" ? "IN ('staff', 'medtech')" : "= ".$db->qstr($PROCESSED["group"]))."
 											".(($PROCESSED["role"]) ? "AND b.`role` = ".$db->qstr($PROCESSED["role"]) : "")."
 											GROUP BY a.`id`
@@ -183,11 +181,9 @@ if (!defined("PARENT_INCLUDED")) {
 											FROM `".AUTH_DATABASE."`.`user_data` AS a
 											LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 											ON b.`user_id` = a.`id`
-											LEFT JOIN `".AUTH_DATABASE."`.`user_organisations` AS c
-											ON c.`proxy_id` = a.`id`
 											AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
 											WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											AND c.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
+											AND b.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
 											AND b.`group` ".($PROCESSED["group"] == "staff" ? "IN ('staff', 'medtech')" : "= ".$db->qstr($PROCESSED["group"]))."
 											".(($PROCESSED["role"]) ? "AND b.`role` = ".$db->qstr($PROCESSED["role"]) : "")."
 											GROUP BY a.`id`
@@ -198,19 +194,17 @@ if (!defined("PARENT_INCLUDED")) {
 											FROM `".AUTH_DATABASE."`.`user_data` AS a
 											LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 											ON b.`user_id` = a.`id`
-											LEFT JOIN `".AUTH_DATABASE."`.`user_organisations` AS c
-											ON c.`proxy_id` = a.`id`
 											AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											JOIN `group_members` AS d
-											ON a.`id` = d.`proxy_id`
-											AND d.`member_active` = 1
-											JOIN `groups` AS e
-											ON d.`group_id` = e.`group_id`
-											AND e.`group_active` = 1
+											JOIN `group_members` AS c
+											ON a.`id` = c.`proxy_id`
+											AND c.`member_active` = 1
+											JOIN `groups` AS d
+											ON c.`group_id` = d.`group_id`
+											AND d.`group_active` = 1
 											WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											AND c.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
+											AND b.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
 											AND b.`group` = ".$db->qstr($PROCESSED["group"])."
-											AND e.`group_id` = ".$db->qstr($PROCESSED["role"])."
+											AND d.`group_id` = ".$db->qstr($PROCESSED["role"])."
 											GROUP BY a.`id`
 											ORDER BY `fullname` ASC
 											LIMIT %s, %s";
@@ -218,19 +212,17 @@ if (!defined("PARENT_INCLUDED")) {
 											FROM `".AUTH_DATABASE."`.`user_data` AS a
 											LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 											ON b.`user_id` = a.`id`
-											LEFT JOIN `".AUTH_DATABASE."`.`user_organisations` AS c
-											ON c.`proxy_id` = a.`id`
 											AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											JOIN `group_members` AS d
-											ON a.`id` = d.`proxy_id`
-											AND d.`member_active` = 1
-											JOIN `groups` AS e
-											ON d.`group_id` = e.`group_id`
-											AND e.`group_active` = 1
+											JOIN `group_members` AS c
+											ON a.`id` = c.`proxy_id`
+											AND c.`member_active` = 1
+											JOIN `groups` AS d
+											ON c.`group_id` = d.`group_id`
+											AND d.`group_active` = 1
 											WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-											AND c.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
+											AND b.`organisation_id` = ".$db->qstr($PROCESSED["organisation"])."
 											AND b.`group` = ".$db->qstr($PROCESSED["group"])."
-											AND e.`group_id` = ".$db->qstr($PROCESSED["role"])."
+											AND d.`group_id` = ".$db->qstr($PROCESSED["role"])."
 											GROUP BY a.`id`
 											ORDER BY `fullname` ASC";
 					}
@@ -367,11 +359,9 @@ if (!defined("PARENT_INCLUDED")) {
 									FROM `".AUTH_DATABASE."`.`user_data` AS a
 									LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 									ON b.`user_id` = a.`id`
-									LEFT JOIN `".AUTH_DATABASE."`.`user_organisations` as c
-									ON c.`proxy_id` = a.`id`
 									AND b.`app_id` IN (".AUTH_APP_IDS_STRING.")
 									WHERE b.`app_id` IN (".AUTH_APP_IDS_STRING.")
-									AND c.`organisation_id` IN (" . $ENTRADA_USER->getActiveOrganisation() . ")
+									AND b.`organisation_id` IN (" . $ENTRADA_USER->getActiveOrganisation() . ")
 									AND (b.`group` ".($group_string && $role_string ? "IN (".$group_string.")									
 									OR (b.`group` = 'student' 
 										AND b.`role` IN (".$role_string.")))" : ($role_string ? "= 'student' 
@@ -909,7 +899,7 @@ if (!defined("PARENT_INCLUDED")) {
 					}
 					echo "			<div class=\"content-small\" style=\"margin-bottom: 15px\">".ucwords($result["group"])." > ".($result["group"] == "student" ? $cohort["group_name"] : ucwords($result["role"]));
 				}
-				echo (isset($ORGANISATIONS_BY_ID[$result["organisation_id"]]) ? "<br/>".$ORGANISATIONS_BY_ID[$result["organisation_id"]]["organisation_title"] : "")."</div>\n";
+				echo (isset($ORGANISATIONS_BY_ID[$result["organisation_id"]]) ? "<br />".$ORGANISATIONS_BY_ID[$result["organisation_id"]]["organisation_title"] : "")."</div>\n";
 				if ($result["privacy_level"] > 1 || $is_administrator) {
 					echo "			<a href=\"mailto:".html_encode($result["email"])."\" style=\"font-size: 10px;\">".html_encode($result["email"])."</a><br />\n";
 					

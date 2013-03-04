@@ -37,7 +37,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	?>
 	<style type="text/css">
@@ -74,6 +74,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/annualreport/reports?section=my_departmental_publications_by_member">Publications By Members</a><br />
 			A report that shows publications in your department for a specific date range grouped by faculty member.
+		</li>
+		<li>
+			<a href="<?php echo ENTRADA_URL; ?>/annualreport/reports?section=my_departmental_publications_by_member_journal">Peer Reviewed Publications By Members By Journal</a><br />
+			A report that shows publications in your department for a specific date range grouped by faculty member and the Journals they published in.
 		</li>
 		<li>
 			<a href="<?php echo ENTRADA_URL; ?>/annualreport/reports?section=my_departmental_grants">Research Grants</a><br />

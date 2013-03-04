@@ -41,18 +41,18 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_PUBLIC_QUIZZES"))) {
  * quizzes attached and then show what grade they got on the attempts they were
  * supposed to list.
  */
-$query		= "	SELECT a.`quiz_score`, a.`quiz_value`, a.`updated_date` AS `quiz_completed_date`, b.*, c.`course_id`, c.`event_title`, c.`event_start`, d.`quiztype_title`
+$query		= "	SELECT a.`quiz_score`, a.`quiz_value`, a.`updated_date` AS `quiz_completed_date`, b.*, c.`course_id`, c.`course_num`, c.`event_id`, c.`event_title`, c.`event_start`, d.`quiztype_title`
 				FROM `quiz_progress` AS a
 				LEFT JOIN `attached_quizzes` AS b
 				ON b.`aquiz_id` = a.`aquiz_id`
 				LEFT JOIN `events` AS c
-				ON a.`content_type` = 'event' 
+				ON a.`content_type` = 'event'
 				AND c.`event_id` = a.`content_id`
 				LEFT JOIN `quizzes_lu_quiztypes` AS d
 				ON d.`quiztype_id` = b.`quiztype_id`
-				WHERE a.`proxy_id` = ".$db->qstr($_SESSION["details"]["id"])."
+				WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 				AND a.`progress_value` = 'complete'
-				ORDER BY c.`course_id` ASC, c.`event_id` ASC, d.`quiztype_title` ASC, b.`quiz_title` ASC";
+				ORDER BY a.`updated_date` DESC, c.`course_num` ASC";
 $results	= $db->GetAll($query);
 if ($results) {
 	$event_id			= 0;
@@ -60,18 +60,16 @@ if ($results) {
 	?>
 	<table class="tableList" cellspacing="0" summary="List of Events">
 	<colgroup>
-		<col class="modified" />
-		<col class="general" />
 		<col class="date" />
+		<col class="general" />
 		<col class="title" />
 		<col class="responses" />
 		<col class="responses" />
 	</colgroup>
 	<thead>
 		<tr>
-			<td class="modified">&nbsp;</td>
-			<td class="general">Quiz Type</td>
-			<td class="date">Completed Date</td>
+			<td class="date borderl">Completed Date</td>
+			<td class="general">Course Code</td>
 			<td class="title">Quiz Title</td>
 			<td class="responses">Score</td>
 			<td class="responses">Percent</td>
@@ -82,36 +80,10 @@ if ($results) {
 	foreach ($results as $result) {
 		$percentage = ((round(($result["quiz_score"] / $result["quiz_value"]), 2)) * 100);
 
-		if ($result["course_id"]) {
-			if (!isset($curriculum_paths[$result["course_id"]])) {
-				$curriculum_path = curriculum_hierarchy($result["course_id"]);
-
-				$curriculum_paths[$result["course_id"]] = $curriculum_path;
-			} else {
-				$curriculum_path = $curriculum_paths[$result["course_id"]];
-			}
-
-			if ((is_array($curriculum_path)) && (count($curriculum_path))) {
-				$course_title = implode(" &gt; ", $curriculum_path);
-			}
-		} else {
-			$course_title = "No Associated Course";
-		}
-
-		if ($result["event_id"] != $event_id) {
-			$event_id = $result["event_id"];
-			echo "<tr>\n";
-			echo "	<td colspan=\"6\">\n";
-			echo "		".$course_title." &gt; <a href=\"".ENTRADA_URL."/events?id=".$result["event_id"]."\" style=\"font-weight: bold\">".html_encode($result["event_title"])."</a> <span class=\"content-small\">".date(DEFAULT_DATE_FORMAT, $result["event_start"])."</span>\n";
-			echo "	</td>\n";
-			echo "</tr>\n";
-		}
-		
 		echo "<tr>\n";
-		echo "	<td>&nbsp;</td>\n";
-		echo "	<td>".html_encode($result["quiztype_title"])."</td>\n";
 		echo "	<td>".date(DEFAULT_DATE_FORMAT, $result["quiz_completed_date"])."</td>\n";
-		echo "	<td>".html_encode($result["quiz_title"])."</td>\n";
+		echo "	<td>".html_encode($result["course_num"])."</td>\n";
+		echo "	<td><a href=\"".ENTRADA_RELATIVE."/events?id=".$result["event_id"]."\" target=\"_blank\">".html_encode($result["quiz_title"])."</a></td>\n";
 		echo "	<td>".$result["quiz_score"]."/".$result["quiz_value"]."</td>\n";
 		echo "	<td>".$percentage."%</td>\n";
 		echo "</tr>\n";
@@ -121,4 +93,3 @@ if ($results) {
 	</table>
 	<?php
 }
-?>

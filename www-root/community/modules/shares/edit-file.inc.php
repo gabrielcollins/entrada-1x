@@ -122,7 +122,7 @@ if ($RECORD_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("community_share_files", $PROCESSED, "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `csfile_id` = ".$db->qstr($RECORD_ID))) {
 								if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
@@ -267,7 +267,7 @@ if ($RECORD_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The file record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to edit it.");
+			application_log("error", "The file record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;

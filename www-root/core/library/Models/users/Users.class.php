@@ -45,7 +45,7 @@ class Users extends Collection {
 	static public function get($organisation=null, $group=null, $role=null, $proxy_id=null) {
 		global $db;
 		$query = "SELECT a.*, b.`group`, b.`role` from `".AUTH_DATABASE."`.`user_data` a LEFT JOIN `".AUTH_DATABASE."`.`user_access` b on a.`id`=b.`user_id` and b.`app_id`=?";
-		$conditions = generateAccessConditions($organisation, $group, $role, $proxy_id);
+		$conditions = generateAccessConditions($organisation, $group, $role, $proxy_id, 'b');
 		if ($conditions) {
 			$query .= " WHERE " . $conditions;
 		}

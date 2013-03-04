@@ -34,13 +34,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$GRADUATE_TEACHING_ID = $_GET["rid"];
 	// This grid should be expanded upon redirecting back to the education index.
 	$_SESSION["education_expand_grid"] = "graduate_grid";
 	if($GRADUATE_TEACHING_ID) {
-		$query	= "SELECT * FROM `ar_graduate_teaching` WHERE `graduate_teaching_id`=".$db->qstr($GRADUATE_TEACHING_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_graduate_teaching` WHERE `graduate_teaching_id`=".$db->qstr($GRADUATE_TEACHING_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/education?section=edit_graduate", "title" => "Edit Graduate Teaching");
@@ -229,7 +229,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 							$ERRORSTR[] = "The <strong>Seminar Hours</strong> field is required.";
 						}
 					}
-					if($_SESSION["details"]["clinical_member"]) {
+					if($ENTRADA_USER->getClinical()) {
 						/**
 						 * Required field "coord_enrollment" / Coordinator Enrollment.
 						 */
@@ -303,8 +303,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						
 						if($db->AutoExecute("ar_graduate_teaching", $PROCESSED, "UPDATE", "`graduate_teaching_id`=".$db->qstr($GRADUATE_TEACHING_ID))) {
 								switch($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
@@ -454,7 +454,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 							<td style="vertical-align: top"><label for="sem_hours" class="form-required">Seminar Hours</label></td>
 							<td><input type="text" id="sem_hours" name="sem_hours" value="<?php echo ((isset($graduateTeachingResult["sem_hours"])) ? html_encode($graduateTeachingResult["sem_hours"]) : html_encode($PROCESSED["sem_hours"])); ?>" maxlength="255" style="width: 40px" /></td>
 						</tr>
-						<?php if($_SESSION["details"]["clinical_member"]) { ?>
+						<?php if($ENTRADA_USER->getClinical()) { ?>
 						<tr>
 							<td></td>
 							<td style="vertical-align: top"><label for="coord_enrollment" class="form-required">Coordinator Enrollment</label></td>

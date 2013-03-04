@@ -1,14 +1,14 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Used to list all available polls within this page of a community.
- * 
+ *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Andrew Dos-Santos <andrew.dos-santos@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
- * 
+ *
 */
 
 if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
@@ -16,32 +16,55 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 } elseif (!$COMMUNITY_LOAD) {
 	exit;
 }
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/elementresizer.js\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/wizard.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+$HEAD[] = "<link href=\"".ENTRADA_URL."/css/wizard.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+$HEAD[] = "<link href=\"".ENTRADA_RELATIVE."/javascript/calendar/css/xc2_default.css?release=".html_encode(APPLICATION_VERSION)."\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" />";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/livepipe/livepipe.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/livepipe/window.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/calendar/config/xc2_default.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/calendar/script/xc2_inpage.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 ?>
+<iframe id="upload-frame" name="upload-frame" onload="frameLoad()" style="display: none;"></iframe>
+<a id="false-link" href="#placeholder"></a>
+<div id="placeholder" style="display: none"></div>
 <div id="module-header">
 </div>
 <script type="text/javascript">
-	function openQuizWizard(eid, qid, action) {
-		if (!action) {
-			action = 'add';
-		}
+	var ajax_url = '';
+	var modalDialog;
+	document.observe('dom:loaded', function() {
+		modalDialog = new Control.Modal($('false-link'), {
+			position:		'center',
+			overlayOpacity:	0.75,
+			closeOnClick:	'overlay',
+			className:		'modal',
+			fade:			true,
+			fadeDuration:	0.30,
+			beforeOpen: function(request) {
+				eval($('scripts-on-open').innerHTML);
+			},
+			afterClose: function() {
+				if (uploaded == true) {
+                    location.reload();
+				}
+			}
+		});
+	});
 
-		if (!eid) {
-			return;
+	function openDialog (url) {
+		if (url) {
+			ajax_url = url;
+			new Ajax.Request(ajax_url, {
+				method: 'get',
+				onComplete: function(transport) {
+					modalDialog.container.update(transport.responseText);
+					modalDialog.open();
+				}
+			});
 		} else {
-			var windowW = 485;
-			var windowH = 585;
-
-			var windowX = (screen.width / 2) - (windowW / 2);
-			var windowY = (screen.height / 2) - (windowH / 2);
-
-			quizWizard = window.open('<?php echo ENTRADA_URL; ?>/quiz-wizard.php?type=community_page&action=' + action + '&id=' + eid + ((qid) ? '&qid=' + qid : ''), 'quizWizard', 'width='+windowW+', height='+windowH+', scrollbars=no, resizable=yes');
-			quizWizard.blur();
-			window.focus();
-
-			quizWizard.resizeTo(windowW, windowH);
-			quizWizard.moveTo(windowX, windowY);
-
-			quizWizard.focus();
+			$('scripts-on-open').update();
+			modalDialog.open();
 		}
 	}
 </script>
@@ -52,11 +75,11 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 		<div style="float: right; margin-bottom: 5px">
 			<ul class="page-action">
 				<li><a href="<?php echo ENTRADA_URL; ?>/admin/quizzes?section=add">Create New Quiz</a></li>
-				<li><a href="javascript: openQuizWizard('<?php echo $PAGE_ID; ?>', 0, 'add')">Attach Existing Quiz</a></li>
+				<li><a href="#" onclick="openDialog('<?php echo ENTRADA_URL; ?>/api/quiz-wizard.api.php?type=community_page&action=add&id=<?php echo $PAGE_ID; ?>')">Attach Existing Quiz</a></li>
 			</ul>
 		</div>
 		<div class="clear"></div>
-		<br/><br/>
+		<br /><br />
 		<?php
 	}
 	/**
@@ -91,14 +114,15 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 		foreach ($quizzes as $quiz_record) {
 			$quiz_attempts		= 0;
 			$total_questions	= quiz_count_questions($quiz_record["quiz_id"]);
-
-			$query				= "	SELECT *
-							FROM `quiz_progress`
-							WHERE `aquiz_id` = ".$db->qstr($quiz_record["aquiz_id"])."
-							AND `proxy_id` = ".$db->qstr($_SESSION["details"]["id"]);
-			$progress_record	= $db->GetAll($query);
-			if ($progress_record) {
-				$quiz_attempts = count($progress_record);
+			if ($LOGGED_IN) {
+				$query				= "	SELECT *
+								FROM `quiz_progress`
+								WHERE `aquiz_id` = ".$db->qstr($quiz_record["aquiz_id"])."
+								AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
+				$progress_record	= $db->GetAll($query);
+				if ($progress_record) {
+					$quiz_attempts = count($progress_record);
+				}
 			}
 
 			$exceeded_attempts	= ((((int) $quiz_record["quiz_attempts"] === 0) || ($quiz_attempts < $quiz_record["quiz_attempts"])) ? false : true);
@@ -115,10 +139,14 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 			if ($COMMUNITY_ADMIN && $_SESSION["details"]["group"] != "student") {
 				echo "	<a href=\"".ENTRADA_URL."/admin/quizzes?section=results&amp;community=true&amp;id=".$quiz_record["aquiz_id"]."\"><img src=\"".ENTRADA_URL."/images/view-stats.gif\" width=\"16\" height=\"16\" alt=\"View results of ".html_encode($quiz_record["quiz_title"])."\" title=\"View results of ".html_encode($quiz_record["quiz_title"])."\" style=\"vertical-align: middle\" border=\"0\" /></a>\n";
 			}
-			if ($allow_attempt) {
-				echo "		<a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":".$PAGE_URL."?section=attempt&amp;community=true&amp;id=".$quiz_record["aquiz_id"]."\" title=\"Take ".html_encode($quiz_record["quiz_title"])."\" style=\"font-weight: bold\">".html_encode($quiz_record["quiz_title"])."</a>";
+			if ($COMMUNITY_ADMIN && $_SESSION["details"]["group"] != "student") {
+				echo "		<a href=\"#\" onclick=\"openDialog('".ENTRADA_URL."/api/quiz-wizard.api.php?action=edit&type=community_page&id=".$PAGE_ID."&qid=".$quiz_record["aquiz_id"]."')\" title=\"Click to edit ".html_encode($quiz_record["quiz_title"])."\" style=\"font-weight: bold; cursor: pointer;\">".html_encode($quiz_record["quiz_title"])."</a>";
 			} else {
-				echo "		<span style=\"color: #666666; font-weight: bold\">".html_encode($quiz_record["quiz_title"])."</span>";
+				if ($allow_attempt) {
+					echo "		<a href=\"".ENTRADA_URL."/community".$COMMUNITY_URL.":".$PAGE_URL."?section=attempt&amp;community=true&amp;id=".$quiz_record["aquiz_id"]."\" title=\"Take ".html_encode($quiz_record["quiz_title"])."\" style=\"font-weight: bold\">".html_encode($quiz_record["quiz_title"])."</a>";
+				} else {
+					echo "		<span style=\"color: #666666; font-weight: bold\">".html_encode($quiz_record["quiz_title"])."</span>";
+				}
 			}
 
 			echo "			<div class=\"content-small\" style=\"margin-top: 3px; margin-bottom: 5px\">\n";
@@ -147,7 +175,7 @@ if ((!defined("COMMUNITY_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 							"quiz_score" => "0",
 							"quiz_value" => "0",
 							"updated_date" => time(),
-							"updated_by" => $_SESSION["details"]["id"]
+							"updated_by" => $ENTRADA_USER->getID()
 						);
 						if (!$db->AutoExecute("quiz_progress", $quiz_progress_array, "UPDATE", "qprogress_id = ".$db->qstr($entry["qprogress_id"]))) {
 							application_log("error", "Unable to update the qprogress_id [".$qprogress_id."] to expired. Database said: ".$db->ErrorMsg());

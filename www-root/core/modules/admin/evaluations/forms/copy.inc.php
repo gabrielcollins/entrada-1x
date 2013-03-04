@@ -34,7 +34,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if ($FORM_ID) {
 		$query = "	SELECT a.*
@@ -44,10 +44,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		$form_record = $db->GetRow($query);
 		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), 'update')) {
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=edit&id=".$FORM_ID, "title" => limit_chars($form_record["form_title"], 32));
-			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=copy&id=".$FORM_ID, "title" => "Copying Quiz");
+			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=copy&id=".$FORM_ID, "title" => "Copying Evaluation");
 
 			/**
-			 * Required field "form_title" / Quiz Title.
+			 * Required field "form_title" / Form Title.
 			 */
 			if ((isset($_POST["form_title"])) && ($tmp_input = clean_input($_POST["form_title"], array("notags", "trim")))) {
 				$PROCESSED["target_id"] = $form_record["target_id"];
@@ -55,12 +55,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				$PROCESSED["form_description"] = $form_record["form_description"];
 				$PROCESSED["form_active"] = 1;
 				$PROCESSED["updated_date"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 				if ($db->AutoExecute("evaluation_forms", $PROCESSED, "INSERT") && ($new_eform_id = $db->Insert_Id())) {
 					$query = "	SELECT *
-								FROM `evaluation_form_questions`
-								WHERE `eform_id` = ".$db->qstr($FORM_ID);
+								FROM `evaluation_form_questions` AS a
+								JOIN `evaluations_lu_questions` AS b
+								ON a.`equestion_id` = b.`equestion_id`
+								WHERE a.`eform_id` = ".$db->qstr($FORM_ID);
 					$questions = $db->GetAll($query);
 					if ($questions) {
 						$new_efquestion_ids = array();
@@ -69,39 +71,55 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							$query = "	INSERT INTO `evaluation_form_questions` VALUES (
 											NULL,
 											'".$new_eform_id."',
-											".$db->qstr($question["questiontype_id"]).",
-											".$db->qstr($question["question_text"]).",
-											".$db->qstr($question["question_order"])."
+											".$db->qstr($question["equestion_id"]).",
+											".$db->qstr($question["question_order"]).",
+											".$db->qstr($question["allow_comments"]).",
+											".$db->qstr($question["send_threshold_notifications"])."
 										)";
-							if (($db->Execute($query)) && ($new_efquestion_id = $db->Insert_Id())) {
-								$query = "	INSERT INTO `evaluation_form_responses`
-											SELECT NULL, '".$new_efquestion_id."', `response_text`, `response_order`, `response_is_html`, `minimum_passing_level`
-											FROM `evaluation_form_responses`
-											WHERE `efquestion_id` = ".$db->qstr($question["efquestion_id"]);
-								if (($db->Execute($query)) && ($db->Affected_Rows() > 0)) {
-									/**
-									 * Add this new efquestion_id to the $new_efquestion_ids array.
-									 */
-									$new_efquestion_ids[] = $new_efquestion_id;
-								} else {
-									$ERROR++;
-
-									application_log("error", "Unable to insert new evaluation_form_responses record when attempting to copy responses for efquestion_id [".$question["efquestion_id"]."] from eform_id [".$FORM_ID."]. Database said: ".$db->ErrorMsg());
-								}
-							} else {
+							if (!($db->Execute($query))) {
 								$ERROR++;
 
 								application_log("error", "Unable to insert new evaluation_form_questions record when attempting to copy eform_id [".$FORM_ID."]. Database said: ".$db->ErrorMsg());
 							}
 						}
+						
+						$query = "SELECT * FROM `evaluation_form_rubrics` WHERE `eform_id` = ".$db->qstr($FORM_ID);
+						$rubrics = $db->GetAll($query);
+						if ($rubrics) {
+							foreach ($rubrics as $rubric) {
+								$new_rubric = $rubric;
+								$new_rubric["eform_id"] = $new_eform_id;
+								$new_rubric["erubric_id"] = NULL;
+								if (!$db->AutoExecute("evaluation_form_rubrics", $new_rubric, "INSERT") || !($new_erubric_id = $db->Insert_Id())) {
+									$ERROR++;
+									application_log("error", "Unable to insert new evaluation_form_rubrics record when attempting to copy eform_id [".$FORM_ID."]. Database said: ".$db->ErrorMsg());
+								}
+							}
+						}
+						
+						$query = "SELECT * FROM `evaluation_form_contacts` 
+									WHERE `eform_id` = ".$db->qstr($FORM_ID);
+						$evaluation_form_contacts = $db->GetAll($query);
+						if ($evaluation_form_contacts) {
+							foreach ($evaluation_form_contacts as $evaluation_form_contact) {
+								$temp_evaluation_form_contacts = $evaluation_form_contact;
+								unset($temp_evaluation_form_contacts["econtact_id"]);
+								$temp_evaluation_form_contacts["eform_id"] = $new_eform_id;
+								if (!$db->AutoExecute("evaluation_form_contacts", $temp_evaluation_form_contacts, "INSERT")) {
+									$ERROR++;
+									application_log("error", "Unable to insert new evaluation_form_contacts record when attempting to copy eform_id [".$FORM_ID."]. Database said: ".$db->ErrorMsg());
+								}
+							}
+						}
 
 						if ($ERROR) {
-							if (count($new_efquestion_ids) > 0) {
-								$query = "DELETE FROM `evaluation_form_responses` WHERE `efquestion_id` IN (".implode(", ", $new_efquestion_ids).")";
-								$db->Execute($query);
-							}
-
+							$query = "DELETE FROM `evaluation_form_rubrics` WHERE `eform_id` = ".$db->qstr($new_eform_id);
+							$db->Execute($query);
+							
 							$query = "DELETE FROM `evaluation_form_questions` WHERE `eform_id` = ".$db->qstr($new_eform_id);
+							$db->Execute($query);
+							
+							$query = "DELETE FROM `evaluation_form_contacts` WHERE `eform_id` = ".$db->qstr($new_eform_id);
 							$db->Execute($query);
 
 							$query = "DELETE FROM `evaluation_forms` WHERE `eform_id` = ".$db->qstr($new_eform_id);
@@ -136,7 +154,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			} else {
 				$url = ENTRADA_URL."/admin/evaluations/forms?section=edit&id=".$form_record["eform_id"];
 
-				$ERRORSTR[(count($ERRORSTR) - 1)] .= "<br /><br />You will now be redirected to the <strong>original</strong> quiz; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+				$ERRORSTR[(count($ERRORSTR) - 1)] .= "<br /><br />You will now be redirected to the <strong>original</strong> evaluation; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 				
 				echo display_error();
 			}

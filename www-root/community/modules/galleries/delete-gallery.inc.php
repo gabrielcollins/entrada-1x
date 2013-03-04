@@ -24,7 +24,7 @@ if ($RECORD_ID) {
 	$gallery_record	= $db->GetRow($query);
 	if ($gallery_record) {
 		if ((int) $gallery_record["gallery_active"]) {
-			if ($db->AutoExecute("community_galleries", array("gallery_active" => 0, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cpage_id` = ".$db->qstr($PAGE_ID)." AND `cgallery_id` = ".$db->qstr($RECORD_ID))) {
+			if ($db->AutoExecute("community_galleries", array("gallery_active" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cpage_id` = ".$db->qstr($PAGE_ID)." AND `cgallery_id` = ".$db->qstr($RECORD_ID))) {
 				communities_deactivate_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID);
 				add_statistic("community:".$COMMUNITY_ID.":galleries", "gallery_delete", "cgallery_id", $RECORD_ID);
 			} else {

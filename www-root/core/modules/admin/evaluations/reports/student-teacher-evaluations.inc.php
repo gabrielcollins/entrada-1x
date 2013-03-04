@@ -37,8 +37,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+	require_once("Models/evaluation/Evaluation.class.php");
 	switch ($STEP) {
 		case 2:
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/reports?section=student-teacher-evaluations".replace_query(array("step" => 1)), "title" => "Students' Teacher Evaluations" );
@@ -65,21 +66,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 				$single = count($results) == 1;
 
-				$query = "	SELECT COUNT(DISTINCT(`evaluator`)) FROM
-							(
-								SELECT ev.`evaluator_value` `evaluator`
-								FROM `evaluation_evaluators` ev
-								WHERE ev.`evaluator_type` = 'proxy_id'
-								AND ev.`evaluation_id` = ".$db->qstr($evaluation_id)."
-								UNION
-								SELECT a.`user_id` `evaluator`
-								FROM `group_members` a , `evaluation_evaluators` ev
-								WHERE ev.`evaluator_type` = 'cohort'
-								AND a.`member_active` = 'true'
-								AND ev.`evaluator_value` = a.`group_id`
-								AND ev.`evaluation_id` = ".$db->qstr($evaluation_id)."
-							) t";
-				$evaluators	= $db->GetOne($query);
+				$evaluators_list = Evaluation::getEvaluators($evaluation_id);
+				$evaluators = count($evaluators_list);
 
 				echo "<h1>".$results[0]["evaluation_title"]."</h1>";
 

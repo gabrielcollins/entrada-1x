@@ -1,4 +1,4 @@
-#!/usr/local/zend/bin/php
+#!/usr/bin/php
 <?php
 /**
  * Entrada Tools [ http://www.entrada-project.org ]
@@ -46,7 +46,6 @@ if ((!isset($_SERVER["argv"])) || (@count($_SERVER["argv"]) < 1)) {
 require_once("classes/adodb/adodb.inc.php");
 require_once("config.inc.php");
 require_once("dbconnection.inc.php");
-require_once("auth_dbconnection.inc.php");
 require_once("functions.inc.php");
 
 $ERROR = false;

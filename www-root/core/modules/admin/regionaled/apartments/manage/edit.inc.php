@@ -279,7 +279,7 @@ if (!defined("IN_MANAGE")) {
 
 			if (!$ERROR) {
 				$PROCESSED["updated_last"] = time();
-				$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 				if ($db->AutoExecute(CLERKSHIP_DATABASE . ".apartments", $PROCESSED, "UPDATE", "apartment_id = " . $db->qstr($APARTMENT_ID))) {
 					$SUCCESS++;

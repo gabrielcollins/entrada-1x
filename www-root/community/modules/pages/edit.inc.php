@@ -181,7 +181,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 			
 			$query	= "	SELECT * FROM `community_members`
 						WHERE `community_id` = ".$db->qstr($COMMUNITY_ID)."
-						AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+						AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 						AND `member_active` = '1'
 						AND `member_acl` = '1'";
 			$result	= $db->GetRow($query);
@@ -495,7 +495,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 								 * updated_date
 								 */
 								$PROCESSED["updated_date"]	= time();
-								$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+								$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 								
 								if ($db->AutoExecute("community_pages", $PROCESSED, "UPDATE", "cpage_id = ".$PAGE_ID)) {
 									if ($home_page) {
@@ -650,14 +650,14 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 													foreach ($PROCESSED_OBJECTIVES as $objective_id => $objective) {
 														$objective_found = $db->GetOne("SELECT `objective_id` FROM `course_objectives` WHERE `objective_id` = ".$db->qstr($objective_id)." AND `course_id` = ".$db->qstr($course_id));
 														if ($objective_found) {
-															$db->AutoExecute("course_objectives", array("objective_details" => $objective, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`objective_id` = ".$db->qstr($objective_id)." AND `course_id` = ".$db->qstr($course_id));
+															$db->AutoExecute("course_objectives", array("objective_details" => $objective, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`objective_id` = ".$db->qstr($objective_id)." AND `course_id` = ".$db->qstr($course_id));
 														} else {
-															$db->AutoExecute("course_objectives", array("course_id" => $course_id, "objective_id" => $objective_id, "objective_details" => $objective, "importance" => 0, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "INSERT");
+															$db->AutoExecute("course_objectives", array("course_id" => $course_id, "objective_id" => $objective_id, "objective_details" => $objective, "importance" => 0, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "INSERT");
 														}
 													}
 													foreach ($course_objectives["used_ids"] as $objective_id) {
 														if (!array_key_exists($objective_id, $PROCESSED_OBJECTIVES)) {
-															$db->AutoExecute("course_objectives", array("objective_details" => "", "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`objective_id` = ".$db->qstr($objective_id)." AND `course_id` = ".$db->qstr($course_id));
+															$db->AutoExecute("course_objectives", array("objective_details" => "", "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`objective_id` = ".$db->qstr($objective_id)." AND `course_id` = ".$db->qstr($course_id));
 														}
 													}
 												}
@@ -1114,7 +1114,7 @@ if (($LOGGED_IN) && (!$COMMUNITY_MEMBER)) {
 													echo "<a href=\"".ENTRADA_URL."/admin/courses?section=edit&id=".$course_ids[0]."\"><img src=\"".ENTRADA_URL."/images/event-details.gif\" width=\"16\" height=\"16\" alt=\"Edit course details\" title=\"Edit course details\" border=\"0\" style=\"vertical-align: middle; margin-bottom: 2px;\" /></a> <a href=\"".ENTRADA_URL."/admin/courses?section=edit&id=".$course_ids[0]."\" style=\"font-size: 10px; margin-right: 8px\">Edit course details</a>\n";
 													echo "	</div>\n";
 													echo "</div>\n";
-													echo "<br/>";
+													echo "<br />";
 												}
 												echo "<ul class=\"objectives\">\n";
 												foreach ($results as $result) {

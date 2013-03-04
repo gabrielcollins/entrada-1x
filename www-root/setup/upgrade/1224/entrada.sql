@@ -1,6 +1,6 @@
 ALTER TABLE `curriculum_lu_types` ADD `curriculum_level_id` INT( 12 ) NULL DEFAULT NULL AFTER `curriculum_type_active`;
 
-CREATE TABLE `curriculum_lu_levels` (
+CREATE TABLE IF NOT EXISTS `curriculum_lu_levels` (
   `curriculum_level_id` int(11) unsigned NOT NULL auto_increment,
   `curriculum_level` varchar(100) NOT NULL default '',
   PRIMARY KEY  (`curriculum_level_id`)

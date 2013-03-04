@@ -33,7 +33,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		$_SESSION["academic_expand_grid"] = "internal_grid";
 	}
 	?>
-	<h1>Section <?php echo ($_SESSION["details"]["clinical_member"] ? "IV" : "III"); ?> - Service</h1>
+	<h1>Section <?php echo ($ENTRADA_USER->getClinical() ? "IV" : "III"); ?> - Service</h1>
 	
 	<table id="flex1" style="display:none"></table>
 	<table id="flex2" style="display:none"></table>
@@ -72,7 +72,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		internal_grid = jQuery("#flex1").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -156,7 +156,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('internal_grid.flexReload()', 1000);
@@ -181,7 +181,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 		external_grid = jQuery("#flex2").flexigrid
 		(
 			{
-			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>',
+			url: '<?php echo ENTRADA_URL; ?>/api/ar_loadgrid.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>',
 			dataType: 'json',
 			method: 'POST',
 			colModel : [
@@ -265,7 +265,7 @@ if ($ENTRADA_ACL->amIAllowed('annualreport', 'read')) {
 						            ({
 						               type: "POST",
 						               dataType: "json",
-						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]; ?>&t=<?php echo $fields; ?>&rid='+ids
+						               url: '<?php echo ENTRADA_URL; ?>/api/ar_delete.api.php?id=<?php echo $ENTRADA_USER->getActiveId(); ?>&t=<?php echo $fields; ?>&rid='+ids
 						             });
 							       	
 							       	window.setTimeout('external_grid.flexReload()', 1000);

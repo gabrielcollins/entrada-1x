@@ -26,7 +26,8 @@ class MSPRPublicController {
 								"contributions" => array("add","remove", "edit"),
 								"critical_enquiry" => array("add","remove", "edit"),
 								"community_based_project" => array("add","remove", "edit"),
-								"research_citations" => array("add","remove","edit", "resequence")
+								"research_citations" => array("add","remove","edit", "resequence"),
+								"observerships" => array("add","remove","edit", "resequence")
 								);
 								
 		$section = filter_input(INPUT_GET, 'mspr-section', FILTER_CALLBACK, array('options'=>'strtolower'));
@@ -41,7 +42,7 @@ class MSPRPublicController {
 			
 			$inputs = filter_input_array(INPUT_POST,$params);
 			extract($inputs);
-			
+
 			if (!$action) {
 				add_error($translator->translate("mspr_no_action"));
 			}
@@ -84,6 +85,9 @@ class MSPRPublicController {
 							break;
 						case 'research_citations':
 							ResearchCitation::create($inputs);
+							break;
+						case 'observerships':
+							$observership = Observership::create($inputs);
 							break;
 					}
 				} elseif ( $action == "resequence") {
@@ -146,6 +150,12 @@ class MSPRPublicController {
 					$research_citations = ResearchCitations::get($user);
 					display_status_messages();
 					echo display_research_citations($research_citations, $type);
+				break;
+			
+				case 'observerships':
+					$observerships = Observerships::get($user);
+					display_status_messages();
+					echo display_observerships($observerships, "public");
 				break;
 			}
 		}

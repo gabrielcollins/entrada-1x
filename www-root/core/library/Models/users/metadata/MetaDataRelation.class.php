@@ -62,7 +62,7 @@ class MetaDataRelation {
 	 * @return boolean
 	 */
 	public function isRelated(User $user) {
-		if ((($this->organisation) && ($user->getOrganisationID() != $this->organisation))
+		if ((($this->organisation) && ($user->getOrganisationId() != $this->organisation))
 		|| (($this->group) && ($user->getGroup() != $this->group))
 		|| (($this->role) && ($user->getRole() != $this->role))
 		|| (($this->user) && ($user->getID() != $this->user))) {

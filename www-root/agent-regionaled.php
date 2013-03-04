@@ -85,11 +85,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		<link href="<?php echo ENTRADA_URL; ?>/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 		<link href="<?php echo ENTRADA_URL; ?>/w3c/p3p.xml" rel="P3Pv1" type="text/xml" />
 
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/prototype.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/scriptaculous/scriptaculous.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
-		<script type="text/javascript" src="<?php echo ENTRADA_URL; ?>/javascript/common.js?release=<?php echo html_encode(APPLICATION_VERSION); ?>"></script>
-
 		%HEAD%
 
 		<style type="text/css">
@@ -101,12 +96,41 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		</style>
 
 		<script type="text/javascript">
+
 		function submitIssue() {
-			document.getElementById('form-submitting').style.display = 'block';
-
-			document.getElementById('issue-form').submit();
-
-			return;
+			var formData = jQuery("#issue-form").serialize();
+			jQuery("#issue-form").remove();
+			jQuery("#form-submitting").show();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-regionaled.php?step=2&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				data: formData,
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+					jQuery("#form-submitting").hide();
+				}
+			});
+			return false;
+		}
+		
+		function newIssue() {
+			jQuery("#wizard-body, #wizard-footer").remove();
+			jQuery.ajax({
+				url: '<?php echo ENTRADA_URL; ?>/agent-regionaled.php?step=1&amp;enc=<?php echo $ENCODED_INFORMATION; ?>',
+				type: 'POST',
+				dataType: 'html',
+				async: true,
+				success: function(data) {
+					jQuery("#form-submitting").parent().append(data);
+				}
+			});
+			return false;
+		}
+		
+		function closeWindow() {
+			jQuery('#accommodation-modal').dialog('close')
 		}
 		</script>
 	</head>
@@ -151,7 +175,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			$mail->Subject	= "Accommodation Issue Report - ".APPLICATION_NAME;
 			$mail->Body		= $message;
 			$mail->ClearAddresses();
-			$mail->AddAddress($AGENT_CONTACTS["agent-regionaled"]["email"], $AGENT_CONTACTS["agent-regionaled"]["name"]);
+			//$mail->AddAddress($AGENT_CONTACTS["agent-regionaled"]["email"], $AGENT_CONTACTS["agent-regionaled"]["name"]);
+			$mail->AddAddress('ryan.warner@queensu.ca');
 			if($mail->Send()) {
 				$SUCCESS++;
 				$SUCCESSSTR[]	= "Thank-you for contacting us. If we have questions regarding your issue we will contact you and let you know.";
@@ -162,9 +187,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				application_log("error", "Unable to send accommodation issue report with the agent. PHPMailer said: ".$mail->ErrorInfo);
 			}
 			?>
-			<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px; overflow: hidden; white-space: nowrap">
-				<span class="content-heading" style="color: #FFFFFF"><?php echo html_encode($PAGE_META["title"]); ?></span>
-			</div>
 			<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 				<?php
 				if($ERROR) {
@@ -180,14 +202,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 
 				To send a <strong>new issue</strong> or <strong>close this window</strong> please use the buttons below.
 			</div>
-			<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 100%; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
+			<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 452px; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
 				<table style="width: 452px" cellspacing="0" cellpadding="0" border="0">
 				<tr>
 					<td style="width: 180px; text-align: left">
-						<input type="button" class="button" value="Close" onclick="closeWindow()" />
+						<input type="button" class="button" value="Close" onclick="closeWindow();" />
 					</td>
 					<td style="width: 272px; text-align: right">
-						<input type="button" class="button" value="New Issue" onclick="window.location='<?php echo ENTRADA_URL; ?>/agent-regionaled.php'" />
+						<input type="button" class="button" value="New Issue" onclick="newIssue();" />
 					</td>
 				</tr>
 				</table>
@@ -199,12 +221,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			?>
 			<form id="issue-form" action="<?php echo ENTRADA_URL; ?>/agent-regionaled.php?step=2" method="post" style="display: inline">
 			<div id="form-processing" style="display: block; position: absolute; top: 0px; left: 0px; width: 485px; height: 555px">
-				<div id="wizard-header" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 25px; background-color: #003366; padding: 4px 4px 4px 10px">
-					<span class="content-heading" style="color: #FFFFFF"><?php echo html_encode($PAGE_META["title"]); ?></span>
-				</div>
 				<div id="wizard-body" style="position: absolute; top: 35px; left: 0px; width: 452px; height: 440px; padding-left: 15px; overflow: auto">
 					<h2>Your Feedback is Important</h2>
-					<table style="width: 100%" cellspacing="1" cellpadding="1" border="0">
+					<table style="width: 452px" cellspacing="1" cellpadding="1" border="0">
 					<colgroup>
 						<col style="width: 25%" />
 						<col style="width: 75%" />
@@ -238,7 +257,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</tbody>
 					</table>
 				</div>
-				<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 100%; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
+				<div id="wizard-footer" style="position: absolute; top: 465px; left: 0px; width: 452px; height: 40px; border-top: 2px #CCCCCC solid; padding: 4px 4px 4px 10px">
 					<table style="width: 100" cellspacing="0" cellpadding="0" border="0">
 					<tr>
 						<td style="width: 180px; text-align: left">
@@ -251,10 +270,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</table>
 				</div>
 			</div>
+			</form>
 			<div id="form-submitting" style="display: none; position: absolute; top: 0px; left: 0px;  background-color: #FFFFFF; opacity:.90; filter: alpha(opacity=90); -moz-opacity: 0.90">
 				<div style="display: table; width: 485px; height: 555px; _position: relative; overflow: hidden">
 					<div style="_position: absolute; _top: 50%; display: table-cell; vertical-align: middle;">
-						<div style="_position: relative; _top: -50%; width: 100%; text-align: center">
+						<div style="_position: relative; _top: -50%; width: 452px; text-align: center">
 							<span style="color: #003366; font-size: 18px; font-weight: bold">
 								<img src="<?php echo ENTRADA_URL; ?>/images/loading.gif" width="32" height="32" alt="Issue Sending" title="Please wait while your issue is submitted" style="vertical-align: middle" /> Please Wait: issue is being sent
 							</span>
@@ -262,7 +282,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					</div>
 				</div>
 			</div>
-			</form>
 			<?php
 		break;
 	}

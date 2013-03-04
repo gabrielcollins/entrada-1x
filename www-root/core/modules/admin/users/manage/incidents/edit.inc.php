@@ -22,16 +22,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if (isset($_GET["incident-id"]) && ($incident_id = clean_input($_GET["incident-id"], array("nows", "int")))) {
 		$query = "SELECT * FROM `".AUTH_DATABASE."`.`user_incidents` WHERE `incident_id` = ".$db->qstr($incident_id);
 		$incident_record = $db->GetRow($query);
 		if ($incident_record) {
-			$BREADCRUMB[] = array("url" => "", "title" => "Editing Incident");
-			
-			echo "<h1>Editing Incident</h1>\n";
-		
+			$BREADCRUMB[] = array("url" => "", "title" => "Edit Incident");
+
+			echo "<h1>Edit Incident</h1>\n";
+
 			// Error Checking
 			switch ($STEP) {
 				case 2 :
@@ -43,7 +43,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 								$PROCESSED["incident_title"] = $incident_title;
 							} else {
 								$ERROR++;
-								$ERRORSTR[] = "The new incident title must be between 3 and 64 characters.";	
+								$ERRORSTR[] = "The new incident title must be between 3 and 64 characters.";
 							}
 					} else {
 						$ERROR++;
@@ -58,7 +58,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					} else {
 						$PROCESSED["incident_severity"] = 1;
 					}
-					
+
 					/*
 					 * Required field "incident_status" / Incident Status.
 					 */
@@ -67,7 +67,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					} else {
 						$PROCESSED["incident_status"] = 0;
 					}
-					
+
 					/**
 					 * Required field "incident_date" / Incident Start (validated through validate_calendars function).
 					 * Non-required field "follow_up_date" / Incident Finish (validated through validate_calendars function).
@@ -76,7 +76,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					if ((isset($incident_date["start"])) && ((int) $incident_date["start"])) {
 						$PROCESSED["incident_date"] = (int) $incident_date["start"];
 					}
-					
+
 					if ((isset($incident_date["finish"])) && ((int) $incident_date["finish"])) {
 						$PROCESSED["follow_up_date"] = (int) $incident_date["finish"];
 					} else {
@@ -98,10 +98,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 
 							$SUCCESS++;
 							$SUCCESSSTR[] = "You have successfully update the incident in the system.<br /><br />You will now be redirected to the user edit page for user id [".$PROXY_ID."]; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
-							
+
 							$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
-							
-							application_log("success", "Proxy ID [".$_SESSION["details"]["id"]."] successfully updated the incident id [".$incident_id."].");
+
+							application_log("success", "Proxy ID [".$ENTRADA_USER->getID()."] successfully updated the incident id [".$incident_id."].");
 						} else {
 							$ERROR++;
 							$ERRORSTR[] = "Unable to update this user incident at this time. The MEdTech Unit has been informed of this error, please try again later.";
@@ -109,7 +109,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 							application_log("error", "Unable to update user incident [".$incident_id."]. Database said: ".$db->ErrorMsg());
 						}
 					}
-					
+
 					if ($ERROR) {
 						$STEP = 1;
 					}
@@ -119,7 +119,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 					$PROCESSED = $incident_record;
 				break;
 			}
-			
+
 			// Display Page.
 			switch ($STEP) {
 				case 2 :
@@ -134,11 +134,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 				case 1 :
 				default :
 					if ($ERROR) {
-						echo display_error();	
+						echo display_error();
 					}
-					
+
 					if ($NOTICE) {
-						echo display_notice();	
+						echo display_notice();
 					}
 					?>
 					<form action="<?php echo ENTRADA_URL; ?>/admin/users/manage/incidents?section=edit&amp;id=<?php echo $PROXY_ID; ?>&amp;incident-id=<?php echo $incident_id; ?>&amp;step=2" method="post">

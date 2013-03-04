@@ -140,7 +140,7 @@ switch ($ACTION) {
 							c.`audience_type` = 'students' 
 							OR c.`audience_type` = 'faculty' 
 							OR c.`audience_type` = 'staff') 
-							AND c.`audience_value` = ".$db->qstr($_SESSION["details"]["id"])."
+							AND c.`audience_value` = ".$db->qstr($ENTRADA_USER->getID())."
 						) 
 						OR ((
 							c.`audience_type` = 'cohorts' 
@@ -148,7 +148,7 @@ switch ($ACTION) {
 							AND c.`audience_value` IN (
 								SELECT `group_id` 
 								FROM `group_members` 
-								WHERE `proxy_id` = ".$db->qstr($_SESSION["details"]["id"]).")
+								WHERE `proxy_id` = ".$db->qstr($ENTRADA_USER->getID()).")
 						)
 					)";
 //		switch ($USER_GROUP) {

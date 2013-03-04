@@ -34,7 +34,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CLERKSHIP"))) {
 
 require_once("Entrada/calendar/calendar.class.php");
 
-switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]) {
+switch($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]) {
 	case "student" :
 		switch($ACTION) {
 			case "remove" :
@@ -48,7 +48,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 										FROM `".CLERKSHIP_DATABASE."`.`notifications` AS a
 										LEFT JOIN `".CLERKSHIP_DATABASE."`.`evaluations` AS b
 										ON b.`item_id` = a.`item_id`
-										WHERE a.`user_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+										WHERE a.`user_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 										AND (
 											a.`notification_status` <> 'complete'
 											OR a.`notification_status` <> 'cancelled'
@@ -65,7 +65,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 									$PROCESSED["notification_status"] = "complete";
 								}
 
-								if(!$db->AutoExecute(CLERKSHIP_DATABASE.".notifications", $PROCESSED, "UPDATE", "`notification_id` = ".$db->qstr($notification_id)." AND `user_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]))) {
+								if(!$db->AutoExecute(CLERKSHIP_DATABASE.".notifications", $PROCESSED, "UPDATE", "`notification_id` = ".$db->qstr($notification_id)." AND `user_id` = ".$db->qstr($ENTRADA_USER->getActiveId()))) {
 									application_log("error", "Unable to cancel notification_id [".$notification_id."]. Database said: ".$db->ErrorMsg());
 								}
 							}
@@ -128,12 +128,12 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 					ON c.`region_id` = a.`region_id`
 					LEFT JOIN `".CLERKSHIP_DATABASE."`.`apartment_schedule` AS d
 					ON d.`event_id` = a.`event_id`
-					AND d.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+					AND d.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 					AND d.`aschedule_status` = 'published'
 					LEFT JOIN `".CLERKSHIP_DATABASE."`.`global_lu_rotations` AS e
 					ON e.`rotation_id` = a.`rotation_id`
 					WHERE b.`econtact_type` = 'student'
-					AND b.`etype_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+					AND b.`etype_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 					ORDER BY a.`event_start` ASC";
 		$results = $db->GetAll($query);
 		if($results) {
@@ -931,7 +931,7 @@ switch($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_
 		    }
 		}
 		?>
-		<br/><br/>
+		<br /><br />
 		<h1>Student Search</h1>
 		<br />
 		<form action="<?php echo ENTRADA_URL; ?>/clerkship?section=results" method="post">

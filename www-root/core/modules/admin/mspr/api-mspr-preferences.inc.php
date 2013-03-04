@@ -27,7 +27,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	if ($ENTRADA_ACL->amIAllowed("mspr", "create", false)) {
 
 		ob_clear_open_buffers();
-		$PROXY_ID = $_SESSION["details"]["id"];
+		$PROXY_ID = $ENTRADA_USER->getID();
 		require_once("Models/users/User.class.php");
 		$user = User::get($PROXY_ID);
 		if (isset($_POST['showAll'])) {

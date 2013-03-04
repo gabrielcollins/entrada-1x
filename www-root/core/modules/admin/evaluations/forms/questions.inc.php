@@ -46,7 +46,7 @@ if (!defined("IN_EVALUATIONS")) {
 		if ($FORM_RECORD && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($FORM_ID), "update")) {
 			define("IN_QUESTION", true);
 
-			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?action=edit&amp;id=".$FORM_ID, "title" => limit_chars($FORM_RECORD["form_title"], 32));
+			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=edit&amp;id=".$FORM_ID, "title" => limit_chars($FORM_RECORD["form_title"], 32));
 
 			if (($router) && ($router->initRoute())) {
 				echo "<div class=\"content-small\">".clean_input($EVALUATION_TARGETS[$FORM_RECORD["target_id"]]["target_title"], array("trim", "encode"))." Form</div>";

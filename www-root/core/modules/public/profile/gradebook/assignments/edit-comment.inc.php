@@ -44,11 +44,11 @@ if ($RECORD_ID && $ASSIGNMENT_ID) {
 	$comment_record	= $db->GetRow($query);
 	if ($comment_record) {
 		if ((int) $comment_record["comment_active"]) {
-			if ($comment_record["proxy_id"] === $ENTRADA_USER->getProxyId()) {
-				if ($comment_record["file_owner"] === $ENTRADA_USER->getProxyId()) {
+			if ($comment_record["proxy_id"] === $ENTRADA_USER->getID()) {
+				if ($comment_record["file_owner"] === $ENTRADA_USER->getID()) {
 					$owner = true;
 				} else {
-					$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+					$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 					$assignment_contact = $db->GetRow($query);
 				}
 				if (isset($assignment_contact) && $assignment_contact) {
@@ -101,7 +101,7 @@ if ($RECORD_ID && $ASSIGNMENT_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("assignment_comments", $PROCESSED, "UPDATE", "`acomment_id` = ".$db->qstr($RECORD_ID)." AND `assignment_id` = ".$db->qstr($ASSIGNMENT_ID))) {
 								
@@ -202,7 +202,7 @@ if ($RECORD_ID && $ASSIGNMENT_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The comment record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to edit it.");
+			application_log("error", "The comment record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;

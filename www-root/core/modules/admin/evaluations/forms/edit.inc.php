@@ -34,7 +34,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if ($FORM_ID) {
 		$query = "	SELECT a.*
@@ -42,7 +42,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					WHERE `eform_id` = ".$db->qstr($FORM_ID)."
 					AND `form_active` = '1'";
 		$form_record = $db->GetRow($query);
-		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["form_id"]), "update")) {
+		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"], true), "update")) {
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=edit&id=".$FORM_ID, "title" => limit_chars($form_record["form_title"], 32));
 
 			/**
@@ -81,12 +81,50 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					} else {
 						$PROCESSED["form_description"] = "";
 					}
+					
+					/**
+					 * Required field "associated_author" / Associated Authors (array of proxy ids).
+					 * This is actually accomplished after the evaluation_form is inserted below.
+					 */	
+					if ((isset($_POST["associated_author"]))) {
+						$associated_authors = explode(",", $_POST["associated_author"]);
+						foreach($associated_authors as $contact_order => $proxy_id) {
+							if ($proxy_id = clean_input($proxy_id, array("trim", "int"))) {
+								$PROCESSED["associated_authors"][(int) $contact_order] = $proxy_id;	
+							}
+						}
+					}
+
+					/**
+					 * The current evaluation author must be in the author list.
+					 */
+					if (!in_array($ENTRADA_USER->getActiveId(), $PROCESSED["associated_authors"])) {
+						array_unshift($PROCESSED["associated_authors"], $ENTRADA_USER->getActiveId());
+					}
 
 					if (!$ERROR) {
 						$PROCESSED["updated_date"] = time();
-						$PROCESSED["updated_by"] = $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
 						if ($db->AutoExecute("evaluation_forms", $PROCESSED, "UPDATE", "`eform_id` = ".$db->qstr($FORM_ID))) {
+							if ((is_array($PROCESSED["associated_authors"])) && (count($PROCESSED["associated_authors"]))) {
+								$query = "DELETE FROM `evaluation_form_contacts` WHERE `eform_id` = ".$db->qstr($FORM_ID);
+								if ($db->Execute($query)) {
+									foreach($PROCESSED["associated_authors"] as $contact_order => $proxy_id) {
+										$contact_details =  array(	"eform_id" => $FORM_ID, 
+																	"proxy_id" => $proxy_id, 
+																	"contact_role" => "author",
+																	"contact_order" => (int) $contact_order, 
+																	"updated_date" => time(), 
+																	"updated_by" => $ENTRADA_USER->getID());
+										if (!$db->AutoExecute("evaluation_form_contacts", $contact_details, "INSERT")) {
+											add_error("There was an error while trying to attach an <strong>Associated Author</strong> to this evaluation form.<br /><br />The system administrator was informed of this error; please try again later.");
+
+											application_log("error", "Unable to insert a new evaluation_form_contact record while adding a new evaluation form. Database said: ".$db->ErrorMsg());
+										}
+									}
+								}
+							}
 							$SUCCESS++;
 							$SUCCESSSTR[] = "The <strong>Form Information</strong> section has been successfully updated.";
 
@@ -102,6 +140,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				case 1 :
 				default :
 					$PROCESSED = $form_record;
+
+					/**
+					 * Add any existing associated reviewers from the evaluation_contacts table
+					 * into the $PROCESSED["associated_reviewers"] array.
+					 */
+					$query = "SELECT * FROM `evaluation_form_contacts` WHERE `eform_id` = ".$db->qstr($FORM_ID)." ORDER BY `contact_order` ASC";
+					$results = $db->GetAll($query);
+					if ($results) {
+						foreach($results as $contact_order => $result) {
+							$PROCESSED["associated_authors"][(int) $contact_order] = $result["proxy_id"];
+						}
+					}
 				break;
 			}
 
@@ -110,12 +160,41 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				case 2 :
 				case 1 :
 				default :
+					
+					if (isset($_GET["success"]) && $_GET["success"]) {
+						if ($_GET["success"] == "true") {
+							echo display_success(array("The <strong>MCC Presentations</strong> for the selected question have been updated successfully."));
+						} else {
+							echo display_error(array("There was an error while attempting to update the <strong>MCC Presentations</strong> for the selected question. Please contact a system administrator if this problem persists."));
+						}
+					}
+					
 					if (!$ALLOW_QUESTION_MODIFICATIONS) {
-						echo display_notice(array("Please note this evaluation form has alreay been used in an evaluation, therefore the questions cannot be modified.<br /><br />If you would like to make modifications to the form you must copy it first <em>(using the Copy Form button below)</em> and then make your modifications."));
+						echo display_notice(array("Please note this evaluation form has already been used in an evaluation, therefore the questions cannot be modified.<br /><br />If you would like to make modifications to the form you must copy it first <em>(using the Copy Form button below)</em> and then make your modifications."));
 					}
 
+					$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/picklist.js\"></script>\n";
 					$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/elementresizer.js\"></script>\n";
 					$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+			
+					/**
+					 * Compiles the full list of faculty members.
+					 */
+					$AUTHOR_LIST = array();
+					$query = "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, a.`organisation_id`
+								FROM `".AUTH_DATABASE."`.`user_data` AS a
+								LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+								ON b.`user_id` = a.`id`
+								WHERE b.`app_id` = '".AUTH_APP_ID."'
+								AND (b.`group` = 'faculty' OR (b.`group` = 'resident' AND b.`role` = 'lecturer') OR b.`group` = 'staff' OR b.`group` = 'medtech')
+								ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+					$results = $db->GetAll($query);
+					if ($results) {
+						foreach($results as $result) {
+							$AUTHOR_LIST[$result["proxy_id"]] = array('proxy_id'=>$result["proxy_id"], 'fullname'=>$result["fullname"], 'organisation_id'=>$result['organisation_id']);
+						}
+					}
+					
 					?>
 					<form action="<?php echo ENTRADA_URL; ?>/admin/evaluations/forms?section=edit&amp;id=<?php echo $FORM_ID; ?>" method="post" id="editEvaluationFormForm">
 					<input type="hidden" name="step" value="2" />
@@ -193,6 +272,44 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 								<div class="clear"></div>
 							</td>
 						</tr>
+						<tr>
+							<td colspan="3">&nbsp;</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="vertical-align: top;">
+								<label for="evaluation_authors" class="form-required">Evaluation Authors</label>
+							</td>
+							<td>
+								<input type="text" id="author_name" name="fullname" size="30" autocomplete="off" style="width: 203px; vertical-align: middle" />
+								<?php
+								$ONLOAD[] = "author_list = new AutoCompleteList({ type: 'author', url: '". ENTRADA_RELATIVE ."/api/personnel.api.php?type=facultyorstaff', remove_image: '". ENTRADA_RELATIVE ."/images/action-delete.gif'})";
+								?>
+								<div class="autocomplete" id="author_name_auto_complete"></div>
+								<input type="hidden" id="associated_author" name="associated_author" />
+								<input type="button" class="button-sm" id="add_associated_author" value="Add" style="vertical-align: middle" />
+								<span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
+								<ul id="author_list" class="menu" style="margin-top: 15px">
+									<?php
+									if (is_array($PROCESSED["associated_authors"]) && count($PROCESSED["associated_authors"])) {
+										foreach ($PROCESSED["associated_authors"] as $author) {
+											if ((array_key_exists($author, $AUTHOR_LIST)) && is_array($AUTHOR_LIST[$author])) {
+												?>
+												<li class="user" id="author_<?php echo $AUTHOR_LIST[$author]["proxy_id"]; ?>" style="cursor: move;margin-bottom:10px;width:350px;"><?php echo $AUTHOR_LIST[$author]["fullname"]; if ($author != $ENTRADA_USER->getID()) {?> <img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="author_list.removeItem('<?php echo $AUTHOR_LIST[$author]["proxy_id"]; ?>');" class="list-cancel-image" /><?php } ?></li>
+												<?php
+											}
+										}
+									} else {
+										?>
+										<li class="user" id="author_<?php echo $AUTHOR_LIST[$ENTRADA_USER->getProxyId()]["proxy_id"]; ?>" style="cursor: move;margin-bottom:10px;width:350px;"><?php echo $AUTHOR_LIST[$ENTRADA_USER->getProxyId()]["fullname"]; ?></li>
+										<?php
+									}
+									?>
+								</ul>
+								<input type="hidden" id="author_ref" name="author_ref" value="" />
+								<input type="hidden" id="author_id" name="author_id" value="" />
+							</td>
+						</tr>
 					</tbody>
 					</table>
 					</form>
@@ -218,170 +335,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 									?>
 									<div style="padding-bottom: 2px">
 										<ul class="page-action">
-											<li><a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/forms/questions?id=<?php echo $FORM_ID; ?>&amp;section=add">Add New Question</a></li>
+											<li><a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/questions?form_id=<?php echo $FORM_ID; ?>">Attach Evaluation Questions</a></li>
 										</ul>
 									</div>
 									<?php
 								}
 
-								$query = "	SELECT a.*
+								$query = "SELECT a.*, b.*
 											FROM `evaluation_form_questions` AS a
+											JOIN `evaluations_lu_questions` AS b
+											ON a.`equestion_id` = b.`equestion_id`
 											WHERE a.`eform_id` = ".$db->qstr($FORM_ID)."
 											ORDER BY a.`question_order` ASC";
 								$questions = $db->GetAll($query);
 								if ($questions) {
-									?>
-									<div id="form-content-questions-holder">
-										<ol id="form-questions-list">
-										<?php
-										foreach ($questions as $key => $question) {
-											$question_number = ($key + 1);
-
-											echo "<li id=\"question_".$question["efquestion_id"]."\"".(($key % 2) ? " class=\"odd\"" : "").">";
-											if ($ALLOW_QUESTION_MODIFICATIONS) {
-												echo "<div class=\"controls\">\n";
-												echo "	<a href=\"".ENTRADA_URL."/admin/evaluations/forms/questions?id=".$FORM_ID."&amp;section=edit&amp;record=".$question["efquestion_id"]."\"><img class=\"question-controls\" src=\"".ENTRADA_URL."/images/action-edit.gif\" alt=\"Edit Question\" title=\"Edit Question\" /></a>";
-												echo "	<a id=\"question_delete_".$question["efquestion_id"]."\" class=\"question-controls-delete\" href=\"#delete-question-confirmation-box\" title=\"".$question["efquestion_id"]."\"><img class=\"question-controls\" src=\"".ENTRADA_URL."/images/action-delete.gif\" alt=\"Delete Question\" title=\"Delete Question\" /></a>";
-												echo "</div>\n";
-											}
-											echo "	<div id=\"question_text_".$question["efquestion_id"]."\" class=\"question\">\n";
-											echo "		".clean_input($question["question_text"], "specialchars");
-											echo "	</div>\n";
-											echo "	<div class=\"responses\">\n";
-											$query = "	SELECT a.*
-														FROM `evaluation_form_responses` AS a
-														WHERE a.`efquestion_id` = ".$db->qstr($question["efquestion_id"])."
-														ORDER BY a.`response_order` ASC";
-											$responses = $db->GetAll($query);
-											if ($responses) {
-												$response_width = floor(100 / count($responses));
-
-												foreach ($responses as $response) {
-													echo "<div style=\"width: ".$response_width."%\">\n";
-													echo "	<label for=\"".$form_record["eform_id"]."_".$response["efquestion_id"]."_".$response["efresponse_id"]."\">".clean_input($response["response_text"], "specialchars")."</label><br />";
-													echo "	<input type=\"radio\" style=\"margin-top: 5px\" id=\"".$form_record["eform_id"]."_".$response["efquestion_id"]."_".$response["efresponse_id"]."\" name=\"form[".$form_record["eform_id"]."][".$response["efquestion_id"]."]\" />";
-													echo "</div>\n";
-												}
-											}
-											echo "	</div>\n";
-											echo "	<div class=\"clear\"></div>";
-											echo "	<div class=\"comments\">";
-											echo "	<label for=\"".$form_record["eform_id"]."_".$response["efquestion_id"]."_".$response["efresponse_id"]."_comment\" class=\"form-nrequired\">Comments:</label>";
-											echo "	<textarea id=\"".$form_record["eform_id"]."_".$response["efquestion_id"]."_".$response["efresponse_id"]."_comment\" class=\"expandable\" style=\"width:95%; height:40px;\"></textarea>";
-											echo "	</div>";
-											echo "</li>\n";
-										}
-										?>
-										</ol>
-									</div>
-									<?php
-									if ($ALLOW_QUESTION_MODIFICATIONS) {
-										?>
-										<div id="delete-question-confirmation-box" class="modal-confirmation">
-											<h1>Delete Form <strong>Question</strong> Confirmation</h1>
-											Do you really wish to remove this question from your evaluation form?
-											<div class="body">
-												<div id="delete-question-confirmation-content" class="content"></div>
-											</div>
-											If you confirm this action, the question will be permanently removed.
-											<div class="footer">
-												<input type="button" class="button" value="Close" onclick="Control.Modal.close()" style="float: left; margin: 8px 0px 4px 10px" />
-												<input type="button" class="button" value="Confirm" onclick="deleteFormQuestion(deleteQuestion_id)" style="float: right; margin: 8px 10px 4px 0px" />
-											</div>
-										</div>
-										<script type="text/javascript" defer="defer">
-											var deleteQuestion_id = 0;
-
-											Sortable.create('form-questions-list', { handles : $$('#form-questions-list div.question'), onUpdate : updateFormQuestionOrder });
-
-											$$('a.question-controls-delete').each(function(obj) {
-												new Control.Modal(obj.id, {
-													overlayOpacity:	0.75,
-													closeOnClick:	'overlay',
-													className:		'modal-confirmation',
-													fade:			true,
-													fadeDuration:	0.30,
-													beforeOpen: function() {
-														deleteQuestion_id = obj.readAttribute('title');
-														$('delete-question-confirmation-content').innerHTML = $('question_text_' + obj.readAttribute('title')).innerHTML;
-													},
-													afterClose: function() {
-														deleteQuestion_id = 0;
-														$('delete-question-confirmation-content').innerHTML = '';
-													}
-												});
-											});
-
-											function updateFormQuestionOrder() {
-												new Ajax.Request('<?php echo ENTRADA_URL; ?>/admin/evaluations/forms/questions', {
-													method: 'post',
-													parameters: { id : <?php echo $FORM_ID; ?>, section : 'api-order', result : Sortable.serialize('form-questions-list', { name : 'order' }) },
-													onSuccess: function(transport) {
-														var count = 0;
-														$$('#form-questions-list li').each(function(obj) {
-															if (obj.hasClassName('odd')) {
-																obj.removeClassName('odd');
-															}
-
-															if (!(count % 2)) {
-																obj.addClassName('odd');
-															}
-															count++;
-														});
-														if (!transport.responseText.match(200)) {
-															new Effect.Highlight('form-content-questions-holder', { startcolor : '#FFD9D0' });
-														}
-													},
-													onError: function() {
-														new Effect.Highlight('form-content-questions-holder', { startcolor : '#FFD9D0' });
-													}
-												});
-											}
-
-											function deleteFormQuestion(efquestion_id) {
-												Control.Modal.close();
-												$('question_' + efquestion_id).fade({ duration: 0.3 });
-
-												new Ajax.Request('<?php echo ENTRADA_URL; ?>/admin/evaluations/forms/questions', {
-													method: 'post',
-													parameters: { id: '<?php echo $FORM_ID; ?>', section: 'api-delete', record: efquestion_id },
-													onSuccess: function(transport) {
-														if (transport.responseText.match(200)) {
-															$('question_' + efquestion_id).remove();
-
-															if ($$('#form-questions-list li').length == 0) {
-																$('form-content-questions-holder').hide();
-																$('display-no-question-message').show();
-															}
-														} else {
-															if ($$('#question_' + efquestion_id + ' .display-error').length == 0) {
-																var errorString = 'Unable to delete this question at this time.<br /><br />The system administrator has been notified of this error, please try again later.';
-																var errorMsg = new Element('div', { 'class': 'display-error' }).update(errorString);
-
-																$('question_' + efquestion_id).insert(errorMsg);
-															}
-
-															$('question_' + efquestion_id).appear({ duration: 0.3 });
-
-															new Effect.Highlight('question_' + efquestion_id, { startcolor : '#FFD9D0' });
-														}
-													},
-													onError: function() {
-														$('question_' + efquestion_id).appear({ duration: 0.3 });
-
-														new Effect.Highlight('question_' + efquestion_id, { startcolor : '#FFD9D0' });
-													}
-												});
-											}
-										</script>
-										<?php
-									}
+									require_once("Models/evaluation/Evaluation.class.php");
+									Evaluation::getQuestionAnswerControls($questions, $FORM_ID, $ALLOW_QUESTION_MODIFICATIONS);
 								} else {
 									$ONLOAD[] = "$('display-no-question-message').show()";
 								}
 								?>
 								<div id="display-no-question-message" class="display-generic" style="display: none">
-									There are currently <strong>no questions</strong> associated with this evaluation form.<br /><br />To create questions in this form click the <strong>Add Question</strong> link above.
+									There are currently <strong>no questions</strong> associated with this evaluation form.<br /><br />To create questions in this form click the <strong>Attach Evaluation Questions</strong> link above.
 								</div>
 							</td>
 						</tr>
@@ -433,7 +408,42 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							</div>
 						</form>
 					</div>
+					<a id="false-link" href="#placeholder"></a>
+					<div id="placeholder" style="display: none; padding: 10px 20px 10px 20px; min-width: 400px;"></div>
 					<script type="text/javascript" defer="defer">
+						var ajax_url = '';
+						var modalDialog;
+						document.observe('dom:loaded', function() {
+							modalDialog = new Control.Modal($('false-link'), {
+								position:		'center',
+								overlayOpacity:	0.75,
+								closeOnClick:	'overlay',
+								className:		'modal',
+								fade:			true,
+								fadeDuration:	0.30,
+								beforeOpen: function(request) {
+									eval($('scripts-on-open').innerHTML);
+								}
+							});
+						});
+				
+						function openDialog (url) {
+							if (url && url != ajax_url) {
+								ajax_url = url;
+								new Ajax.Request(ajax_url, {
+									method: 'get',
+									onComplete: function(transport) {
+										modalDialog.container.update(transport.responseText);
+										modalDialog.open();
+									}
+								});
+							} else {
+								$('scripts-on-open').update();
+								modalDialog.open();
+							}
+						}
+
+						
 						// Modal control for deleting form.
 						new Control.Modal('form-control-disable', {
 							overlayOpacity:	0.75,

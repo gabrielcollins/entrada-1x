@@ -162,7 +162,7 @@ if ($RECORD_ID) {
 
 					if (!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
 
 						if ($db->AutoExecute("community_galleries", $PROCESSED, "UPDATE", "`community_id` = ".$db->qstr($COMMUNITY_ID)." AND `cpage_id` = ".$db->qstr($PAGE_ID)." AND `cgallery_id` = ".$db->qstr($RECORD_ID))) {
 							$url			= COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL;
@@ -346,7 +346,7 @@ if ($RECORD_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The photo gallery record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to edit it.");
+			application_log("error", "The photo gallery record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;

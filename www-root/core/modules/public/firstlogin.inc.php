@@ -1,7 +1,7 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,23 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * $Id: firstlogin.inc.php 1171 2010-05-01 14:39:27Z ad29 $
  */
 
-if(!defined("PARENT_INCLUDED")) {
+if (!defined("PARENT_INCLUDED")) {
 	exit;
-} elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
+} elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif(!$ENTRADA_ACL->amIAllowed('firstlogin', 'read')) {
-	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/".$MODULE."\\'', 15000)";
-
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+} elseif (!$ENTRADA_ACL->amIAllowed("firstlogin", "read")) {
+	add_error("Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.");
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	?>
 	<form action="<?php echo ENTRADA_URL; ?>/profile" method="post">
@@ -61,7 +57,7 @@ if(!defined("PARENT_INCLUDED")) {
 	/**
 	 * Google Hosted Apps Account
 	 */
-	if($_SESSION["details"]["google_id"] == "opt-in") {
+	if ($_SESSION["details"]["google_id"] == "opt-in") {
 		?>
 		<tr>
 			<td colspan="2">
@@ -85,13 +81,13 @@ if(!defined("PARENT_INCLUDED")) {
 				<span class="content-small">If you decide you would like one in the future, simply contact the system administrator.</span>
 			</td>
 		</tr>
-	<?php
+		<?php
 	}
 
 	/**
 	 * Privacy Level Settings
 	 */
-	if(!(int) $_SESSION["details"]["privacy_level"]) {
+	if (!(int) $_SESSION["details"]["privacy_level"]) {
 		?>
 		<tr>
 			<td colspan="2">

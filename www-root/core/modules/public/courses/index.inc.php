@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * This file displays the list of objectives pulled 
+ * This file displays the list of objectives pulled
  * from the entrada.global_lu_objectives table.
  *
  * @author Organisation: Queen's University
@@ -38,7 +38,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 	 * and add the appropriate toggle sidebar item.
 	 */
 	if ($ENTRADA_ACL->amIAllowed("coursecontent", "update", false)) {
-		switch ($_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]) {
+		switch ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]) {
 			case "admin" :
 				$admin_wording	= "Administrator View";
 				$admin_url		= ENTRADA_URL."/admin/".$MODULE.(($COURSE_ID) ? "?".replace_query(array("section" => "edit", "id" => $COURSE_ID)) : "");
@@ -63,25 +63,25 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			$sidebar_html .= "<li class=\"off\"><a href=\"".$admin_url."\">".html_encode($admin_wording)."</a></li>\n";
 		}
 		$sidebar_html .= "</ul>\n";
-	
+
 		new_sidebar_item("Display Style", $sidebar_html, "display-style", "open");
 	}
 	if(!$ORGANISATION_ID){
 		$query = "SELECT `organisation_id` FROM `courses` WHERE `course_id` = ".$db->qstr($COURSE_ID);
 		if($result = $db->GetOne($query)){
 			$ORGANISATION_ID = $result;
-			$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"] = $result;
+			$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"] = $result;
 		}
 		else
-			$ORGANISATION_ID	= $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"];
+			$ORGANISATION_ID	= $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"];
 	}
-	
+
 	$COURSE_LIST = array();
 
-	$results = courses_fetch_courses(true, false);
+	$results = courses_fetch_courses(true, true);
 	if ($results) {
 		foreach ($results as $result) {
-			$COURSE_LIST[$result["course_id"]] = html_encode($result["course_name"].(($result["course_code"]) ? ": ".$result["course_code"] : ""));
+			$COURSE_LIST[$result["course_id"]] = html_encode(($result["course_code"] ? $result["course_code"] . ": " : "") . $result["course_name"]);
 		}
 	}
 
@@ -99,7 +99,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			exit;
 		}
 
-		$query = "	SELECT * FROM `courses` 
+		$query = "	SELECT * FROM `courses`
 					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
 					AND `course_active` = '1'";
 		$course_details	= ((USE_CACHE) ? $db->CacheGetRow(CACHE_TIMEOUT, $query) : $db->GetRow($query));
@@ -109,7 +109,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 			echo display_error();
 		} else {
-			if ($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getOrganisationID()), "read")) {
+			if ($ENTRADA_ACL->amIAllowed(new CourseResource($COURSE_ID, $ENTRADA_USER->getActiveOrganisation), "read")) {
 				add_statistic($MODULE, "view", "course_id", $COURSE_ID);
 
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/".$MODULE."?".replace_query(array("id" => $course_details["course_id"])), "title" => $course_details["course_name"].(($course_details["course_code"]) ? ": ".$course_details["course_code"] : ""));
@@ -329,9 +329,6 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						echo "				<div id=\"objectives_list\">\n".course_objectives_in_list($objectives, $top_level_id,$top_level_id)."\n</div>\n";
 						echo "			</td>\n";
 						echo "		</tr>\n";
-						echo "		<tr>\n";
-						echo "			<td colspan=\"2\">\n";
-						echo "				<h3>Clinical Presentations</h3>";
 						$query = "	SELECT b.*
 									FROM `course_objectives` AS a
 									JOIN `global_lu_objectives` AS b
@@ -346,6 +343,9 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									ORDER BY b.`objective_order`";
 						$results = $db->GetAll($query);
 						if ($results) {
+						echo "		<tr>\n";
+						echo "			<td colspan=\"2\">\n";
+						echo "				<h3>Clinical Presentations</h3>";							
 							echo "				<ul class=\"objectives\">\n";
 							$HEAD[] = "
 								<script type=\"text/javascript\" defer=\"defer\">
@@ -362,17 +362,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								if ($result["objective_name"]) {
 									echo "<li><a id=\"objective-".$result["objective_id"]."-details\" style=\"text-decoration: none;\" href=\"".ENTRADA_URL."/courses/objectives?section=objective-details&api=true&oid=".$result["objective_id"]."&cid=".$COURSE_ID."\">".$result["objective_name"]."</a></li>\n";
 								}
-							
+
 							}
 							$HEAD[] = "
 								});
 								</script>";
 							echo "				</ul>\n";
-						} else {
-							echo "<div class=\"display-notice\">While medical presentations may be used to illustrate concepts in this course, there are no specific presentations from the Medical Council of Canada that have been selected.</div>";
-						}
 						echo "			</td>\n";
-						echo "		</tr>\n";
+						echo "		</tr>\n";							
+						}
 					//}
 					echo "		</tbody>";
 					echo "	</table>";
@@ -388,7 +386,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								FROM `course_files`
 								LEFT JOIN `statistics`
 								ON `statistics`.`module`=".$db->qstr($MODULE)."
-								AND `statistics`.`proxy_id`=".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+								AND `statistics`.`proxy_id`=".$db->qstr($ENTRADA_USER->getActiveId())."
 								AND `statistics`.`action`='file_download'
 								AND `statistics`.`action_field`='file_id'
 								AND `statistics`.`action_value`=`course_files`.`id`
@@ -542,10 +540,11 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 		$sidebar_html .= "<span style=\"float: left; padding-top: 7px;\"><a href=\"".ENTRADA_URL."/search\" style=\"font-size: 11px\">Advanced Search</a></span>\n";
 		$sidebar_html .= "<span style=\"float: right; padding-top: 4px;\"><input type=\"submit\" class=\"button-sm\" value=\"Search\" /></span>\n";
 		$sidebar_html .= "</form></div>\n";
-		$sidebar_html .= "<br/><br/><hr style=\"clear: both;\"/>\n";
+		$sidebar_html .= "<br /><br /><hr style=\"clear: both;\"/>\n";
 		$sidebar_html .= "<a href=\"".ENTRADA_URL."/courses/objectives\">View <strong>Curriculum Map</strong></a>\n";
 
 		new_sidebar_item("Our Curriculum", $sidebar_html, "curriculum-search-bar", "open");
+		if ($COURSE_LIST) {
 		?>
 		<div style="text-align: right">
 			<form>
@@ -563,15 +562,17 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 			</form>
 		</div>
 		<?php
-
+		}
 		$query	= "SELECT * FROM `curriculum_lu_types` WHERE `curriculum_type_active` = '1' ORDER BY `curriculum_type_order` ASC";
 		$terms	= $db->GetAll($query);
+		$course_flag = false;
 		if ($terms) {
 			echo "<h2>". $module_singular_name . " Listing</h2>\n";
 			echo "<ol class=\"curriculum-layout\">\n";
 			foreach ($terms as $term) {
 				$courses = courses_fetch_courses(true, true, $term["curriculum_type_id"]);
 				if ($courses) {
+					$course_flag = true;
 					echo "<li><h3>".html_encode($term["curriculum_type_name"])."</h3>\n";
 					echo "	<ul class=\"course-list\">\n";
 					foreach ($courses as $course) {
@@ -582,6 +583,9 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				}
 			}
 			echo "</ol>\n";
+		}
+		if (!$course_flag) {
+			echo display_notice(array("There are no courses to display."));
 		}
 	}
 }

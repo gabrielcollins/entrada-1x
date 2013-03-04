@@ -37,8 +37,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
+	require_once("Models/evaluation/Evaluation.class.php");
 	$BREADCRUMB[]	= array("url" => ENTRADA_URL."/admin/", "title" => "Evaluation Reports");
 
 	$QUESTION_COMMENTS = false;  // Show question comments at the end of the question
@@ -126,25 +127,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		}
 		echo "	</tr>\n";
 
-		/**
-		 * Get number of evaluators: individual student(s) and whole class
-		 */
-		$query = "	SELECT COUNT(DISTINCT(`evaluator`)) FROM
-					(
-						SELECT ev.`evaluator_value` `evaluator`
-						FROM `evaluation_evaluators` ev
-						WHERE ev.`evaluator_type` = 'proxy_id'
-						AND ev.`evaluation_id` = ".$db->qstr($report["evaluation"])."
-						UNION
-						SELECT a.`proxy_id` `evaluator`
-						FROM `group_members` a , `evaluation_evaluators` ev
-						WHERE ev.`evaluator_type` = 'cohort'
-						AND ev.`evaluator_value` = a.`group_id`
-						AND a.`member_active` = '1'
-						AND ev.`evaluation_id` = ".$db->qstr($report["evaluation"])."
-					) t";
-		$evaluators	= $db->GetOne($query);
-
+		$evaluators_list = Evaluation::getEvaluators($report["evaluation"]);
+		$evaluators = count($evaluators_list);
+		
 		if ($STUDENTS) {		
 			$query = "	SELECT COUNT(DISTINCT(a.`proxy_id`)) `total`,  b.`group_name`
 						FROM `group_members` a, `evaluation_evaluators` ev
@@ -187,9 +172,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		/**
 		 * Get the questions for this form
 		 */
-		$query = "	SELECT q.`efquestion_id` `id`, t.`questiontype_title`, q.`question_text`
+		$query = "SELECT qt.`equestion_id` `id`, t.`questiontype_title`, qt.`question_text`
 					FROM `evaluation_form_questions` q
-					INNER JOIN `evaluations_lu_questiontypes` t ON q.`questiontype_id` = t.`questiontype_id`
+					JOIN `evaluations_lu_questions` AS qt
+					ON q.`equestion_id` = qt.`equestion_id`
+					INNER JOIN `evaluations_lu_questiontypes` t 
+					ON qt.`questiontype_id` = t.`questiontype_id`
 					WHERE `eform_id` = ".$db->qstr($report["form_id"])."
 					ORDER BY q.`question_order`";
 		$questions = $db->GetAll($query);
@@ -212,13 +200,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			/**
 			 * Get all evaluator responses for each question
 			 */
-			$query = "	SELECT r.`efresponse_id`, r.`comments`
+			$query = "	SELECT r.`eqresponse_id`, r.`comments`
 						FROM `evaluation_responses` r
+						JOIN `evaluation_form_questions` AS q
+						ON r.`efquestion_id` = q.`efquestion_id`
 						INNER JOIN `evaluation_progress` p ON r.`eprogress_id` = p.`eprogress_id`
 						WHERE p.`progress_value` <> 'cancelled'
 						AND p.`etarget_id` = ".$db->qstr($target)."
 						AND r.`eform_id` = ".$db->qstr($report["form_id"])."
-						AND r.`efquestion_id` = ".$db->qstr($question["id"]);
+						AND q.`equestion_id` = ".$db->qstr($question["id"]);
 			$results	= $db->GetAll($query);
 			if ($results) {
 				echo "<tr>\n";
@@ -233,9 +223,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				/**
 				 * Get the available responses for each question and build the response profile array
 				 */
-				$query = "	SELECT `efresponse_id` `id`, `response_order` `order` ,`response_text` `text`,  `response_is_html` `html`, `minimum_passing_level` `mpl`, 0 `freq`, 0 `percent`, 0 `cumul`
-							FROM `evaluation_form_responses`
-							WHERE `efquestion_id` = ".$db->qstr($question["id"])."
+				$query = "	SELECT `eqresponse_id` `id`, `response_order` `order` ,`response_text` `text`,  `response_is_html` `html`, `minimum_passing_level` `mpl`, 0 `freq`, 0 `percent`, 0 `cumul`
+							FROM `evaluations_lu_question_responses`
+							WHERE `equestion_id` = ".$db->qstr($question["id"])."
 							ORDER BY `response_order` ASC";
 				$responses = $db->GetAll($query);
 				$answers = count($responses);
@@ -257,7 +247,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				 * Tally responses for each question
 				 */
 				foreach ($results as $result) {
-					$profile[$result["efresponse_id"]]["freq"]++;
+					$profile[$result["eqresponse_id"]]["freq"]++;
 					if (($QUESTION_COMMENTS||$END_COMMENTS) && $result["comments"] && strlen($result["comments"])) {
 						$comments[$number][] = $result["comments"];
 					}

@@ -68,7 +68,7 @@ if (($router) && ($router->initRoute())) {
 				FROM `community_members` AS a
 				LEFT JOIN `communities` AS b
 				ON b.`community_id` = a.`community_id`
-				WHERE a.`proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"])."
+				WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 				AND a.`member_active` = '1'
 				AND b.`community_active` = '1'
 				AND b.`community_template` <> 'course'

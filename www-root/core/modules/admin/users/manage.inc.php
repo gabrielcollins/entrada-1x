@@ -25,7 +25,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 	application_log("error", "Group [".$GROUP."] and role [".$ROLE."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_MANAGE_USER", true);
-	
+
 	$query = "	SELECT * FROM `".AUTH_DATABASE."`.`user_access` AS a
 				LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS b
 				ON a.`user_id` = `b`.`id`
@@ -33,11 +33,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 				AND a.`app_id` = ?";
 	$user_record = $db->GetRow($query, array($PROXY_ID, AUTH_APP_ID));
 	if (($user_record) && ($router) && ($router->initRoute())) {
-		$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage?id=".$PROXY_ID, "title" => "Manage ".html_encode($user_record["firstname"]." ".$user_record["lastname"]));
+		$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/users/manage?id=".$PROXY_ID, "title" => html_encode($user_record["firstname"]." ".$user_record["lastname"]));
 
 		$module_file = $router->getRoute();
 		if ($module_file) {
-		
+
 			add_user_management_sidebar();
 			if ($user_record['group'] == 'student') {
 				add_student_management_sidebar();
@@ -55,7 +55,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_USERS"))) {
 
 /**
  * Creates the profile sidebar to appear on all profile pages. The sidebar content will vary depending on the permissions of the user.
- * 
+ *
  */
 function add_user_management_sidebar () {
 	global $ENTRADA_ACL, $PROXY_ID;
@@ -93,7 +93,7 @@ function add_mspr_management_sidebar () {
 	$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/admin/users/manage/students?section=mspr-revisions&id=".$PROXY_ID."\">MSPR File Revisions</a></li>\n";
 	$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/admin/mspr?mode=year&year=".$year ."\">Manage Class of ". $year ." MSPRs</a></li>\n";
 	$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/admin/mspr?mode=all\">Manage All MSPRs Requiring Attention</a></li>\n";
-	
+
 	$sidebar_html .= "</ul>";
 
 	new_sidebar_item("MSPR Management", $sidebar_html, "mspr-management-nav", "open");

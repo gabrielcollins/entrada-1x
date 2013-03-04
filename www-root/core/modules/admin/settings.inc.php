@@ -32,26 +32,18 @@ if (!defined("PARENT_INCLUDED")) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_CONFIGURATION", true);
-	
+
 	/*
 	 * To change this template, choose Tools | Templates
 	 * and open the template in the editor.
 	 */
-	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings", "title" => "Manage Settings");
+	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/settings", "title" => "System Settings");
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);
-
-		/**
-		 * Add the Regional Education module secondary navigation.
-		 */
-		$sidebar_html  = "<ul class=\"menu\">";
-		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/admin/settings/organisations/\">Manage Organisations</a></li>\n";
-		$sidebar_html .= "</ul>";
-		new_sidebar_item("Configuration", $sidebar_html, "config-nav", "open");
 
 		$module_file = $router->getRoute();
 		if ($module_file) {

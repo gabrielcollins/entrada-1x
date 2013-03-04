@@ -35,20 +35,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] does not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	if (isset($_GET["assessment_id"]) && $tmp_input = (int)$_GET["assessment_id"]) {
 		$ASSESSMENT_ID = $tmp_input;
 	}
 
 	if ($ASSESSMENT_ID) {
-		   $url = ENTRADA_URL."/admin/gradebook/assessments?".replace_query(array("step" => false, "section" => "grade", "assessment_id" => $ASSESSMENT_ID));			
-		   if ($_FILES["file"]["error"] > 0) {
+		   	$url = ENTRADA_URL."/admin/gradebook/assessments?".replace_query(array("step" => false, "section" => "grade", "assessment_id" => $ASSESSMENT_ID));			
+		   	if ($_FILES["file"]["error"] > 0) {
 				add_error("Error occurred while uploading file.");
 				//$_FILES["file"]["error"]
-			} elseif($_FILES["file"]["type"] != "text/csv") {
+			} elseif(!in_array($_FILES["file"]["type"], array("text/csv", "application/vnd.ms-excel","text/comma-separated-values","application/csv", "application/excel", "application/vnd.ms-excel", "application/vnd.msexcel","application/octet-stream"))) {
 				add_error("Invalid <strong>file type</strong> uploaded. Must be a CSV file in the proper format.");
-
 			} else {
 
 				$lines = file($_FILES["file"]["tmp_name"]);
@@ -82,6 +81,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 										//$db->AutoExecute("assessment_grades",$PROCESSED,"INSERT");
 										$query = "SELECT * FROM `assessment_grades` WHERE `assessment_id` = ".$db->qstr($ASSESSMENT_ID)." AND `proxy_id` = ".$db->qstr($member["proxy_id"]);
 										$grade = $db->GetRow($query);
+										
+										if ($PROCESSED["value"] < $assessment["grade_threshold"]) {
+											$PROCESSED["threshold_notified"] = 0;
+										}
+										
 										if ($grade) {
 											$db->AutoExecute("assessment_grades",$PROCESSED,"UPDATE","`grade_id`=".$db->qstr($grade["grade_id"]));
 										} else {

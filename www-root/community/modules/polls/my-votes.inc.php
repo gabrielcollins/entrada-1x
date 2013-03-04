@@ -51,7 +51,7 @@ if ($RECORD_ID) {
 					WHERE `cpolls_id` = ".$RECORD_ID."
 					AND `question_active` = '1'";
 		$questions = $db->GetAll($query);
-		$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+		$vote_record = communities_polls_votes_cast_by_member($RECORD_ID, $ENTRADA_USER->getActiveId());
 	
 		if (isset($vote_record["votes"]) && (int)$vote_record["votes"] > 0) {
 			$allow_main_load = true;

@@ -1,7 +1,7 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,12 +16,12 @@
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Serves as the main Entrada administrative request controller file.
- * 
+ *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
- * 
+ *
 */
 
 @set_include_path(implode(PATH_SEPARATOR, array(
@@ -81,19 +81,19 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	 * This function updates the users_online table.
 	 */
 	users_online();
-	$proxy_id = $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"];
-	if(($proxy_id != $_SESSION["details"]["id"]) && ($_SESSION["permissions"][$proxy_id]["expires"] <= time())) {
+	$proxy_id = $ENTRADA_USER->getActiveId();
+	if(($proxy_id != $ENTRADA_USER->getID()) && ($_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["expires"] <= time())) {
 		unset($proxy_id);
 	}
 
 	if(!isset($proxy_id)) {
-		$proxy_id = $_SESSION["details"]["id"];
+		$proxy_id = $ENTRADA_USER->getID();
 	}
 
 	/**
 	 * Redirect guests and students users away from the admin section.
 	 */
-	if (in_array($_SESSION["details"]["group"], array("guest", "student"))) {
+	if (in_array($ENTRADA_USER->getActiveGroup(), array("guest", "student"))) {
 		header("Location: ".ENTRADA_URL);
 		exit;
 	}
@@ -133,6 +133,12 @@ $router->setSection($SECTION);
 
 define("PARENT_INCLUDED", true);
 
+if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"] && isset($ENTRADA_USER)) {
+	if (($cached_user = $ENTRADA_CACHE->load("user_".AUTH_APP_ID."_".$ENTRADA_USER->getID())) && $cached_user != $ENTRADA_USER) {
+		$ENTRADA_CACHE->save($ENTRADA_USER, "user_".AUTH_APP_ID."_".$ENTRADA_USER->getID(), array("auth"), 300);
+	}
+}
+
 require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_ACTIVE_TEMPLATE."/layouts/admin/header.tpl.php");
 if (($router) && ($route = $router->initRoute($MODULE))) {
 	/**
@@ -142,14 +148,23 @@ if (($router) && ($route = $router->initRoute($MODULE))) {
 	if ((isset($_SESSION["permissions"])) && (is_array($_SESSION["permissions"])) && (count($_SESSION["permissions"]) > 1)) {
 		$sidebar_html  = "<form id=\"masquerade-form\" action=\"".ENTRADA_URL."/admin/\" method=\"get\">\n";
 		$sidebar_html .= "<label for=\"permission-mask\">Available permission masks:</label>";
-		$sidebar_html .= "<select id=\"permission-mask\" name=\"mask\" style=\"width: 160px\" onchange=\"window.location='".ENTRADA_URL."/admin/".$MODULE."/?".html_decode(replace_query(array("mask" => "'+this.options[this.selectedIndex].value")))."\">\n";
-		foreach($_SESSION["permissions"] as $proxy_id => $result) {
-			$sidebar_html .= "<option value=\"".(($proxy_id == $_SESSION["details"]["id"]) ? "close" : $result["permission_id"])."\"".(($proxy_id == $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"])."</option>\n";
+		$sidebar_html .= "<select id=\"permission-mask\" name=\"mask\" style=\"width: 100%\" onchange=\"window.location='".ENTRADA_URL."/admin/".$MODULE."/?".html_decode(replace_query(array("mask" => "'+this.options[this.selectedIndex].value")))."\">\n";
+		$display_masks = false;
+		$added_users = array();
+		foreach($_SESSION["permissions"] as $access_id => $result) {
+			if (is_int($access_id) && ((isset($result["mask"]) && $result["mask"]) || $access_id == $ENTRADA_USER->getDefaultAccessId()) && array_search($result["id"], $added_users) === false) {
+				if (isset($result["mask"]) && $result["mask"]) {
+					$display_masks = true;
+				}
+				$added_users[] = $result["id"];
+				$sidebar_html .= "<option value=\"".(($access_id == $ENTRADA_USER->getDefaultAccessId()) ? "close" : $result["permission_id"])."\"".(($result["id"] == $ENTRADA_USER->getActiveId()) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"])."</option>\n";
+			}
 		}
 		$sidebar_html .= "</select>\n";
 		$sidebar_html .= "</form>\n";
-
-		new_sidebar_item("Permission Masks", $sidebar_html, "permission-masks", "open");
+		if ($display_masks) {
+			new_sidebar_item("Permission Masks", $sidebar_html, "permission-masks", "open");
+		}
 	}
 
 	$module_file = $router->getRoute();
@@ -173,29 +188,35 @@ require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_ACTIVE_TEMPLATE."/layouts/
  *
  */
 if((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
-	
-	add_task_sidebar();
-	
-	$sidebar_html  = "<a href=\"javascript: sendFeedback('".ENTRADA_URL."/agent-feedback.php?enc=".feedback_enc()."')\"><img src=\"".ENTRADA_URL."/images/feedback.gif\" width=\"48\" height=\"48\" alt=\"Give Feedback\" border=\"0\" align=\"right\" hspace=\"3\" vspace=\"5\" /></a>";
-	$sidebar_html .= "Giving feedback is a very important part of application development. Please <a href=\"javascript: sendFeedback('".ENTRADA_URL."/agent-feedback.php?enc=".feedback_enc()."')\"><b>click here</b></a> to send us any feedback you may have about <u>this</u> page.<br /><br />\n";
 
-	new_sidebar_item("Page Feedback", $sidebar_html, "page-feedback", "open");
+	add_task_sidebar();
+
+	system_feedback_sidebar($ENTRADA_USER->getGroup());
 
 	/**
 	 * Create the Organisation side bar.
 	 */
 
-	if ($ENTRADA_USER->getAllOrganisations() && count($ENTRADA_USER->getAllOrganisations()) > 1) {
+	if (($ENTRADA_USER->getAllOrganisations() && count($ENTRADA_USER->getAllOrganisations()) > 1) || ($ENTRADA_USER->getOrganisationGroupRole() && max(array_map('count', $ENTRADA_USER->getOrganisationGroupRole())) > 1)) {
+		$org_group_role = $ENTRADA_USER->getOrganisationGroupRole();
 		$sidebar_html = "<ul class=\"menu none\">\n";
 		foreach ($ENTRADA_USER->getAllOrganisations() as $key => $organisation_title) {
 			if ($key == $ENTRADA_USER->getActiveOrganisation()) {
-				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key)) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?organisation_id=" . $key . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				if ($org_group_role && !empty($org_group_role)) {
+					foreach($org_group_role[$key] as $group_role) {
+						if ($group_role["access_id"] == $ENTRADA_USER->getAccessId()) {
+							$sidebar_html .= "<li style=\"padding-left: 15px;\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key, "ua_id" => $group_role["access_id"])) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-on.gif\" alt=\"\" /> <span>" . html_encode(ucfirst($group_role["group"]) . " - " . ucfirst($group_role["role"])) . "</span></a></li>\n";
+						} else {
+							$sidebar_html .= "<li style=\"padding-left: 15px;\"><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key, "ua_id" => $group_role["access_id"])) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode(ucfirst($group_role["group"]) . " - " . ucfirst($group_role["role"])) . "</span></a></li>\n";
+						}
+					}
+				}
 			} else {
-				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?" . replace_query(array("organisation_id" => $key)) . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
+				$sidebar_html .= "<li><a href=\"" . ENTRADA_URL . "/admin/" . $MODULE . "/" . "?organisation_id=" . $key . "\"><img src=\"".ENTRADA_RELATIVE."/images/checkbox-off.gif\" alt=\"\" /> <span>" . html_encode($organisation_title) . "</span></a></li>\n";
 			}
 		}
 		$sidebar_html .= "</ul>\n";
-
 		new_sidebar_item("Organisations", $sidebar_html, "org-switch", "open", SIDEBAR_PREPEND);
 	}
 }

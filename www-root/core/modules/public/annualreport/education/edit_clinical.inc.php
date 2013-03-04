@@ -34,13 +34,13 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$CLINICAL_EDUCATION_ID = $_GET["rid"];
 	// This grid should be expanded upon redirecting back to the education index.
 	$_SESSION["education_expand_grid"] = "clinical_education_grid";
 	if($CLINICAL_EDUCATION_ID) {
-		$query	= "SELECT * FROM `ar_clinical_education` WHERE `clinical_education_id`=".$db->qstr($CLINICAL_EDUCATION_ID)." AND `proxy_id` = ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id']);
+		$query	= "SELECT * FROM `ar_clinical_education` WHERE `clinical_education_id`=".$db->qstr($CLINICAL_EDUCATION_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId());
 		$result	= $db->GetRow($query);
 		if($result) {
 			$BREADCRUMB[]	= array("url" => ENTRADA_URL."/annualreport/education?section=edit_clinical", "title" => "Edit Clinical Education");
@@ -48,7 +48,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 			// Error Checking
 			switch($STEP) {
-				case 2 :					
+				case 2 :
 					/**
 					 * Required field "level" / Level of Trainees.
 					 */
@@ -111,6 +111,18 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						}
 					}
 					/**
+					 * Non-required field "research_percentage" / Research Percentage.
+					 */
+					if((isset($_POST["research_percentage"])) && ($research_percentage = clean_input($_POST["research_percentage"], array("notags", "trim")))) {
+						if($research_percentage) {
+							$PROCESSED["research_percentage"] = 1;
+						} else {
+							$PROCESSED["research_percentage"] = 0;
+						}
+					} else {
+						$PROCESSED["research_percentage"] = 0;
+					}
+					/**
 					 * Required field "description" / Description			 
 					 */
 					if((isset($_POST["description"])) && ($description = clean_input($_POST["description"], array("notags", "trim")))) {
@@ -145,8 +157,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 					
 					if(!$ERROR) {
 						$PROCESSED["updated_date"]	= time();
-						$PROCESSED["updated_by"]	= $_SESSION["details"]["id"];
-						$PROCESSED["proxy_id"]		= $_SESSION[APPLICATION_IDENTIFIER]['tmp']['proxy_id'];
+						$PROCESSED["updated_by"]	= $ENTRADA_USER->getID();
+						$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 						
 						if($db->AutoExecute("ar_clinical_education", $PROCESSED, "UPDATE", "`clinical_education_id`=".$db->qstr($CLINICAL_EDUCATION_ID))) {
 								switch($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) {
@@ -230,12 +242,47 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 							}
 						?>
 						</select>
+						<script>
+					    	jQuery(function($) {
+									jQuery('#level').change(function() {
+										if(jQuery(':selected', this).text() == "Clinical Research Fellow") {
+											jQuery('#research_percentage_details').show();
+										} else {
+											jQuery('#research_percentage_details').hide();
+											jQuery('input[name=research_percentage]').attr('checked', false);
+										}
+									}).trigger('change');
+					    	});
+						</script>
+						</td>
+					</tr>
+					<?php
+						if(isset($PROCESSED["research_percentage"]) && $PROCESSED["research_percentage"]) {
+							$checked = "checked=\"checked\"";
+							$display = "";					
+						} else if($clinicalEducationResult["research_percentage"]) {
+							$checked = "checked=\"checked\"";
+							$display = "";
+						} else {
+							$checked = "";
+							$display = "style=\"display: none;\"";
+						}
+					?>
+					<tr id="research_percentage_details" <?php echo $display; ?>>
+						<td></td>
+						<td><label for="research_percentage">Research > 75%</label></td>
+						<td>
+							<input type="checkbox" id="research_percentage" name="research_percentage" style="vertical-align:0px;" <?php echo $checked; ?>>
+							<span class="content-small">Check this box when clinical trainee devotes 75% or more of their time to research</span>
 						</td>
 					</tr>
 					<tr>
 						<td></td>
 						<td style="vertical-align: top"><label for="level_description" class="form-nrequired">Level Description</label></td>				
 						<td><input type="text" id="level_description" name="level_description" value="<?php echo ((isset($clinicalEducationResult["level_description"])) ? html_encode($clinicalEducationResult["level_description"]) : html_encode($PROCESSED["level_description"])); ?>" maxlength="255" style="width: 95%" /></td>
+					</tr>
+					<tr>
+						<td colspan="3">&nbsp;</td>
 					</tr>					
 					<tr>
 						<td></td>
@@ -257,13 +304,16 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 						<td><input type="text" id="location_description" name="location_description" value="<?php echo ((isset($clinicalEducationResult["location_description"])) ? html_encode($clinicalEducationResult["location_description"]) : html_encode($PROCESSED["location_description"])); ?>" maxlength="255" style="width: 95%" /></td>
 					</tr>
 					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					<tr>
 						<td></td>
-						<td style="vertical-align: top"><label for="average_hours" class="form-required">Average Hours / Week</label></td>				
-						<td><input type="text" id="average_hours" name="average_hours" value="<?php echo ((isset($clinicalEducationResult["average_hours"])) ? html_encode($clinicalEducationResult["average_hours"]) : html_encode($PROCESSED["average_hours"])); ?>" maxlength="255" style="width: 40px" /></td>						
+						<td style="vertical-align: top"><label for="average_hours" class="form-required">Average Hours / Week</label></td>
+						<td><input type="text" id="average_hours" name="average_hours" value="<?php echo ((isset($clinicalEducationResult["average_hours"])) ? html_encode($clinicalEducationResult["average_hours"]) : html_encode($PROCESSED["average_hours"])); ?>" maxlength="255" style="width: 40px" /></td>
 					</tr>								
 					<tr>
 						<td></td>
-						<td style="vertical-align: top"><label for="description" class="form-required">Description</label></td>				
+						<td style="vertical-align: top"><label for="description" class="form-required">Description</label></td>			
 						<td><textarea id="description" name="description" style="width: 95%" rows="4"><?php echo ((isset($clinicalEducationResult["description"])) ? html_encode($clinicalEducationResult["description"]) : html_encode($PROCESSED["description"])); ?></textarea></td>
 					</tr>
 					<tr>

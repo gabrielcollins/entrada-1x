@@ -68,7 +68,7 @@ if ($objectives) {
 			$last = $objective["rotation_id"];
 			echo "<h2>".$db->GetOne("SELECT `rotation_title` FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations` WHERE `rotation_id` = ".$db->qstr($last))."</h2>";
 		}
-		echo "<img src=\"".ENTRADA_URL."/images/checkbox-off.gif\" /> ".$objective["objective_name"]."<br/>\n";
+		echo "<img src=\"".ENTRADA_URL."/images/checkbox-off.gif\" /> ".$objective["objective_name"]."<br />\n";
 	}
 	echo "</ul>\n";
 }

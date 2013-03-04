@@ -32,57 +32,68 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	?>
-	<?php
-		if($ENTRADA_ACL->amIAllowed("configuration", "create")){?>
-		<div style="float: right">
-			<ul class="page-action">
-				<li><a href="<?php echo ENTRADA_URL; ?>/admin/settings/organisations?section=add" class="strong-green">Add New Organisation</a></li>
-			</ul>
-		</div>	
-	<?php
-		}
-	$query = "	SELECT * FROM `".AUTH_DATABASE."`.`organisations`
-				ORDER BY `organisation_title` ASC";
+	<h1>Manage Organisations</h1>
+    <?php
+    if ($ENTRADA_ACL->amIAllowed("configuration", "create")) {
+        ?>
+        <div style="float: right">
+            <ul class="page-action">
+                <li><a href="<?php echo ENTRADA_URL; ?>/admin/settings?section=add" class="strong-green">Add New Organisation</a></li>
+            </ul>
+        </div>
+        <br />
+        <?php
+    }
+
+    $query = "	SELECT a.*
+                FROM `" . AUTH_DATABASE . "`.`organisations` AS a
+                WHERE a.`organisation_active` = '1'
+                ORDER BY a.`organisation_title` ASC";
 	$results = $db->GetAll($query);
 	if ($results) {
 		$organisations = array();
-
-		foreach($results as $result) {
+		foreach ($results as $result) {
 			if ($ENTRADA_ACL->amIAllowed(new ConfigurationResource($result["organisation_id"]), "update")) {
 				$organisations[] = $result;
 			}
 		}
-		
-		if (!empty($organisations)) {
-			?>
-			<h2>Organisations</h2>
-			<div id="organisations-section">
-					<table class="tableList" cellspacing="0" cellpadding="1" border="0" summary="List of Organisations">
-						<colgroup>
-							<col class="title" />
-						</colgroup>
-						<thead>
-							<tr>
-								<td class="title borderl">Organisation Title</td>
-							</tr>
-						</thead>
-						<tbody>
-							<?php
-							foreach($organisations as $result) {
-								$url = ENTRADA_URL."/admin/settings/organisations/manage?org=".(int) $result["organisation_id"];
 
-								echo "<tr>\n";
-								echo "	<td><a href=\"".$url."\">".html_encode($result["organisation_title"])."</a></td>\n";
-								echo "</tr>\n";
-							}
-							?>
-						</tbody>
-					</table>
-			</div>
-			<?php
+		if (!empty($organisations)) {
+				?>
+				<div id="organisations-section">
+					<form action="<?php echo ENTRADA_URL; ?>/admin/settings?section=delete" method="post">
+						<table class="tableList" cellspacing="0" cellpadding="1" border="0" summary="List of Organisations">
+							<colgroup>
+								<col class="modified" />
+								<col class="title" />
+							</colgroup>
+							<thead>
+								<tr>
+									<td class="modified">&nbsp;</td>
+									<td class="title">Title</td>
+								</tr>
+							</thead>
+							<tbody>
+								<?php
+								foreach ($organisations as $result) {
+									$url = ENTRADA_URL."/admin/settings/manage?org=".(int) $result["organisation_id"];
+
+									echo "<tr>\n";
+									echo "	<td><input type=\"checkbox\" name = \"remove_ids[]\" value = \"".html_encode($result["organisation_id"])."\"".($ENTRADA_USER->GetActiveOrganisation() == $result["organisation_id"] ? " disabled=\"disabled\"" : "")." /></td>\n";
+									echo "	<td><a href=\"".$url."\">".html_encode($result["organisation_title"])."</a></td>\n";
+									echo "</tr>\n";
+								}
+								?>
+							</tbody>
+						</table><br />
+						<input type="submit" class="button" value="Delete Selected" />
+
+					</form>
+				</div>
+		<?php
 		} else {
 			add_notice("You don't appear to have access to change any organisations. If you feel you are seeing this in error, please contact your system administrator.");
 			echo display_notice();

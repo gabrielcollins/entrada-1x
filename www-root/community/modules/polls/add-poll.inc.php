@@ -240,12 +240,12 @@ switch($STEP) {
 
 		if (!$ERROR) {
 			$PROCESSED["community_id"]			= $COMMUNITY_ID;
-			$PROCESSED["proxy_id"]				= $_SESSION["details"]["id"];
+			$PROCESSED["proxy_id"]				= $ENTRADA_USER->getID();
 			$PROCESSED["poll_active"]			= 1;
 			$PROCESSED["question_active"]		= 1;
 			$PROCESSED["poll_order"]			= 0;
 			$PROCESSED["updated_date"]			= time();
-			$PROCESSED["updated_by"]			= $_SESSION["details"]["id"];
+			$PROCESSED["updated_by"]			= $ENTRADA_USER->getID();
 			$PROCESSED["cpage_id"]				= $PAGE_ID;
 			$PROCESSED["poll_terminology"]		= $terminology;
 			
@@ -267,7 +267,7 @@ switch($STEP) {
 								$RESPONSES["response"] 				= $respValue;
 								$RESPONSES["response_index"] 		= $respKey + 1;
 								$RESPONSES["updated_date"]			= time();
-								$RESPONSES["updated_by"]			= $_SESSION["details"]["id"];
+								$RESPONSES["updated_by"]			= $ENTRADA_USER->getID();
 								if ($db->AutoExecute("community_polls_responses", $RESPONSES, "INSERT")) {
 									$SUCCESS = TRUE;
 								}
@@ -283,7 +283,7 @@ switch($STEP) {
 							if ($specificMembers && isset($CLEANED_MEMBERS_ARRAY) && count($CLEANED_MEMBERS_ARRAY)) {
 								$MEMBERS["cpolls_id"] 				= $PROCESSED["cpolls_id"];
 								$MEMBERS["updated_date"]			= time();
-								$MEMBERS["updated_by"]				= $_SESSION["details"]["id"];
+								$MEMBERS["updated_by"]				= $ENTRADA_USER->getID();
 								
 								foreach($CLEANED_MEMBERS_ARRAY as $memberKey => $memberValue)
 								{

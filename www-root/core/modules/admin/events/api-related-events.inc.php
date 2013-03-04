@@ -168,10 +168,10 @@ if (!defined("IN_EVENTS")) {
 												echo date(DEFAULT_DATE_FORMAT, $related_event["event_start"]);
 											?>
 										</div>
-										<div  style="float: right;">
-											<img style="position: relative;" src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="removeRelatedEvent('<?php echo $related_event["event_id"]; ?>');" class="list-cancel-image" />
-										</div>
 									</a>
+									<div  style="float: right;">
+										<img style="position: relative;" src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="removeRelatedEvent('<?php echo $related_event["event_id"]; ?>');" class="list-cancel-image" />
+									</div>
 								</li>
 								<?php
 							}
@@ -181,9 +181,9 @@ if (!defined("IN_EVENTS")) {
 				</div>
 			</div>
 			<?php
-			if ($related_events && $related_event_ids && !$related_event_error) {
+			if ((($related_events && $related_event_ids) || $PROCESSED["remove_id"]) && !$related_event_error) {
 				$added_events = array();
-				$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"]))." AND `event_id` NOT IN (".$related_event_ids.")";
+				$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"])).($related_event_ids ? " AND `event_id` NOT IN (".$related_event_ids.")" : "");
 				$removed_events = $db->GetAll($query);
 				$query = "SELECT * FROM `events` WHERE `parent_id` = ".$db->qstr((isset($event["parent_id"]) && $event["parent_id"] ? $event["parent_id"] : $event["event_id"]))." AND `event_id` IN (".$related_event_ids.")";
 				$existing_events = $db->GetAll($query);

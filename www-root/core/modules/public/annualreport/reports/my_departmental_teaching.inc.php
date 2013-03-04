@@ -36,7 +36,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 
 	echo display_error();
 
-	application_log("error", "Group [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["group"]."] and role [".$_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["role"]."] do not have access to this module [".$MODULE."]");
+	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[]	= array("url" => "", "title" => "Undergraduate Medical Teaching" );
 	
@@ -46,10 +46,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_ANNUAL_REPORT"))) {
 		$PROCESSED["department_id"] = $_POST['department_id'];
 		
 		//$PROCESSED["department_id"]
-		$PROCESSED["department_id"] = is_department_head($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+		$PROCESSED["department_id"] = is_department_head($ENTRADA_USER->getActiveId());
 	
 		if(!$PROCESSED["department_id"] || $PROCESSED["department_id"] == 0) {
-			$PROCESSED["department_id"] = get_user_departments($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]);
+			$PROCESSED["department_id"] = get_user_departments($ENTRADA_USER->getActiveId());
 			
 			$PROCESSED["department_id"] = $PROCESSED["department_id"][0]["department_id"];
 		}

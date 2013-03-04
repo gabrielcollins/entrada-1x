@@ -44,7 +44,6 @@ td.sidebar-body ul.menu li,
 td.sidebar-body ul.menu li.off {
 	font-size:		10px;
 	padding-bottom:	4px;
-	padding-left:		20px;
 }
 
 td.sidebar-body ul.menu li.on {
@@ -194,7 +193,7 @@ table.tableListReport tr td.activity_type {
 
 table.tableListReport tr td.notices,
 table.tableListReport tr td.accesses,
-table.tableListReport tr td.phase, 
+table.tableListReport tr td.phase,
 table.tableListReport tr td.small_numbers {
 	width:			50px;
 	border-left:		none;
@@ -242,8 +241,8 @@ table.tableListReport tr td.full_description {
 }
 
 table.tableListReport tr td.principal_investigator,
-table.tableListReport tr td.student_name, 
-table.tableListReport tr td.department, 
+table.tableListReport tr td.student_name,
+table.tableListReport tr td.department,
 table.tableListReport tr td.university{
 	width:			150px;
 	border-left:		none;

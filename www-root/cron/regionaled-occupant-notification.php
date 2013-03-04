@@ -11,8 +11,9 @@
  * @author Organisation: Queen's University
  * @author Unit: Faculty of Medicine
  * @author Developer: Brandon Thorn <brandon.thorn@queensu.ca>
- * @copyright Copyright 2011 Queen's Univerity. All Rights Reserved.
- *
+ * @author Developer: Ryan Warner <ryan.warner@queensu.ca>
+ * @copyright Copyright 2012 Queen's Univerity. All Rights Reserved.
+ * if they're doing a clerkship rotation in a location that the regional education manages (oshawa)
  */
 @set_time_limit(0);
 @set_include_path(implode(PATH_SEPARATOR, array(
@@ -27,8 +28,7 @@
  */
 require_once("init.inc.php");
 
-$search = array("%LEARNER_NAME%", "%ACCOMMODATION_TITLE%", "%ACCOMMODATION_NUMBER%", "%ACCOMMODATION_STREET%", "%ACCOMMODATION_REGION%","%INHABITING_START%","%INHABITING_FINISH%","%ACCOMMODATION_CONTACT_NAME%","%ACCOMMODATION_CONTACT_INFO%","%APPLICATION_NAME%");
-
+$search = array("%LEARNER_NAME%", "%ACCOMMODATION_TITLE%", "%ACCOMMODATION_NUMBER%", "%ACCOMMODATION_STREET%", "%ACCOMMODATION_REGION%","%INHABITING_START%","%INHABITING_FINISH%","%ACCOMMODATION_CONTACT_NAME%","%ACCOMMODATION_CONTACT_INFO%", "%ACCOMMODATION_LINK%", "%APPLICATION_NAME%");
 
 $mail = new Zend_Mail();
 $mail->addHeader("X-Section", "Regional Education Notification System", true);
@@ -43,6 +43,7 @@ $query = "	SELECT c.`username`,
 				a.`apartment_address`, 
 				d.`region_name`, 
 				a.`apartment_province`,
+				b.`aschedule_id`,
 				FROM_UNIXTIME(b.inhabiting_start) AS inhabiting_start,
 				FROM_UNIXTIME(b.inhabiting_finish) AS inhabiting_finish
 			FROM `".CLERKSHIP_DATABASE."`.`apartments` AS a 
@@ -53,20 +54,20 @@ $query = "	SELECT c.`username`,
 			LEFT JOIN `".CLERKSHIP_DATABASE."`.`regions` as d 
 			ON a.`region_id` = d.`region_id` 
 			WHERE b.`occupant_title` = '' 
-			AND DATEDIFF(FROM_UNIXTIME(b.`inhabiting_start`), NOW()) = 30";
+			AND DATEDIFF(FROM_UNIXTIME(b.`inhabiting_start`), FROM_UNIXTIME('".time()."')) = 30";
 $occupants = $db->GetAll($query);
+
 if ($occupants) {
 	global $ENTRADA_ACTIVE_TEMPLATE;
 	$email_body = file_get_contents(ENTRADA_ABSOLUTE . "/templates/" . $ENTRADA_ACTIVE_TEMPLATE . "/email/regionaled-learner-accommodation-notification.txt");
 	
 	foreach ($occupants as $occupant) {
 		$mail->clearSubject();
-		$mail->setSubject("Occupancy Reminder Notification: ".$occupant["apartment_title"]);
-		$replace = array($occupant["fullname"], $occupant["apartment_title"], $occupant["apartment_number"], $occupant["apartment_address"], $occupant["region_name"],date("l F j Y @ g:i A",  strtotime($occupant["inhabiting_start"])),date("l F j Y @ g:i A",  strtotime($occupant["inhabiting_finish"])), $AGENT_CONTACTS["agent-regionaled"]["name"], $AGENT_CONTACTS["agent-regionaled"]["email"],"Entrada");
+		$mail->setSubject("Regional Accomodation: ".$message["region"]);
+		$replace = array($occupant["fullname"], $occupant["apartment_title"], $occupant["apartment_number"], $occupant["apartment_address"], $occupant["region_name"],date("l, F j, Y",  strtotime($occupant["inhabiting_start"])),date("l, F j, Y",  strtotime($occupant["inhabiting_finish"])), $AGENT_CONTACTS["agent-regionaled"]["name"], $AGENT_CONTACTS["agent-regionaled"]["email"],"https://meds.queensu.ca/central/regionaled/view?id=".$occupant["aschedule_id"],"Entrada");
 		$mail->setBodyText(str_replace($search, $replace, $email_body));
 		$mail->clearRecipients();
 		$mail->addTo($occupant["email"],$occupant["fullname"]);
 		$mail->send();
-
 	}
 }

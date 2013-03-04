@@ -81,7 +81,7 @@ if ($RECORD_ID) {
 
 						if (!$ERROR) {
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $_SESSION["details"]["id"];
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("community_share_comments", $PROCESSED, "UPDATE", "`cscomment_id` = ".$db->qstr($RECORD_ID)." AND `csfile_id` = ".$db->qstr($comment_record["csfile_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
 								$url			= COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&id=".$comment_record["csfile_id"]."#comment-".$RECORD_ID;
@@ -181,7 +181,7 @@ if ($RECORD_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The comment record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to edit it.");
+			application_log("error", "The comment record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to edit it.");
 		}
 	} else {
 		$ERROR++;

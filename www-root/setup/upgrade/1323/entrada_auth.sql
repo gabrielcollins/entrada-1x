@@ -1,0 +1,2 @@
+DELETE FROM `acl_permissions` WHERE `resource_type` = 'event' AND `read` = 1 AND `entity_type` IS NULL AND `entity_value` IS NULL AND `assertion` = 'ResourceOrganisation&NotGuest';
+UPDATE `acl_permissions` SET `assertion` = 'EventEnrollment&NotGuest&ResourceOrganisation' WHERE `resource_type` = 'event' AND `entity_type` IS NULL AND `entity_value` IS NULL AND `assertion` = 'EventEnrollment&NotGuest';

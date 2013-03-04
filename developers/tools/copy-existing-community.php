@@ -1,4 +1,4 @@
-#!/usr/local/zend/bin/php
+#!/usr/bin/php
 <?php
 /**
  * Entrada Tools [ http://www.entrada-project.org ]
@@ -288,7 +288,7 @@ function copy_images($db, $old_community_id, $old_gallery_id, $new_community_id,
 			AND `cgallery_id` = " . $old_gallery_id;
 
 	$community_photo_arr = $db->GetAll($query);
-    
+
 	if ($community_photo_arr) {
 		foreach ($community_photo_arr as $community_photo) {
 			$time = time();
@@ -428,7 +428,7 @@ function create_child_pages($db, $cpage_id, $COMMUNITY_ID, $new_parent_id, $new_
 /**
  * This function looks up the new photo id for an image copied from another
  * community.
- * 
+ *
  * @param ADONewConnection $db
  * @param int $old_photo_id
  * @param int $new_community_id
@@ -440,7 +440,7 @@ function find_photo_id($db, $old_photo_id, $new_community_id) {
 			WHERE `cgphoto_id` = " . $db->qstr($old_photo_id);
 
 	$old_photo = $db->GetRow($query);
-	
+
 	$query = "	SELECT *
 			FROM " . DATABASE_NAME . ".`community_gallery_photos`
 			WHERE `photo_filename` = '" . $old_photo["photo_filename"] . "'

@@ -39,17 +39,16 @@ require_once("Models/utility/Collection.class.php");
 class ClinicalFacultyMembers extends Collection {
 	
 	static public function get() {
-		global $db;
-		$ORGANISATION_ID	= $_SESSION["permissions"][$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"]]["organisation_id"];
+		global $db, $ENTRADA_USER;
+		$ORGANISATION_ID	= $_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["organisation_id"];
 		
 		$curdbname = $db->databaseName;
 		$db->SelectDB(AUTH_DATABASE);
 		$query = "SELECT distinct `user_data`.*
 				FROM user_data 
 				LEFT JOIN user_access ON `user_access`.`user_id` = `user_data`.`id`
-				where user_access.group='faculty' and clinical='1' and `organisation_id`=? group by lastname,firstname 
+				where user_access.group='faculty' and clinical='1' and `user_data`.`organisation_id`=? group by lastname,firstname 
 				order by lastname,firstname";
-				
 		$results	= $db->GetAll($query, array($ORGANISATION_ID));
 		$db->SelectDB($curdbname);
 		$faculty_members = array();

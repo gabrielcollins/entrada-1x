@@ -38,12 +38,12 @@ if ($RECORD_ID && $FILE_ID) {
 	if ($file_record) {
 		if ((int) $file_record["file_active"]) {
 			$allowed = false;
-			$query = "SELECT * FROM `assignment_files` WHERE `afile_id` = ".$db->qstr($FILE_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+			$query = "SELECT * FROM `assignment_files` WHERE `afile_id` = ".$db->qstr($FILE_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 			$owner = $db->GetRow($query);
 			if ($owner) {
 				$allowed = true;
 			} else{
-				$query = "SELECT a.* FROM `assignment_files` AS a JOIN `assignment_contacts` AS b ON a.`assignment_id` = b.`assignment_id` WHERE a.`afile_id` = ".$db->qstr($FILE_ID)." AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getProxyId());
+				$query = "SELECT a.* FROM `assignment_files` AS a JOIN `assignment_contacts` AS b ON a.`assignment_id` = b.`assignment_id` WHERE a.`afile_id` = ".$db->qstr($FILE_ID)." AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 				$assignment_contact = $db->GetRow($query);				
 				if($assignment_contact){
 					$allowed = true;
@@ -89,11 +89,11 @@ if ($RECORD_ID && $FILE_ID) {
 						if (!$ERROR) {
 							$PROCESSED["afile_id"]			= $FILE_ID;
 							$PROCESSED["assignment_id"]		= $RECORD_ID;
-							$PROCESSED["proxy_id"]			= $ENTRADA_USER->getProxyId();
+							$PROCESSED["proxy_id"]			= $ENTRADA_USER->getID();
 							$PROCESSED["comment_active"]	= 1;
 							$PROCESSED["release_date"]		= time();
 							$PROCESSED["updated_date"]		= time();
-							$PROCESSED["updated_by"]		= $ENTRADA_USER->getProxyId();
+							$PROCESSED["updated_by"]		= $ENTRADA_USER->getID();
 
 							if ($db->AutoExecute("assignment_comments", $PROCESSED, "INSERT")) {
 								if ($COMMENT_ID = $db->Insert_Id()) {
@@ -196,7 +196,7 @@ if ($RECORD_ID && $FILE_ID) {
 
 			echo display_notice();
 
-			application_log("error", "The file record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$_SESSION["details"]["id"]."] has tried to comment on it.");
+			application_log("error", "The file record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to comment on it.");
 		}
 	} else {
 		$ERROR++;

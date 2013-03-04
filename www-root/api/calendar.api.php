@@ -64,14 +64,14 @@ if (substr($request_filename, -4) == ".ics") {
  * Check if the user is already authenticated.
  */
 if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
-	$user_proxy_id = $_SESSION["details"]["id"];
+	$user_proxy_id = $ENTRADA_USER->getID();
 	$user_username = $_SESSION["details"]["username"];
 	$user_firstname = $_SESSION["details"]["firstname"];
 	$user_lastname = $_SESSION["details"]["lastname"];
 	$user_email = $_SESSION["details"]["email"];
 	$user_role = $_SESSION["details"]["role"];
 	$user_group = $_SESSION["details"]["group"];
-	$user_organisation_id = $_SESSION["details"]["organisation_id"];
+	$user_organisation_id = $ENTRADA_USER->getActiveOrganisation();
 } else {
 	/**
 	 * If the are not already authenticated, check to see if they have provided
@@ -82,7 +82,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		 * @todo Add a setUserHashAuthentication() method to the authentication client and server so we can use the
 		 * web-service instead of querying the data directly to authenticate a private-hash.
 		 */
-		$query = "SELECT a.`id`, a.`username`, a.`firstname`, a.`lastname`, a.`email`, a.`grad_year`, b.`role`, b.`group`, a.`organisation_id`, b.`access_expires`
+		$query = "SELECT a.`id`, a.`username`, a.`firstname`, a.`lastname`, a.`email`, a.`grad_year`, b.`role`, b.`group`, b.`organisation_id`, b.`access_expires`
 					FROM `".AUTH_DATABASE."`.`user_data` AS a
 					LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 					ON b.`user_id` = a.`id`
@@ -94,7 +94,13 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 					GROUP BY a.`id`";
 		$result = $db->GetRow($query);
 		if ($result) {
-			$_SESSION["details"]["id"] = $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["proxy_id"] = $user_proxy_id = $result["id"];
+			// If $ENTRADA_USER was previously initialized in init.inc.php before the
+			// session was authorized it is set to false and needs to be re-initialized.
+			if ($ENTRADA_USER == false) {
+				$ENTRADA_USER = User::get($result["id"]);
+			}
+			$_SESSION["details"]["id"] = $user_proxy_id = $result["id"];
+			$_SESSION["details"]["access_id"] = $ENTRADA_USER->getAccessId();
 			$_SESSION["details"]["username"] = $user_username = $result["username"];
 			$_SESSION["details"]["firstname"] = $user_firstname = $result["firstname"];
 			$_SESSION["details"]["lastname"] = $user_lastname = $result["lastname"];
@@ -155,12 +161,13 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 			unset($username, $password);
 		}
 	}
-	
+
 	$ENTRADA_USER = User::get($user_proxy_id);
-	
+
 	$details = array();
 	$details["app_id"] = (int) AUTH_APP_ID;
 	$details["id"] = $user_proxy_id;
+	$details["access_id"] = $ENTRADA_USER->getAccessId();
 	$details["username"] = $user_username;
 	$details["prefix"] = "";
 	$details["firstname"] = $user_firstname;
@@ -198,8 +205,10 @@ if ($user_proxy_id) {
 			events_filters_defaults($user_proxy_id, $user_group, $user_role),
 			true,
 			1,
-			1750);
-	
+			1750,
+            0,
+            ($user_group == "student" ? true : false));
+
 	if ($ENTRADA_ACL->amIAllowed("clerkship", "read")) {
 		$query = "	SELECT c.*
 					FROM `".CLERKSHIP_DATABASE."`.`events` AS a
@@ -216,8 +225,8 @@ if ($user_proxy_id) {
 		if (isset($clerkship_schedule) && $clerkship_schedule && $clerkship_schedule["rotation_id"] != MAX_ROTATION) {
 			$course_id = $clerkship_schedule["course_id"];
 			$course_ids = array();
-			$query 	= "SELECT `course_id` FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations` 
-					WHERE `course_id` <> ".$db->qstr($course_id)." 
+			$query 	= "SELECT `course_id` FROM `".CLERKSHIP_DATABASE."`.`global_lu_rotations`
+					WHERE `course_id` <> ".$db->qstr($course_id)."
 					AND `course_id` <> 0";
 			$course_ids_array = $db->GetAll($query);
 			foreach ($course_ids_array as $id) {
@@ -230,7 +239,7 @@ if ($user_proxy_id) {
 			}
 		}
 	}
-	
+
 	switch ($calendar_type) {
 		case "ics" :
 			add_statistic("calendar.api", "view", "type", "ics");
@@ -290,7 +299,7 @@ if ($user_proxy_id) {
 					}
 
 					$events[] = array (
-								"drid" => $drid,
+								"drid" => $event["event_id"],
 								"id" => $event["event_id"],
 								"start"	=> date("c", $event["event_start"]),
 								"end" => date("c", $event["event_finish"]),

@@ -127,7 +127,7 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 				$ERRORSTR[] = "You are not permitted to access this event.";
 
 				echo display_error($errorstr);
-				application_log("error", "Proxy_id [".$_SESSION["details"]["id"]."] attempted to access event_id [".$event_id."] and was denied access.");
+				application_log("error", "Proxy_id [".$ENTRADA_USER->getID()."] attempted to access event_id [".$event_id."] and was denied access.");
 			}
 		}
 	}

@@ -42,9 +42,9 @@ if ($RECORD_ID) {
 			if ($share_record) {
 				if ((int) $file_record["file_active"]) {
 					if (shares_file_module_access($RECORD_ID, "move-file")) {
-						if ($db->AutoExecute("community_share_files", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
-							@$db->AutoExecute("community_share_file_versions", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
-							@$db->AutoExecute("community_share_comments", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $_SESSION["details"]["id"]), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
+						if ($db->AutoExecute("community_share_files", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID))) {
+							@$db->AutoExecute("community_share_file_versions", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
+							@$db->AutoExecute("community_share_comments", array("cshare_id" => $share_id, "updated_date" => time(), "updated_by" => $ENTRADA_USER->getID()), "UPDATE", "`csfile_id` = ".$db->qstr($RECORD_ID)." AND `cshare_id` = ".$db->qstr($file_record["cshare_id"])." AND `community_id` = ".$db->qstr($COMMUNITY_ID));
 
 							communities_log_history($COMMUNITY_ID, $PAGE_ID, $RECORD_ID, "community_history_move_file", true, $share_id);
 							add_statistic("community:".$COMMUNITY_ID.":shares", "file_move", "csfile_id", $RECORD_ID);
