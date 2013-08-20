@@ -763,6 +763,13 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										$JS_INITSTEP	= 3;
 									} else {
 										if(!DEMO_MODE) {
+
+											// parse the file's contents so we can search it later
+											require_once('Entrada/FileToText.php');
+											$pathinfo = pathinfo($PROCESSED["file_name"]);
+ 											$PROCESSED['file_contents'] = FileToText::decode($_FILES["filename"]["tmp_name"], $pathinfo['extension']);
+ 											
+
 											if(($db->AutoExecute("event_files", $PROCESSED, "INSERT")) && ($EFILE_ID = $db->Insert_Id())) {
 												last_updated("event", $EVENT_ID);
 	
