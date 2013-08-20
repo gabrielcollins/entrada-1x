@@ -2713,6 +2713,7 @@ CREATE TABLE IF NOT EXISTS `event_files` (
   `file_name` varchar(255) NOT NULL,
   `file_title` varchar(128) NOT NULL,
   `file_notes` longtext NOT NULL,
+  `file_contents` longtext NULL DEFAULT NULL,
   `access_method` int(1) NOT NULL DEFAULT '0',
   `accesses` int(12) NOT NULL DEFAULT '0',
   `release_date` bigint(64) NOT NULL DEFAULT '0',
@@ -2723,7 +2724,8 @@ CREATE TABLE IF NOT EXISTS `event_files` (
   KEY `required` (`required`),
   KEY `access_method` (`access_method`),
   KEY `event_id` (`event_id`),
-  KEY `release_date` (`release_date`,`release_until`)
+  KEY `release_date` (`release_date`,`release_until`),
+  FULLTEXT KEY `event_contents` (`event_contents`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `event_history` (
