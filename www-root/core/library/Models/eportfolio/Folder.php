@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Models_Eportfolio
+ * Models_Eportfolio_Folder
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
@@ -23,18 +23,17 @@
  * @copyright Copyright 2013 Queen's University. All Rights Reserved.
  */
 
-class Models_Eportfolio {
+class Models_Eportfolio_Folder {
 
-	private $portfolio_id,
-			$group_id,
-			$portfolio_name,
-			$start_date,
-			$finish_date,
+	private $pfolder_id,
+			$portfolio_id,
+			$title,
+			$description,
+			$allow_learner_artifacts,
+			$order,
 			$active = 1,
 			$updated_date,
-			$updated_by,
-			$organisation_id,
-			$allow_student_export = 1;
+			$updated_by;
 	
 	public function __construct($arr = NULL) {
 		if (is_array($arr)) {
@@ -60,27 +59,14 @@ class Models_Eportfolio {
 		return $this;
 	}
 	
-	public static function fetchRow($portfolio_id, $active = 1) {
+	public static function fetchRow($pfolder_id, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolios` WHERE `portfolio_id` = ? AND `active` = ?";
-		$result = $db->GetRow($query, array($portfolio_id, $active));
+		$query = "SELECT * FROM `portfolio_folders` WHERE `pfolder_id` = ? AND `active` = ?";
+		$result = $db->GetRow($query, array($pfolder_id, $active));
 		if ($result) {
-			$portfolio = new self($result);
-			return $portfolio;
-		} else {
-			return false;
-		}
-	}
-	
-	public static function fetchRowByGroupID($group_id, $active = 1) {
-		global $db;
-		
-		$query = "SELECT * FROM `portfolios` WHERE `group_id` = ? AND `active` = ?";
-		$result = $db->GetRow($query, array($group_id, $active));
-		if ($result) {
-			$portfolio = new self($result);
-			return $portfolio;
+			$folder = new self($result);
+			return $folder;
 		} else {
 			return false;
 		}
@@ -89,7 +75,7 @@ class Models_Eportfolio {
 	public static function fetchAll($active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolios` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolio_folders` WHERE `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -104,8 +90,8 @@ class Models_Eportfolio {
 	
 	public function insert() {
 		global $db;
-		if ($db->AutoExecute("`portfolios`", $this->toArray(), "INSERT")) {
-			$this->portfolio_id = $db->Insert_ID();
+		if ($db->AutoExecute("`portfolio_folders`", $this->toArray(), "INSERT")) {
+			$this->pfolder_id = $db->Insert_ID();
 			return true;
 		} else {
 			return false;
@@ -114,7 +100,7 @@ class Models_Eportfolio {
 	
 	public function update() {
 		global $db;
-		if ($db->AutoExecute("`portfolios`", $this->toArray(), "UPDATE", "`portfolio_id` = ".$db->qstr($this->getID()))) {
+		if ($db->AutoExecute("`portfolio_folders`", $this->toArray(), "UPDATE", "`pfolder_id` = ".$db->qstr($this->getID()))) {
 			return true;
 		} else {
 			return false;
@@ -124,30 +110,34 @@ class Models_Eportfolio {
 	public function delete() {
 		global $db;
 		
-		$query = "DELETE FROM `portfolios` WHERE `portfolio_id` = ?";
+		$query = "DELETE FROM `portfolio_folders` WHERE `pfolder_id` = ?";
 		$result = $db->Execute($query, array($this->getID()));
 		
 		return $result;
-	}
-
+	}	
+	
 	public function getID() {
+		return $this->pfolder_id;
+	}
+	
+	public function getPortfolioID() {
 		return $this->portfolio_id;
 	}
 	
-	public function getGroupID() {
-		return $this->group_id;
+	public function getTitle() {
+		return $this->title;
 	}
 	
-	public function getPortfolioName() {
-		return $this->portfolio_name;
+	public function getDescription() {
+		return $this->description;
 	}
 	
-	public function getStartDate() {
-		return $this->start_date;
+	public function getAllowLearnerArtifacts() {
+		return $this->allow_learner_artifacts;
 	}
 	
-	public function getFinishDate() {
-		return $this->finish_date;
+	public function getOrder() {
+		return $this->order;
 	}
 	
 	public function getActive() {
@@ -161,14 +151,6 @@ class Models_Eportfolio {
 	public function getUpdatedBy() {
 		$user = User::get($this->updated_by);
 		return $user;
-	}
-	
-	public function getOrganisationID() {
-		return $this->organisation_id;
-	}
-	
-	public function getAllowStudentExport() {
-		return $this->allow_student_export;
 	}
 	
 }
