@@ -94,7 +94,8 @@ class Entrada_ACL extends ACL_Factory {
 			"mydepartment",
 			"myowndepartment",
 			"group",
-            "encounter_tracking"
+            "encounter_tracking",
+			"eportfolio"
 		)
 	);
 	/**
@@ -2764,6 +2765,140 @@ class LoggableFoundAssertion implements Zend_Acl_Assert_Interface {
 			return true;
 		} else {
 			return false;
+		}
+
+		return false;
+	}
+}
+
+class EportfolioOwnerAssertion implements Zend_Acl_Assert_Interface {
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+		if (!($resource instanceof Core_Acl_Resource_EportfolioResource)) {
+			return false;
+		}
+		if(!isset($resource->resource_id)) {
+			return false;
+		}
+
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+		$role = $acl->_entrada_last_query_role;
+		if(!isset($role->details["id"])) {
+			return false;
+		}
+
+		if ($resource->viewUser->id != Zend_Auth::getInstance()->getIdentity()->id) {
+            return false;
+        }
+
+        $res = $db->fetchOne('SELECT * FROM group_members WHERE group_id = '.$resource->portfolio->group_id.' AND proxy_id = '.$role->details["id"]);
+		if(!is_null($res)) {
+			return true;
+		}
+
+		return false;
+	}
+}
+
+class EportfolioArtifactEntryOwnerAssertion implements Zend_Acl_Assert_Interface {
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+
+		if (!($resource instanceof Core_Acl_Resource_EportfolioArtifactEntry)) {
+			return false;
+		}
+		if(!isset($resource->resource_id)) {
+			return false;
+		}
+
+		$role = $acl->_entrada_last_query_role;
+		if(!isset($role->details["id"])) {
+			return false;
+		}
+
+		if ($resource->viewUser->id != Zend_Auth::getInstance()->getIdentity()->id) {
+            return false;
+        }
+
+		if($resource->entry->isOwner($resource->viewUser->id)) {
+			return true;
+		}
+
+		return false;
+	}
+}
+
+class EportfolioArtifactSharePermittedAssertion implements Zend_Acl_Assert_Interface {
+
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+
+		if (!($resource instanceof Core_Acl_Resource_EportfolioArtifactEntry)) {
+			return false;
+		}
+		if(!isset($resource->resource_id)) {
+			return false;
+		}
+
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+		$role = $acl->_entrada_last_query_role;
+		if(!isset($role->details["id"])) {
+			return false;
+		}
+
+		if ($resource->viewUser->id != Zend_Auth::getInstance()->getIdentity()->id) {
+            return false;
+        }
+
+        // Skip the owner
+        if ($resource->viewUser->id == $resource->entry->proxy_id) {
+            return true;
+        }
+
+        $permissionModel = new Portfolio_Model_Artifact_Permissions();
+        $permissionRow = $permissionModel->getPermission($resource->viewUser->id, $resource->entry->pentry_id, $resource->entry->proxy_id);
+
+        if (is_null($permissionRow)) {
+            return false;
+        }
+
+        switch ($privilege) {
+            case Core_Acl::CRUD_UPDATE:
+                return $permissionRow['edit'] == 1;
+                break;
+
+            case Core_Acl::CRUD_READ:
+                return $permissionRow['view'] == 1;
+                break;
+
+            case Core_Acl_Resource_EportfolioArtifactEntry::CRUD_COMMENT:
+                return $permissionRow['comment'] == 1;
+                break;
+        }
+
+		return false;
+	}
+}
+
+class EportfolioArtifactReviewerAssertion implements Zend_Acl_Assert_Interface {
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+        //CR::dBug($resource);
+		if (!($resource->artifact instanceof Portfolio_Model_Artifact)) {
+			return false;
+		}
+
+		if(!isset($resource->resource_id)) {
+			return false;
+		}
+
+		$role = $acl->_entrada_last_query_role;
+		if(!isset($role->details["id"])) {
+			return false;
+		}
+
+		if ($resource->viewUser->id != Zend_Auth::getInstance()->getIdentity()->id) {
+            return false;
+        }
+
+		if($resource->artifact->isReviewer($resource->viewUser->id)) {
+			return true;
 		}
 
 		return false;

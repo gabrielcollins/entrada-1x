@@ -125,7 +125,20 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('evaluationquestion', NULL, 'group', 'faculty', 1, 1, 1, 1, NULL, NULL),
 ('evaluationquestion', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
 ('encounter_tracking', NULL, 'group', 'student', NULL, NULL, 1, NULL, NULL, 'LoggableFound'),
-('encounter_tracking', NULL, 'role', 'admin', NULL, NULL, 0, NULL, NULL, NULL);
+('encounter_tracking', NULL, 'role', 'admin', NULL, NULL, 0, NULL, NULL, NULL),
+('eportfolio', NULL, 'group:role', 'medtech:admin', 1, 1, 1, 1, 1, 'EportfolioOwner'),
+('eportfolio', NULL, 'group', 'student', 1, NULL, 1, NULL, NULL, 'EportfolioOwner'),
+('eportfolio', NULL, 'group', 'resident', 1, NULL, 1, NULL, NULL, 'EportfolioOwner'),
+('eportfolio', NULL, 'group', 'alumni', 1, NULL, 1, NULL, NULL, 'EportfolioOwner'),
+('eportfolio', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, 'EportfolioOwner'),
+('eportfolio-review', NULL, 'group:role', 'medtech:admin', 1, 1, 1, 1, NULL, 'EportfolioArtifactReviewer'),
+('eportfolio-artifact-entry', NULL, 'group', 'student', 1, 1, 1, 1, 1, 'EportfolioArtifactEntryOwner'),
+('eportfolio-review', NULL, 'group', 'faculty', 1, 1, 1, 1, 1, NULL),
+('eportfolio-mentor-view', NULL, 'group', 'faculty', 1, 1, 1, 1, 1, NULL),
+('eportfolio-artifact-entry', NULL, 'group', 'student', 1, 1, 1, NULL, NULL, 'EportfolioArtifactSharePermitted'),
+('eportfolio-manage', NULL, 'group:role', 'medtech:admin', 1, 1, 1, NULL, NULL, NULL),
+('eportfolio-artifact-entry', NULL, 'group', 'faculty', 1, 1, 1, NULL, NULL, NULL),
+('eportfolio-review-interface', NULL, 'group', 'faculty', 1, 1, 1, 1, 1, NULL);
 
 CREATE TABLE IF NOT EXISTS `departments` (
   `department_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
