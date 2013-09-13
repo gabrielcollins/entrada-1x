@@ -147,6 +147,11 @@ class Models_Eportfolio_Folder_Artifact_Reviewer {
 		return $user;
 	}
 	
+	public function getArtifact() {
+		$artifact = Models_Eportfolio_Folder_Artifact::fetchRow($this->pfartifact_id);
+		return $artifact;
+	}
+	
 }
 
 ?>

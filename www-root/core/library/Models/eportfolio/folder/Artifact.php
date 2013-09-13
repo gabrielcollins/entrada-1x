@@ -138,8 +138,8 @@ class Models_Eportfolio_Folder_Artifact {
 	}
 	
 	public function getArtifact() {
-		// @todo: return instance of artifact model
-		return false;
+		$artifact = Models_Eportfolio_Artifact::fetchRow($this->artifact_id);
+		return $artifact;
 	}
 	
 	public function getProxyID() {
@@ -194,6 +194,11 @@ class Models_Eportfolio_Folder_Artifact {
 	public function getReviewers() {
 		$reviewers = Models_Eportfolio_Folder_Artifact_Reviewer::fetchAll($this->pfartifact_id);
 		return $reviewers;
+	}
+	
+	public function getFolder() {
+		$folder = Models_Eportfolio_Folder::fetchRow($this->pfolder_id);
+		return $folder;
 	}
 	
 }

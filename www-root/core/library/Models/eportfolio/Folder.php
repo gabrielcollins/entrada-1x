@@ -158,6 +158,11 @@ class Models_Eportfolio_Folder {
 		return $artifacts;
 	}
 	
+	public function getPortfolio() {
+		$portfolio = Models_Eportfolio::fetchRow($this->portfolio_id);
+		return $portfolio;
+	}
+	
 }
 
 ?>

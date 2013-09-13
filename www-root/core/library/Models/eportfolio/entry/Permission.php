@@ -146,6 +146,11 @@ class Models_Eportfolio_Entry_Permission {
 		return $this->edit;
 	}
 	
+	public function getEntry() {
+		$entry = Models_Eportfolio_Entry::fetchRow($this->pentry_id);
+		return $entry;
+	}
+	
 }
 
 ?>
