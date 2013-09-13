@@ -131,6 +131,10 @@ class Models_Eportfolio_Artifact {
 		return $this->allow_learner_addable;
 	}
 	
+	public function getOrder() {
+		return $this->order;
+	}
+	
 	public function getActive() {
 		return $this->active;
 	}

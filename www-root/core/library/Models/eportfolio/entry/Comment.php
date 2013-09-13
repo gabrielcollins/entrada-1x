@@ -71,10 +71,10 @@ class Models_Eportfolio_Entry_Comment {
 		}
 	}
 	
-	public static function fetchAll($active = 1) {
+	public static function fetchAll($pentry_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_entry_comments` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolio_entry_comments` WHERE ".(!is_null($pentry_id) ? " `pentry_id` = " . $db->qstr($pentry_id) . " AND " : "")." `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();

@@ -182,6 +182,15 @@ class Models_Eportfolio_Entry {
 		return $user;
 	}
 	
+	public function getComments() {
+		$comments = Models_Eportfolio_Entry_Comment::fetchAll($this->pentry_id);
+		return $comments;
+	}
+	
+	public function getPermissions() {
+		$permissions = Models_Eportfolio_Entry_Permission::fetchAll($this->pentry_id);
+	}
+	
 }
 
 ?>

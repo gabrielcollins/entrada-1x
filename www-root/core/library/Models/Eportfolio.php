@@ -171,6 +171,11 @@ class Models_Eportfolio {
 		return $this->allow_student_export;
 	}
 	
+	public function getFolders() {
+		$folders = Models_Eportfolio_Folder::fetchAll($this->portfolio_id);
+		return $folders;
+	}
+	
 }
 
 ?>

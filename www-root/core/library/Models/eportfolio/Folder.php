@@ -72,10 +72,10 @@ class Models_Eportfolio_Folder {
 		}
 	}
 	
-	public static function fetchAll($active = 1) {
+	public static function fetchAll($portfolio_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_folders` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolio_folders` WHERE ".(!is_null($portfolio_id) ? " `portfolio_id` = " .$db->qstr($portfolio_id) . " AND " : "")." `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -151,6 +151,11 @@ class Models_Eportfolio_Folder {
 	public function getUpdatedBy() {
 		$user = User::get($this->updated_by);
 		return $user;
+	}
+	
+	public function getArtifacts() {
+		$artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($this->pfolder_id);
+		return $artifacts;
 	}
 	
 }
