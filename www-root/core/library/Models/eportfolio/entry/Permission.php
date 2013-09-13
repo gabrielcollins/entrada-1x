@@ -15,24 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Models_Eportfolio_Entry
+ * Models_Eportfolio_Entry_Permission
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Ryan Warner <rw65@queensu.ca>
  * @copyright Copyright 2013 Queen's University. All Rights Reserved.
  */
-class Models_Eportfolio_Entry_Comments {
+class Models_Eportfolio_Entry_Permission {
 
-	private $pecomment_id,
+	private $permission_id,
 			$pentry_id,
+			$allow_to,
 			$proxy_id,
+			$view,
 			$comment,
-			$submitted_date,
-			$flag,
-			$active,
-			$updated_date,
-			$updated_by;
+			$edit;
 	
 	public function __construct($arr = NULL) {
 		if (is_array($arr)) {
@@ -58,11 +56,11 @@ class Models_Eportfolio_Entry_Comments {
 		return $this;
 	}
 	
-	public static function fetchRow($pecomment_id, $active = 1) {
+	public static function fetchRow($permission_id, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_entry_comments` WHERE `pecomment_id` = ? AND `active` = ?";
-		$result = $db->GetRow($query, array($pecomment_id, $active));
+		$query = "SELECT * FROM `portfolio_artifact_permissions` WHERE `permission_id` = ? AND `active` = ?";
+		$result = $db->GetRow($query, array($permission_id, $active));
 		if ($result) {
 			$folder = new self($result);
 			return $folder;
@@ -74,7 +72,7 @@ class Models_Eportfolio_Entry_Comments {
 	public static function fetchAll($active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_entry_comments` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolio_artifact_permissions` WHERE `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -89,8 +87,8 @@ class Models_Eportfolio_Entry_Comments {
 	
 	public function insert() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_entry_comments`", $this->toArray(), "INSERT")) {
-			$this->pecomment_id = $db->Insert_ID();
+		if ($db->AutoExecute("`portfolio_artifact_permissions`", $this->toArray(), "INSERT")) {
+			$this->permission_id = $db->Insert_ID();
 			return true;
 		} else {
 			return false;
@@ -99,7 +97,7 @@ class Models_Eportfolio_Entry_Comments {
 	
 	public function update() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_entry_comments`", $this->toArray(), "UPDATE", "`pecomment_id` = ".$db->qstr($this->getID()))) {
+		if ($db->AutoExecute("`portfolio_artifact_permissions`", $this->toArray(), "UPDATE", "`permission_id` = ".$db->qstr($this->getID()))) {
 			return true;
 		} else {
 			return false;
@@ -109,14 +107,14 @@ class Models_Eportfolio_Entry_Comments {
 	public function delete() {
 		global $db;
 		
-		$query = "DELETE FROM `portfolio_entry_comments` WHERE `pecomment_id` = ?";
+		$query = "DELETE FROM `portfolio_artifact_permissions` WHERE `permission_id` = ?";
 		$result = $db->Execute($query, array($this->getID()));
 		
 		return $result;
 	}
 	
 	public function getID() {
-		return $this->pecomment_id;
+		return $this->permission_id;
 	}
 	
 	public function getPentryID() {
@@ -125,35 +123,27 @@ class Models_Eportfolio_Entry_Comments {
 	
 	public function getPentry() {
 		$pentry = Models_Eportfolio_Entry::fetchRow($this->pentry_id);
+		return $pentry;
+	}
+	
+	public function getAllowTo() {
+		return $this->allow_to;
 	}
 	
 	public function getProxyID() {
 		return $this->proxy_id;
 	}
 	
+	public function getView() {
+		return $this->view;
+	}
+	
 	public function getComment() {
 		return $this->comment;
 	}
 	
-	public function getSubmittedDate() {
-		return $this->submitted_date;
-	}
-	
-	public function getFlag() {
-		return $this->flag;
-	}
-	
-	public function getActive() {
-		return $this->active;
-	}
-	
-	public function getUpdateDate() {
-		return $this->updated_date;
-	}
-	
-	public function getUpdatedBy() {
-		$user = User::get($this->updated_by);
-		return $user;
+	public function getEdit() {
+		return $this->edit;
 	}
 	
 }
