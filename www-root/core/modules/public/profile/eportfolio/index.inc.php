@@ -40,6 +40,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
+	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
 	?>
 	<h1>Entrada ePortfolio</h1>
 	<?php
@@ -59,7 +60,7 @@ if (!defined("PARENT_INCLUDED")) {
 				echo "<ul>";
 				foreach ($artifacts as $artifact) {
 					echo "<li>";
-					echo "<h4>".$artifact->getTitle()."</h4>";
+					echo "<h4>".$artifact->getTitle()."<a href=\"#\" class=\"add-entry\"><i class=\"icon-plus\"></i></a></h4>";
 					$entries = $artifact->getEntries($ENTRADA_USER->getID());
 					if ($entries) {
 						echo "<ul>";
@@ -68,6 +69,8 @@ if (!defined("PARENT_INCLUDED")) {
 							$edata = $entry->getEdataDecoded(); 
 							if (isset($edata["filename"]) && !empty($edata["filename"])) {
 								echo "<a href=\"#\">".$edata["filename"]."</a>";
+							} else if (isset($edata["description"]) && !empty($edata["description"])) {
+								echo $edata["description"];
 							}
 							echo "</li>";
 						}
