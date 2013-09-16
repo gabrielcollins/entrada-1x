@@ -76,10 +76,10 @@ class Models_Eportfolio_Folder_Artifact {
 		}
 	}
 	
-	public static function fetchAll($active = 1) {
+	public static function fetchAll($pfolder_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_folder_artifacts` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolio_folder_artifacts` WHERE ".(!is_null($pfolder_id) ? "`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : "")." `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -138,8 +138,8 @@ class Models_Eportfolio_Folder_Artifact {
 	}
 	
 	public function getArtifact() {
-		// @todo: return instance of artifact model
-		return false;
+		$artifact = Models_Eportfolio_Artifact::fetchRow($this->artifact_id);
+		return $artifact;
 	}
 	
 	public function getProxyID() {
@@ -189,6 +189,16 @@ class Models_Eportfolio_Folder_Artifact {
 	
 	public function getEdataDecoded() {
 		return unserialize($this->_edata);
+	}
+	
+	public function getReviewers() {
+		$reviewers = Models_Eportfolio_Folder_Artifact_Reviewer::fetchAll($this->pfartifact_id);
+		return $reviewers;
+	}
+	
+	public function getFolder() {
+		$folder = Models_Eportfolio_Folder::fetchRow($this->pfolder_id);
+		return $folder;
 	}
 	
 }
