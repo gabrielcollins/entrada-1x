@@ -41,6 +41,45 @@ if (!defined("PARENT_INCLUDED")) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	?>
-		<h1>Entrada ePortfolio</h1>
+	<h1>Entrada ePortfolio</h1>
 	<?php
+	
+	$eportfolio = Models_Eportfolio::fetchRowByGroupID($ENTRADA_USER->getCohort());
+	
+	echo "<h2>".$eportfolio->getPortfolioName()."</h2>";
+	
+	$folders = $eportfolio->getFolders();
+	if ($folders) {
+		echo "<ul>";
+		foreach ($folders as $folder) {
+			echo "<li>";
+			echo "<h3>".$folder->getTitle()."</h3>";
+			$artifacts = $folder->getArtifacts($ENTRADA_USER->getID());
+			if ($artifacts) {
+				echo "<ul>";
+				foreach ($artifacts as $artifact) {
+					echo "<li>";
+					echo "<h4>".$artifact->getTitle()."</h4>";
+					$entries = $artifact->getEntries($ENTRADA_USER->getID());
+					if ($entries) {
+						echo "<ul>";
+						foreach ($entries as $entry) {
+							echo "<li>";
+							$edata = $entry->getEdataDecoded(); 
+							if (isset($edata["filename"]) && !empty($edata["filename"])) {
+								echo "<a href=\"#\">".$edata["filename"]."</a>";
+							}
+							echo "</li>";
+						}
+						echo "</ul>";
+					}
+					echo "</li>";
+				}
+				echo "</ul>";
+			}
+			echo "</li>";
+		}
+		echo "</ul>";
+	}
+	
 }

@@ -76,10 +76,13 @@ class Models_Eportfolio_Folder_Artifact {
 		}
 	}
 	
-	public static function fetchAll($pfolder_id = NULL, $active = 1) {
+	public static function fetchAll($pfolder_id = NULL, $proxy_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_folder_artifacts` WHERE ".(!is_null($pfolder_id) ? "`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : "")." `active` = ?";
+		$query = "	SELECT * FROM `portfolio_folder_artifacts` WHERE ".
+					(!is_null($pfolder_id) ? "`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
+					(!is_null($proxy_id) ? "`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")." 
+					`active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -199,6 +202,11 @@ class Models_Eportfolio_Folder_Artifact {
 	public function getFolder() {
 		$folder = Models_Eportfolio_Folder::fetchRow($this->pfolder_id);
 		return $folder;
+	}
+	
+	public function getEntries($proxy_id = NULL) {
+		$entries = Models_Eportfolio_Entry::fetchAll($this->pfartifact_id, $proxy_id);
+		return $entries;
 	}
 	
 }

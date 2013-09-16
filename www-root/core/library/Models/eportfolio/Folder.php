@@ -153,8 +153,8 @@ class Models_Eportfolio_Folder {
 		return $user;
 	}
 	
-	public function getArtifacts() {
-		$artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($this->pfolder_id);
+	public function getArtifacts($proxy_id = NULL) {
+		$artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($this->pfolder_id, $proxy_id);
 		return $artifacts;
 	}
 	

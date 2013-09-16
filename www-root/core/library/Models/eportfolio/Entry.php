@@ -75,10 +75,13 @@ class Models_Eportfolio_Entry {
 		}
 	}
 	
-	public static function fetchAll($active = 1) {
+	public static function fetchAll($pfartifact_id = NULL, $proxy_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_entries` WHERE `active` = ?";
+		$query = "	SELECT * FROM `portfolio_entries` WHERE ".
+					(!is_null($pfartifact_id) ? "`pfartifact_id` = " . $db->qstr($pfartifact_id) . " AND " : ""). 
+					(!is_null($proxy_id) ? "`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")."
+					`active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();

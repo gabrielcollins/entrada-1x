@@ -92,6 +92,43 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("error" => "success", "data" => "Could not find any artifacts."));
 					}
 				break;
+				case "get-folders" :
+					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					}
+
+					if ($PROCESSED["portfolio_id"]) {
+						$folders = Models_Eportfolio_Folder::fetchAll($PROCESSED["portfolio_id"]);
+						if ($folders) {
+							$f_data = array();
+							foreach ($folders as $folder) {
+								$f_data[$folder->getID()] = $folder->toArray();
+							}
+							echo json_encode(array("status" => "success", "data" => $f_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No folders attached to this portfolio ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
+					}
+				break;
+				case "get-folder" :
+					if (${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["pfolder_id"]) {
+						$folder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
+						if ($folder) {
+							$f_data = $folder->toArray();
+							echo json_encode(array("status" => "success", "data" => $fa_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No folder found with this ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID or invalid portfolio folder ID."));
+					}
+				break;
 				case "get-folder-artifacts" :
 					if (${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
 						$PROCESSED["pfolder_id"] = $tmp_input;
@@ -127,26 +164,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID or invalid portfolio folder artifact ID."));
-					}
-				break;
-				case "get-folders" :
-					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
-						$PROCESSED["portfolio_id"] = $tmp_input;
-					}
-
-					if ($PROCESSED["portfolio_id"]) {
-						$folders = Models_Eportfolio_Folder::fetchAll($PROCESSED["portfolio_id"]);
-						if ($folders) {
-							$f_data = array();
-							foreach ($folders as $folder) {
-								$f_data[$folder->getID()] = $folder->toArray();
-							}
-							echo json_encode(array("status" => "success", "data" => $f_data));
-						} else {
-							echo json_encode(array("status" => "error", "data" => "No folders attached to this portfolio ID."));
-						}
-					} else {
-						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
 					}
 				break;
 			}
