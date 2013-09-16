@@ -39,7 +39,7 @@ require_once("init.inc.php");
 if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "update", false)) {
+} elseif (!$ENTRADA_ACL->amIAllowed("eportfolio", "read", false)) {
 	$ERROR++;
 	$ERRORSTR[]	= "You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
 
@@ -49,8 +49,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 } else {
 
 	$request = strtoupper(clean_input($_SERVER['REQUEST_METHOD'], "alpha"));
-	$method = clean_input($_POST["method"], array("trim", "striptags"));
 	
+	$request_var = "_".$request;
+	
+	$method = clean_input(${$request_var}["method"], array("trim", "striptags"));
+
 	switch ($request) {
 		case "POST" :
 			switch ($method) {
@@ -61,8 +64,73 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		break;
 		case "GET" :
 			switch ($method) {
+				case "get-portfolio" :
+					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					}
+
+					if ($PROCESSED["portfolio_id"]) {
+						$portfolio = Models_Eportfolio::fetchRow($PROCESSED["portfolio_id"]);
+						if ($portfolio) {
+							$p_data = $portfolio->toArray();
+							echo json_encode(array("status" => "success", "data" => $p_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No portfolio found with this portfolio ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
+					}
+				break;
+				case "get-artifacts" :
+					$artifacts = Models_Eportfolio_Artifact::fetchAll();
+					if ($artifacts) {
+						foreach ($artifacts as $artifact) {
+							$a_data[] = $artifact->toArray();
+						}
+						echo json_encode(array("status" => "success", "data" => $a_data));
+					} else {
+						echo json_encode(array("error" => "success", "data" => "Could not find any artifacts."));
+					}
+				break;
+				case "get-folder-artifacts" :
+					if (${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["pfolder_id"]) {
+						$folder_artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($PROCESSED["pfolder_id"]);
+						if ($folder_artifacts) {
+							$fa_data = array();
+							foreach ($folder_artifacts as $folder_artifact) {
+								$fa_data[] = $folder_artifact->toArray();
+							}
+							echo json_encode(array("status" => "success", "data" => $fa_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID or invalid portfolio folder ID."));
+					}
+				break;
+				case "get-folder-artifact" :
+					if (${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["pfartifact_id"]) {
+						$folder_artifact = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
+						if ($folder_artifact) {
+							$fa_data = $folder_artifact->toArray();
+							echo json_encode(array("status" => "success", "data" => $fa_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID or invalid portfolio folder artifact ID."));
+					}
+				break;
 				case "get-folders" :
-					if ($_POST["portfolio_id"] && $tmp_input = clean_input($_POST["portfolio_id"], "int")) {
+					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
 						$PROCESSED["portfolio_id"] = $tmp_input;
 					}
 
