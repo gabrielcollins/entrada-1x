@@ -121,7 +121,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$folder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
 						if ($folder) {
 							$f_data = $folder->toArray();
-							echo json_encode(array("status" => "success", "data" => $fa_data));
+							echo json_encode(array("status" => "success", "data" => $f_data));
 						} else {
 							echo json_encode(array("status" => "error", "data" => "No folder found with this ID."));
 						}
