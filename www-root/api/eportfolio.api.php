@@ -57,6 +57,40 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	switch ($request) {
 		case "POST" :
 			switch ($method) {
+				case "create-entry" :
+					if(${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
+					}
+					
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+						$PROCESSED["description"] = $tmp_input;
+					}
+					
+					if (isset($PROCESSED["pfartifact_id"])) {
+						
+						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
+						$PROCESSED["submitted_date"] = time();
+						$PROCESSED["reviewed_date"] = "0";
+						$PROCESSED["flag"] = "0";
+						$PROCESSED["flagged_by"] = "0";
+						$PROCESSED["flagged_date"] = "0";
+						$PROCESSED["order"] = "0";
+						$PROCESSED["updated_date"] = date(time());
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$PROCESSED["_edata"] = serialize(array("description" => $PROCESSED["description"]));
+						
+						$pentry = new Models_Eportfolio_Entry();
+						
+						if ($pentry->fromArray($PROCESSED)->insert()) {
+							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+						} else {
+							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+						}
+						
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID provided or invalid portfolio folder artifact ID provided."));
+					}
+				break;
 				case "create-folder" :
 					
 				break;
