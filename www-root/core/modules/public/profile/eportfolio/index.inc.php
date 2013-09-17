@@ -55,7 +55,7 @@ if (!defined("PARENT_INCLUDED")) {
 		echo "<ul>";
 		foreach ($folders as $folder) {
 			echo "<li>";
-			echo "<h3>".$folder->getTitle()."</h3>";
+			echo "<h3>".$folder->getTitle()."<a href=\"#\" data-pfolder-id=\"".$folder->getID()."\" class=\"add-artifact\"><i class=\"icon-plus-sign\"></i></a></h3>";
 			$artifacts = $folder->getArtifacts($ENTRADA_USER->getID());
 			if ($artifacts) {
 				echo "<ul>";

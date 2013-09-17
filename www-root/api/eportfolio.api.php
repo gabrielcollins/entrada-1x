@@ -91,6 +91,48 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID provided or invalid portfolio folder artifact ID provided."));
 					}
 				break;
+				case "create-artifact" :
+					if(${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					}
+					
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+						$PROCESSED["description"] = $tmp_input;
+					}
+					
+					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
+						$PROCESSED["title"] = $tmp_input;
+					}
+					
+					if(${$request_var}["start_date"] && $tmp_input = strtotime(clean_input(${$request_var}["start_date"], array("trim", "striptags")))) {
+						$PROCESSED["start_date"] = $tmp_input;
+					}
+					
+					if(${$request_var}["finish_date"] && $tmp_input = strtotime(clean_input(${$request_var}["finish_date"], array("trim", "striptags")))) {
+						$PROCESSED["finish_date"] = $tmp_input;
+					}
+					
+					if (isset($PROCESSED["pfolder_id"])) {
+						
+						$PROCESSED["artifact_id"] = 2;
+						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
+						$PROCESSED["submitted_date"] = time();
+						$PROCESSED["updated_date"] = date(time());
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$PROCESSED["order"] = 0;
+						
+						$pentry = new Models_Eportfolio_Folder_Artifact();
+						
+						if ($pentry->fromArray($PROCESSED)->insert()) {
+							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+						} else {
+							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+						}
+						
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID provided or invalid portfolio folder ID provided."));
+					}
+				break;
 				case "create-folder" :
 					
 				break;
