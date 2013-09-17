@@ -53,6 +53,10 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	$request_var = "_".$request;
 	
 	$method = clean_input(${$request_var}["method"], array("trim", "striptags"));
+	
+	if (isset(${$request_var}["proxy_id"]) && $tmp_input = clean_input(${$request_var}["proxy_id"], "int")) {
+		$proxy_id = $tmp_input;
+	}
 
 	switch ($request) {
 		case "POST" :
@@ -211,7 +215,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					}
 					
 					if ($PROCESSED["pfolder_id"]) {
-						$folder_artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($PROCESSED["pfolder_id"]);
+						$folder_artifacts = Models_Eportfolio_Folder_Artifact::fetchAll($PROCESSED["pfolder_id"], (isset($proxy_id) ? $proxy_id : NULL));
 						if ($folder_artifacts) {
 							$fa_data = array();
 							foreach ($folder_artifacts as $folder_artifact) {
@@ -240,6 +244,26 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID or invalid portfolio folder artifact ID."));
+					}
+				break;
+				case "get-artifact-entries" :
+					if (isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["pfartifact_id"]) { 
+						$artifact_entries = Models_Eportfolio_Entry::fetchAll($PROCESSED["pfartifact_id"], (isset($proxy_id) ? $proxy_id : NULL));
+						if ($artifact_entries) {
+							$ae_data = array();
+							foreach ($artifact_entries as $artifact_entry) {
+								$ae_data[] = $artifact_entry->toArray();
+							}
+							echo json_encode(array("status" => "success", "data" => $ae_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No entries attached to this artifact."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No artifact ID or invalid artifact ID."));
 					}
 				break;
 			}
