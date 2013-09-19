@@ -64,6 +64,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				case "create-entry" :
 					if(${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portfolio entry artifact id.");
 					}
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
@@ -98,6 +100,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				case "create-artifact" :
 					if(${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
 						$PROCESSED["pfolder_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portolio folder ID provided.");
 					}
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
@@ -106,17 +110,21 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					
 					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
 						$PROCESSED["title"] = $tmp_input;
+					} else {
+						add_error("No title provided.");
 					}
 					
 					if(${$request_var}["start_date"] && $tmp_input = strtotime(clean_input(${$request_var}["start_date"], array("trim", "striptags")))) {
 						$PROCESSED["start_date"] = $tmp_input;
+					} else {
+						add_error("No start date was provided.");
 					}
 					
 					if(${$request_var}["finish_date"] && $tmp_input = strtotime(clean_input(${$request_var}["finish_date"], array("trim", "striptags")))) {
 						$PROCESSED["finish_date"] = $tmp_input;
 					}
 					
-					if (isset($PROCESSED["pfolder_id"])) {
+					if (!$ERROR) {
 						
 						$PROCESSED["artifact_id"] = 2;
 						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
@@ -134,10 +142,50 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 						
 					} else {
-						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID provided or invalid portfolio folder ID provided."));
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
 					}
 				break;
 				case "create-folder" :
+					if(${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portfolio ID.");
+					}
+					
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+						$PROCESSED["description"] = $tmp_input;
+					}
+					
+					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
+						$PROCESSED["title"] = $tmp_input;
+					} else {
+						add_error("Invalid title.");
+					}
+					
+					if(${$request_var}["allow_learner_artifacts"] && $tmp_input = clean_input(${$request_var}["allow_learner_artifacts"], array("int"))) {
+						$PROCESSED["allow_learner_artifacts"] = $tmp_input;
+					} else {
+						$PROCESSED["allow_learner_artifacts"] = 0;
+					}
+					
+					if (isset($PROCESSED["portfolio_id"])) {
+						$PROCESSED["order"] = 1;
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$PROCESSED["updated_date"] = time();
+						
+						$pfolder = new Models_Eportfolio_Folder();
+						
+						if ($pfolder->fromArray($PROCESSED)->insert()) {
+							echo json_encode(array("status" => "success", "data" => $pfolder->toArray()));
+						} else {
+							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+						}
+						
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
+				case "create-portfolio" :
 					
 				break;
 			}

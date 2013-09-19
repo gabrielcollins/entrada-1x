@@ -7,9 +7,9 @@ jQuery(function($) {
 		}
 
 		$.ajax({
-			url: ENTRADA_URL + "/api/eportfolio.api.php",
-			type: "POST",
-			data: "method=create-entry&" + $.param(entry_data),
+			url : ENTRADA_URL + "/api/eportfolio.api.php",
+			type : "POST",
+			data : "method=create-entry&" + $.param(entry_data),
 			success: function(data) {
 				var jsonResponse = JSON.parse(data);
 			}
@@ -29,9 +29,30 @@ jQuery(function($) {
 		}
 
 		$.ajax({
-			url: ENTRADA_URL + "/api/eportfolio.api.php",
-			type: "POST",
-			data: "method=create-artifact&" + $.param(entry_data),
+			url : ENTRADA_URL + "/api/eportfolio.api.php",
+			type : "POST",
+			data : "method=create-artifact&" + $.param(entry_data),
+			success: function(data) {
+				var jsonResponse = JSON.parse(data);
+			}
+		});
+		
+		e.preventDefault();
+	});
+	
+	$(".add-folder").on("click", function(e) {
+		var link = $(this);
+		var folder_data = {
+			portfolio_id : link.attr("data-portfolio-id"),
+			title : "New Test Folder",
+			description : "New Test Folder Description",
+			allow_learner_artifacts : 1
+		}
+		
+		$.ajax({
+			url : ENTRADA_URL + "/api/eportfolio.api.php",
+			type : "POST",
+			data : "method=create-folder&" + $.param(folder_data),
 			success: function(data) {
 				var jsonResponse = JSON.parse(data);
 			}
