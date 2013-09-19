@@ -111,17 +111,19 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
 						$PROCESSED["title"] = $tmp_input;
 					} else {
-						add_error("No title provided.");
+						add_error("You must provide a <strong>Title</strong> for this Artifact.");
 					}
 					
 					if(${$request_var}["start_date"] && $tmp_input = strtotime(clean_input(${$request_var}["start_date"], array("trim", "striptags")))) {
 						$PROCESSED["start_date"] = $tmp_input;
 					} else {
-						add_error("No start date was provided.");
+						$PROCESSED["start_date"] = 0;
 					}
 					
 					if(${$request_var}["finish_date"] && $tmp_input = strtotime(clean_input(${$request_var}["finish_date"], array("trim", "striptags")))) {
 						$PROCESSED["finish_date"] = $tmp_input;
+					} else {
+						$PROCESSED["finish_date"] = 0;
 					}
 					
 					if (!$ERROR) {
@@ -138,7 +140,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						if ($pentry->fromArray($PROCESSED)->insert()) {
 							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
 						} else {
-							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry., DB said: ".$db->ErrorMsg()));
 						}
 						
 					} else {

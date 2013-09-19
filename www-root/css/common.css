@@ -4404,3 +4404,8 @@ a.help {
 .previous-notices {
 	margin-top:21px;
 }
+
+/*Style for eportfolio module*/
+.artifact-container h3 {
+	line-height: 17px;
+} 

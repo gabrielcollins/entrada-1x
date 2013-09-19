@@ -41,10 +41,10 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
+	//$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
 	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."';</script>";
-	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
 	load_rte("minimal");
+	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
 	?>
 	<h1>Entrada ePortfolio</h1>
 	<?php
@@ -59,7 +59,7 @@ if (!defined("PARENT_INCLUDED")) {
 			getFolder(pfolder_id);
 			$(".folder-item").on("click", function (e) {
 				e.preventDefault();
-				var pfolder_id = $(this).data("id");
+				pfolder_id = $(this).data("id");
 				getFolder(pfolder_id);
 			});
 			
@@ -85,6 +85,7 @@ if (!defined("PARENT_INCLUDED")) {
 					data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
 					type: 'GET',
 					success:function (data) {
+						console.log(data);
 						var jsonResponse = JSON.parse(data);
 						$(".artifact-container").empty();
 						if (jsonResponse.status == "success") {
@@ -93,10 +94,15 @@ if (!defined("PARENT_INCLUDED")) {
 							}
 							
 							$.each(jsonResponse.data, function (key, artifact) {
+								// Create the artifact container and set the heading to the title of the artifact
 								var folder_artifact = document.createElement("div");
 								var pfartifact_id = artifact.pfartifact_id;
 								var artifact_heading = document.createElement("h3");
 								$(artifact_heading).html(artifact.title);
+								
+								// Create the artifact meta data paragraph
+								var artifact_meta = document.createElement("p");
+								$(artifact_meta).html((artifact.start_date > 0 ? "Created on: <strong>" + format_date(artifact.start_date) + "</strong>, " : "") + (artifact.finish_date > 0 ? "Due on: <strong>" + format_date(artifact.finish_date) + "</strong>" : "" )).addClass("muted");
 								
 								// Create the button group for artifact Content 
 								var artifact_content = document.createElement("div");
@@ -183,7 +189,7 @@ if (!defined("PARENT_INCLUDED")) {
 								
 								$(artifact_entries).append(entries_table);
 								$(artifact_row).append(artifact_entries);
-								$(folder_artifact).addClass("artifact").append(artifact_heading).append(artifact_content).append(artifact_row);
+								$(folder_artifact).addClass("artifact").append(artifact_heading).append(artifact_meta).append(artifact_content).append(artifact_row);
 								$(".artifact-container").append(folder_artifact);
 								getEntries(pfartifact_id);
 							});
@@ -244,6 +250,13 @@ if (!defined("PARENT_INCLUDED")) {
 								// Append entry row to appropriate artifact
 								$("#artifact-" + entry.pfartifact_id).append(entry_row);
 							});
+						} else {
+							// Create error row and cell
+							var error_row = document.createElement("tr");
+							var error_cell = document.createElement("td");
+							$(error_cell).append(jsonResponse.data).attr("colspan", "3");
+							$(error_row).append(error_cell);
+							$("#artifact-" + pfartifact_id).append(error_row);
 						}
 					}	
 				});
@@ -255,10 +268,6 @@ if (!defined("PARENT_INCLUDED")) {
 			});
 			
 			function artifactForm () {
-				if ($("#portfolio-form .control-group").length) {
-					$(".control-group").remove();
-				}
-				
 				// Create the divs that will hold the form controls for the create artifact form
 				var title_control_group = document.createElement("div");
 				$(title_control_group).addClass("control-group");
@@ -291,10 +300,6 @@ if (!defined("PARENT_INCLUDED")) {
 			}
 			
 			function entryForm () {
-				if ($("#portfolio-form .control-group").length) {
-					$(".control-group").remove();
-				}
-				
 				// Create the divs that will hold the form controls for the create artifact form
 				var title_control_group = document.createElement("div");
 				$(title_control_group).addClass("control-group");
@@ -339,7 +344,6 @@ if (!defined("PARENT_INCLUDED")) {
 						$(entry_label).html("Attach File:").attr("for", "media-entry-upload");
 						var entry_input = document.createElement("input");
 						$(entry_input).attr({type: "file", id: "media-entry-upload"});
-						
 					break;
 					case "reflection-entry" :
 						$(entry_label).html("Reflection Body:").attr("for", "reflection-entry");
@@ -352,6 +356,31 @@ if (!defined("PARENT_INCLUDED")) {
 				$("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group);
 				$("#reflection-entry").ckeditor();
 			}
+			
+			$("#save-button").on("click", function() {
+				$.ajax({
+					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=create-artifact&pfolder_id=" + pfolder_id + $("#portfolio-form").serialize(),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "error") {
+							var msgs = new Array();
+							display_error(jsonResponse.data, "#modal-msg");
+						}
+					}
+				});
+			});
+			
+			$("#portfolio-modal").on("hide", function () {
+				if ($("#portfolio-form .control-group").length) {
+					$(".control-group").remove();
+				}
+				
+				if ($("#display-error-box-modal")) {
+					$("#modal-msg").empty();
+				}
+			});
 		});
 	</script>
 	<div class="btn-group">
@@ -393,6 +422,7 @@ if (!defined("PARENT_INCLUDED")) {
 		</div>
 	</div>
 	<?php
+	/*
 	if ($folders) {
 		echo "<ul>";
 		foreach ($folders as $folder) {
@@ -427,5 +457,6 @@ if (!defined("PARENT_INCLUDED")) {
 		}
 		echo "</ul>";
 	}
+	*/
 }
 
