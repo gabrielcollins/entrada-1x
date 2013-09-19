@@ -55,6 +55,44 @@ if (!defined("PARENT_INCLUDED")) {
 	<h2><?php echo $eportfolio->getPortfolioName(); ?></h2>
 	<script type="text/javascript">
 		jQuery(document).ready(function ($) {
+			
+			$("#portfolio-form").on("submit", function(e) {
+				
+				if ($(".isie").length > 0) {
+					// handle ie
+				} else {
+					
+					var xhr = new XMLHttpRequest();
+					var fd = new FormData();
+					var file = $("#media-entry-upload").prop("files");
+					
+					fd.append("method", "create-entry");
+					fd.append("title", $("#media-entry-title").val());
+					fd.append("description", $("#media-entry-description").val());
+					fd.append("pfartifact_id", $("#pfartifact_id").val());
+					fd.append("file", file[0]);
+
+					xhr.open('POST', ENTRADA_URL + "/api/eportfolio.api.php", true);
+					xhr.send(fd);
+
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState == 4 && xhr.status == 200) {
+							var jsonResponse = JSON.parse(xhr.responseText);
+							if (jsonResponse.status == "success") {
+								// success
+							} else {
+								// Some kind of failure notification.
+							};
+						} else {
+							// another failure notification.
+						}
+					}
+					
+				}
+				
+				e.preventDefault();
+			})
+			
 			var pfolder_id = $("#folder-list").children(":first").children("a").data("id");
 			getFolder(pfolder_id);
 			$(".folder-item").on("click", function (e) {
@@ -85,7 +123,6 @@ if (!defined("PARENT_INCLUDED")) {
 					data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
 					type: 'GET',
 					success:function (data) {
-						console.log(data);
 						var jsonResponse = JSON.parse(data);
 						$(".artifact-container").empty();
 						if (jsonResponse.status == "success") {
@@ -135,16 +172,16 @@ if (!defined("PARENT_INCLUDED")) {
 									e.preventDefault();
 									$("#method").attr("value", "reflection-entry");
 									$(".modal-header h3").html("Add Reflection");
-									$("#save-button").html("Save Reflection");
-									entryForm();
+									$("#save-button").html("Save Reflection").attr("data-type", "reflection");
+									entryForm(pfartifact_id);
 								});
 								
 								$(artifact_option_media_a).on("click", function (e) {
 									e.preventDefault();
 									$("#method").attr("value", "media-entry");
 									$(".modal-header h3").html("Add Media");
-									$("#save-button").html("Save Media");
-									entryForm();
+									$("#save-button").html("Save Media").attr("data-type", "file");
+									entryForm(pfartifact_id);
 								});
 								
 								// Append anchors to list items 
@@ -210,7 +247,6 @@ if (!defined("PARENT_INCLUDED")) {
 					data: "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
 					type: 'GET',
 					success:function (data) {
-						console.log(data);
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
 							$.each(jsonResponse.data, function(key, entry) {
@@ -263,7 +299,7 @@ if (!defined("PARENT_INCLUDED")) {
 			}
 			$("#create-artifact").on("click", function () {
 				$(".modal-header h3").html("Create Artifact");
-				$("#save-button").html("Save Artifact");
+				$("#save-button").html("Save Artifact").attr("data-type", "artifact");
 				artifactForm();
 			});
 			
@@ -299,7 +335,14 @@ if (!defined("PARENT_INCLUDED")) {
 				$("#portfolio-form").append(title_control_group).append(description_control_group);
 			}
 			
-			function entryForm () {
+			function entryForm (pfartifact_id) {
+				if ($("#portfolio-form .control-group").length) {
+					$(".control-group").remove();
+				}
+				
+				var pfartifact_id_input = document.createElement("input");
+				$(pfartifact_id_input).attr({value: pfartifact_id, name: "pfartifact_id", id: "pfartifact_id", type: "hidden"});
+				
 				// Create the divs that will hold the form controls for the create artifact form
 				var title_control_group = document.createElement("div");
 				$(title_control_group).addClass("control-group");
@@ -353,23 +396,40 @@ if (!defined("PARENT_INCLUDED")) {
 				}
 				$(entry_controls).append(entry_input);
 				$(entry_control_group).append(entry_label).append(entry_controls);
-				$("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group);
+				$("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group).append(pfartifact_id_input);
 				$("#reflection-entry").ckeditor();
 			}
 			
-			$("#save-button").on("click", function() {
-				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
-					type : "POST",
-					data : "method=create-artifact&pfolder_id=" + pfolder_id + $("#portfolio-form").serialize(),
-					success: function(data) {
-						var jsonResponse = JSON.parse(data);
-						if (jsonResponse.status == "error") {
-							var msgs = new Array();
-							display_error(jsonResponse.data, "#modal-msg");
+			$("#save-button").on("click", function(e) {
+				var button = $(this);
+				var type = $(this).attr("data-type");
+				
+				switch (type) {
+					case "file" :
+						if (window.FileReader) {
+							
+						} else {
+							$("#portfolio-form").append("<input type=\"hidden\" name=\"isie\" value=\"isie\" class=\"isie\" />");
 						}
-					}
-				});
+						$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
+					break;
+					case "reflection" :
+						$.ajax({
+							url : ENTRADA_URL + "/api/eportfolio.api.php",
+							type : "POST",
+							data : "method=create-artifact&pfolder_id=" + pfolder_id + $("#portfolio-form").serialize(),
+							success: function(data) {
+								var jsonResponse = JSON.parse(data);
+								if (jsonResponse.status == "error") {
+									var msgs = new Array();
+									display_error(jsonResponse.data, "#modal-msg");
+								}
+							}
+						});
+					break;
+				}
+				
+				e.preventDefault();
 			});
 			
 			$("#portfolio-modal").on("hide", function () {

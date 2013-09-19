@@ -62,6 +62,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 		case "POST" :
 			switch ($method) {
 				case "create-entry" :
+
 					if(${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					} else {
@@ -70,6 +71,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
 						$PROCESSED["description"] = $tmp_input;
+					}
+					
+					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
+						$PROCESSED["title"] = $tmp_input;
+					}
+					
+					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
+						$PROCESSED["filename"] = str_replace(" ", "_", $tmp_input);
 					}
 					
 					if (isset($PROCESSED["pfartifact_id"])) {
@@ -83,12 +92,31 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["order"] = "0";
 						$PROCESSED["updated_date"] = date(time());
 						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
-						$PROCESSED["_edata"] = serialize(array("description" => $PROCESSED["description"]));
+						$_edata = array();
+						$_edata["description"] = $PROCESSED["description"];
+						$_edata["title"] = $PROCESSED["title"];
+						if ($PROCESSED["filename"]) {
+							$_edata["filename"] = $PROCESSED["filename"];
+						}
+						$PROCESSED["_edata"] = serialize($_edata);
 						
 						$pentry = new Models_Eportfolio_Entry();
 						
 						if ($pentry->fromArray($PROCESSED)->insert()) {
-							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+							
+							$pfartifact = $pentry->getPfartifact();
+	
+							$pfolder = $pfartifact->getFolder();
+
+							$portfolio = $pfolder->getPortfolio();
+							$file_realpath = EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$pentry->getProxyID()."/".$pentry->getID();
+
+							if (copy($_FILES["file"]["tmp_name"], $file_realpath)) {
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+							} else {
+								add_error("Failed to copy file.");
+							}
+							
 						} else {
 							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
 						}

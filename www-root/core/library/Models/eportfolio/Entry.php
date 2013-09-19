@@ -100,7 +100,16 @@ class Models_Eportfolio_Entry {
 	
 	public function insert() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_entries`", $this->toArray(), "INSERT")) {
+		
+		$arr = array();
+		$class_vars = get_class_vars(get_called_class());
+		if (isset($class_vars)) {
+			foreach ($class_vars as $class_var => $value) {
+				$arr[$class_var] = $this->$class_var;
+			}
+		}
+		
+		if ($db->AutoExecute("`portfolio_entries`", $arr, "INSERT")) {
 			$this->pentry_id = $db->Insert_ID();
 			return true;
 		} else {
