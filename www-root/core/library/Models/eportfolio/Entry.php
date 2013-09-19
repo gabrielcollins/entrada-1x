@@ -49,7 +49,11 @@ class Models_Eportfolio_Entry {
 		$class_vars = get_class_vars(get_called_class());
 		if (isset($class_vars)) {
 			foreach ($class_vars as $class_var => $value) {
-				$arr[$class_var] = $this->$class_var;
+				if ($class_var == "_edata") {
+					$arr[$class_var] = unserialize($this->$class_var);
+				} else {
+					$arr[$class_var] = $this->$class_var;
+				}
 			}
 		}
 		return $arr;

@@ -820,3 +820,17 @@ function display_msg(type, msg_array, target, location) {
 	}
 
 }
+
+function format_date (timestamp, format) {
+	var formatted_date = "";
+	var d = new Date(timestamp * 1000);
+	var year = d.getFullYear();
+	var month = d.getMonth() + 1;
+	var day = d.getDate();
+	switch (format) {
+		default :
+			return year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
+		break;
+	}
+	return formatted_date;
+}

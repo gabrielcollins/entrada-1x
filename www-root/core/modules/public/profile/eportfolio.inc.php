@@ -15,8 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Entrada.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Primary controller file for the public Gradebook module.
- * /gradebook
+ * Primary controller file for the public ePortfolio module.
  *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
@@ -24,7 +23,6 @@
  * @copyright Copyright 2013 Queen's University. All Rights Reserved.
  *
  */
-
 if(!defined("PARENT_INCLUDED")) {
 	exit;
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
@@ -43,12 +41,6 @@ if(!defined("PARENT_INCLUDED")) {
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);
-
-		/*if ((isset($_GET["id"]) && ($tmp_input = clean_input($_GET["id"], array("nows", "int")))) || isset($_POST["id"]) && ($tmp_input = clean_input($_POST["id"], array("nows", "int")))) {
-			$OBSERVERSHIP_ID = $tmp_input;
-		} else {
-			$OBSERVERSHIP_ID = 0;
-		}*/
 
 		$module_file = $router->getRoute();
 		if ($module_file) {
