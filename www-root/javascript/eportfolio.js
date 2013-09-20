@@ -1,5 +1,11 @@
 jQuery(function($) {
+	
 	var pfolder_id = $("#folder-list").children(":first").children("a").data("id");
+	
+	if (location.hash.length > 0) {
+		pfolder_id = parseInt(location.hash.substring(1, location.hash.length));
+	}
+	
 	getFolder(pfolder_id);
 	
 	$(".add-entry").on("click", function(e) {
