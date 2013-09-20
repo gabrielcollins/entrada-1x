@@ -1,4 +1,7 @@
 jQuery(function($) {
+	var pfolder_id = $("#folder-list").children(":first").children("a").data("id");
+	getFolder(pfolder_id);
+	
 	$(".add-entry").on("click", function(e) {
 		var link = $(this);
 		var entry_data = {
@@ -138,6 +141,7 @@ jQuery(function($) {
 	$("#save-button").on("click", function(e) {
 		var button = $(this);
 		var type = $(this).attr("data-type");
+		var pfartifact_id = jQuery(this).attr("data-artifact");
 
 		switch (type) {
 			case "file" :
@@ -150,13 +154,18 @@ jQuery(function($) {
 			break;
 			case "artifact" :
 			case "reflection" :
+				var method = (type == "reflection" || type == "media" ? "create-entry&pfartifact_id=" + pfartifact_id : "create-artifact&pfolder_id=" + pfolder_id);
+				console.log(method);
 				$.ajax({
 					url : ENTRADA_URL + "/api/eportfolio.api.php",
 					type : "POST",
-					data : "method=create-artifact&pfolder_id=" + pfolder_id + $("#portfolio-form").serialize(),
+					data : "method=" + method +  "&" + $("#portfolio-form").serialize(),
 					success: function(data) {
 						var jsonResponse = JSON.parse(data);
-						if (jsonResponse.status == "error") {
+						if (jsonResponse.status == "success") {
+							appendContent(type, jsonResponse.data.pentry_id);
+							$("#portfolio-modal").modal("hide");
+						} else {
 							var msgs = new Array();
 							display_error(jsonResponse.data, "#modal-msg");
 						}
@@ -209,103 +218,9 @@ function getFolderArtifacts (pfolder_id) {
 				}
 
 				jQuery.each(jsonResponse.data, function (key, artifact) {
-					// Create the artifact container and set the heading to the title of the artifact
-					var folder_artifact = document.createElement("div");
 					var pfartifact_id = artifact.pfartifact_id;
-					var artifact_heading = document.createElement("h3");
-					jQuery(artifact_heading).html(artifact.title);
-
-					// Create the artifact meta data paragraph
-					var artifact_meta = document.createElement("p");
-					jQuery(artifact_meta).html((artifact.start_date > 0 ? "Created on: <strong>" + format_date(artifact.start_date) + "</strong>, " : "") + (artifact.finish_date > 0 ? "Due on: <strong>" + format_date(artifact.finish_date) + "</strong>" : "" )).addClass("muted");
-
-					// Create the button group for artifact Content 
-					var artifact_content = document.createElement("div");
-					jQuery(artifact_content).addClass("btn-group pull-right space-below");
-					var artifact_options_button = document.createElement("button");
-					jQuery(artifact_options_button).addClass("btn btn-primary dropdown-toggle").attr("data-toggle", "dropdown").html("Add Content ");
-					var artifact_options_span = document.createElement("span");
-					jQuery(artifact_options_span).addClass("caret");
-
-					// Append the the artifact content button to the button group
-					jQuery(artifact_options_button).append(artifact_options_span);
-					jQuery(artifact_content).append(artifact_options_button);
-
-					// Create the options list for the artifact content button group
-					var artifact_options = document.createElement("ul");
-					jQuery(artifact_options).addClass("dropdown-menu");
-
-					// Create list items and links
-					var artifact_option_reflection = document.createElement("li");
-					var artifact_option_media = document.createElement("li");
-					var artifact_option_reflection_a = document.createElement("a");
-					jQuery(artifact_option_reflection_a).html("Reflection");
-					jQuery(artifact_option_reflection_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("reflection-content");
-					var artifact_option_media_a = document.createElement("a");
-					jQuery(artifact_option_media_a).html("Media");
-					jQuery(artifact_option_media_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("media-content");
-
-					// Attach click event to reflection and media links to update the contents of the portfolio-modal
-					jQuery(artifact_option_reflection_a).on("click", function (e) {
-						e.preventDefault();
-						jQuery("#method").attr("value", "reflection-entry");
-						jQuery(".modal-header h3").html("Add Reflection");
-						jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
-						entryForm(pfartifact_id);
-					});
-
-					jQuery(artifact_option_media_a).on("click", function (e) {
-						e.preventDefault();
-						jQuery("#method").attr("value", "media-entry");
-						jQuery(".modal-header h3").html("Add Media");
-						jQuery("#save-button").html("Save Media").attr("data-type", "file");
-						entryForm(pfartifact_id);
-					});
-
-					// Append anchors to list items 
-					jQuery(artifact_option_reflection).append(artifact_option_reflection_a);
-					jQuery(artifact_option_media).append(artifact_option_media_a);
-
-					// Append list items to artifact options ul
-					jQuery(artifact_options).append(artifact_option_media);
-					jQuery(artifact_options).append(artifact_option_reflection);
-
-					// Append the artifact options ul to the button group
-					jQuery(artifact_content).append(artifact_options);
-
-					var artifact_row = document.createElement("div");
-					jQuery(artifact_row).addClass("row-fluid");
-
-					var artifact_entries = document.createElement("div");
-					jQuery(artifact_entries).addClass("span12");
-
-					var entries_table = document.createElement("table");
-					jQuery(entries_table).addClass("table table-striped table-bordered");
-					jQuery(entries_table).attr("id", "artifact-" + artifact.pfartifact_id);
-
-					var entries_thead = document.createElement("thead");
-					jQuery(entries_table).append(entries_thead);
-
-					var entries_thead_row = document.createElement("tr");
-					jQuery(entries_thead).append(entries_thead_row);
-
-					var entries_title_th =  document.createElement("th");
-					jQuery(entries_title_th).width("5%");
-					jQuery(entries_thead_row).append(entries_title_th);
-
-					var entries_date_th =  document.createElement("th");
-					jQuery(entries_date_th).width("25%");
-					jQuery(entries_date_th).html("Submitted Date");
-					jQuery(entries_thead_row).append(entries_date_th);
-
-					var entries_content_th =  document.createElement("th");
-					jQuery(entries_content_th).html("Content");
-					jQuery(entries_thead_row).append(entries_content_th);
-
-					jQuery(artifact_entries).append(entries_table);
-					jQuery(artifact_row).append(artifact_entries);
-					jQuery(folder_artifact).addClass("artifact").append(artifact_heading).append(artifact_meta).append(artifact_content).append(artifact_row);
-					jQuery(".artifact-container").append(folder_artifact);
+					var artifact_title = artifact.title;
+					appendArtifact(pfartifact_id, artifact_title);
 					getEntries(pfartifact_id);
 				});
 
@@ -470,4 +385,124 @@ function entryForm (pfartifact_id) {
 	jQuery(entry_control_group).append(entry_label).append(entry_controls);
 	jQuery("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group).append(pfartifact_id_input);
 	jQuery("#reflection-entry").ckeditor();
+}
+
+function appendArtifact (pfartifact_id, artifact_title) {
+	var folder_artifact = document.createElement("div");
+	var artifact_heading = document.createElement("h3");
+	jQuery(artifact_heading).html(artifact_title);
+
+	// Create the artifact meta data paragraph
+	/*
+	var artifact_meta = document.createElement("p");
+	jQuery(artifact_meta).html((artifact.start_date > 0 ? "Created on: <strong>" + format_date(artifact.start_date) + "</strong>, " : "") + (artifact.finish_date > 0 ? "Due on: <strong>" + format_date(artifact.finish_date) + "</strong>" : "" )).addClass("muted");
+	*/
+
+	// Create the button group for artifact Content 
+	var artifact_content = document.createElement("div");
+	jQuery(artifact_content).addClass("btn-group pull-right space-below");
+	var artifact_options_button = document.createElement("button");
+	jQuery(artifact_options_button).addClass("btn btn-primary dropdown-toggle").attr("data-toggle", "dropdown").html("Add Content ");
+	var artifact_options_span = document.createElement("span");
+	jQuery(artifact_options_span).addClass("caret");
+
+	// Append the the artifact content button to the button group
+	jQuery(artifact_options_button).append(artifact_options_span);
+	jQuery(artifact_content).append(artifact_options_button);
+
+	// Create the options list for the artifact content button group
+	var artifact_options = document.createElement("ul");
+	jQuery(artifact_options).addClass("dropdown-menu");
+
+	// Create list items and links
+	var artifact_option_reflection = document.createElement("li");
+	var artifact_option_media = document.createElement("li");
+	var artifact_option_reflection_a = document.createElement("a");
+	jQuery(artifact_option_reflection_a).html("Reflection");
+	jQuery(artifact_option_reflection_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("reflection-content");
+	var artifact_option_media_a = document.createElement("a");
+	jQuery(artifact_option_media_a).html("Media");
+	jQuery(artifact_option_media_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("media-content");
+
+	// Attach click event to reflection and media links to update the contents of the portfolio-modal
+	jQuery(artifact_option_reflection_a).on("click", function (e) {
+		e.preventDefault();
+		jQuery("#method").attr("value", "reflection-entry");
+		jQuery(".modal-header h3").html("Add Reflection");
+		jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
+		jQuery("#save-button").attr("data-artifact", pfartifact_id);
+		entryForm(pfartifact_id);
+	});
+
+	jQuery(artifact_option_media_a).on("click", function (e) {
+		e.preventDefault();
+		jQuery("#method").attr("value", "media-entry");
+		jQuery(".modal-header h3").html("Add Media");
+		jQuery("#save-button").html("Save Media").attr("data-type", "file");
+		jQuery("#save-button").attr("data-artifact", pfartifact_id);
+		entryForm(pfartifact_id);
+	});
+
+	// Append anchors to list items 
+	jQuery(artifact_option_reflection).append(artifact_option_reflection_a);
+	jQuery(artifact_option_media).append(artifact_option_media_a);
+
+	// Append list items to artifact options ul
+	jQuery(artifact_options).append(artifact_option_media);
+	jQuery(artifact_options).append(artifact_option_reflection);
+
+	// Append the artifact options ul to the button group
+	jQuery(artifact_content).append(artifact_options);
+
+	var artifact_row = document.createElement("div");
+	jQuery(artifact_row).addClass("row-fluid");
+
+	var artifact_entries = document.createElement("div");
+	jQuery(artifact_entries).addClass("span12");
+
+	var entries_table = document.createElement("table");
+	jQuery(entries_table).addClass("table table-striped table-bordered");
+	jQuery(entries_table).attr("id", "artifact-" + pfartifact_id);
+
+	var entries_thead = document.createElement("thead");
+	jQuery(entries_table).append(entries_thead);
+
+	var entries_thead_row = document.createElement("tr");
+	jQuery(entries_thead).append(entries_thead_row);
+
+	var entries_title_th =  document.createElement("th");
+	jQuery(entries_title_th).width("5%");
+	jQuery(entries_thead_row).append(entries_title_th);
+
+	var entries_date_th =  document.createElement("th");
+	jQuery(entries_date_th).width("25%");
+	jQuery(entries_date_th).html("Submitted Date");
+	jQuery(entries_thead_row).append(entries_date_th);
+
+	var entries_content_th =  document.createElement("th");
+	jQuery(entries_content_th).html("Content");
+	jQuery(entries_thead_row).append(entries_content_th);
+
+	jQuery(artifact_entries).append(entries_table);
+	jQuery(artifact_row).append(artifact_entries);
+	jQuery(folder_artifact).addClass("artifact").append(artifact_heading).append(artifact_content).append(artifact_row);
+	jQuery(".artifact-container").append(folder_artifact);
+}
+
+function appendContent (type, pfartifact_id) {
+	switch (type) {
+		case "artifact" :
+			var artifact_title = jQuery("#artifact-title").val();
+			appendArtifact(pfartifact_id, artifact_title);
+			var entry_row = document.createElement("tr");
+			var entry_cell = document.createElement("td");
+			jQuery(entry_cell).append("No entries attached to this artifact.").attr("colspan", "3");
+			jQuery(entry_row).append(entry_cell);
+			jQuery("#artifact-" + pfartifact_id).append(entry_row);
+		break;
+		case "reflection" :
+		break;
+		case "media" :
+		break;
+	}
 }

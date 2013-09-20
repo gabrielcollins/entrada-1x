@@ -53,12 +53,6 @@ if (!defined("PARENT_INCLUDED")) {
 	?>
 	
 	<h2><?php echo $eportfolio->getPortfolioName(); ?></h2>
-	<script type="text/javascript">
-		jQuery(document).ready(function ($) {
-			var pfolder_id = $("#folder-list").children(":first").children("a").data("id");
-			getFolder(pfolder_id);
-		});
-	</script>
 	<div class="btn-group">
 		<a class="btn btn-primary">Folders</a>
 		<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
@@ -89,7 +83,7 @@ if (!defined("PARENT_INCLUDED")) {
 		<div class="modal-body">
 			<div id="modal-msg"></div>
 			<form action="" method="POST" class="form-horizontal" id="portfolio-form">
-				<input type="hidden" value="create-artifact" class="method" name="method" id="method" />
+				<input type="hidden" value="create-artifact" class="method" name="content-type" id="method" />
 			</form>
 		</div>
 		<div class="modal-footer">
