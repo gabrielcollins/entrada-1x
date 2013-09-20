@@ -71,6 +71,8 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
 						$PROCESSED["description"] = $tmp_input;
+					} else {
+						$PROCESSED["description"] = "";
 					}
 					
 					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
@@ -79,9 +81,23 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					
 					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
 						$PROCESSED["filename"] = str_replace(" ", "_", $tmp_input);
+						
+						$allowed_mime_types = array(
+							"image/jpeg", "image/png", "application/pdf", "application/x-pdf", "application/excel", "application/vnd.ms-excel", "application/msword", "application/mspowerpoint", "application/vnd.ms-powerpoint", "text/richtext", "application/rtf", "application/x-rtf"
+						);
+						
+						$finfo = new finfo(FILEINFO_MIME);
+
+						$type = $finfo->file($_FILES["file"]["tmp_name"]);
+						
+						$mime_type = explode("; ", $type);
+						
+						if (!in_array($mime_type[0], $allowed_mime_types)) {
+							add_error("Invalid file type. ".$mime_type[0]);
+						}
 					}
 					
-					if (isset($PROCESSED["pfartifact_id"])) {
+					if (isset($PROCESSED["pfartifact_id"]) && !$ERROR) {
 						
 						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
 						$PROCESSED["submitted_date"] = time();
@@ -104,17 +120,10 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						
 						if ($pentry->fromArray($PROCESSED)->insert()) {
 							
-							$pfartifact = $pentry->getPfartifact();
-	
-							$pfolder = $pfartifact->getFolder();
-
-							$portfolio = $pfolder->getPortfolio();
-							$file_realpath = EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$pentry->getProxyID()."/".$pentry->getID();
-
-							if (copy($_FILES["file"]["tmp_name"], $file_realpath)) {
-								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+							if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
 							} else {
-								add_error("Failed to copy file.");
+								echo json_encode(array("status" => "error", "data" => "Failed to save file"));
 							}
 							
 						} else {
@@ -122,7 +131,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 						
 					} else {
-						echo json_encode(array("status" => "error", "data" => "No portfolio folder artifact ID provided or invalid portfolio folder artifact ID provided."));
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
 					}
 				break;
 				case "create-artifact" :

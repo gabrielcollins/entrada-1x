@@ -89,7 +89,33 @@ jQuery(function($) {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					var jsonResponse = JSON.parse(xhr.responseText);
 					if (jsonResponse.status == "success") {
-						// success
+						
+						var entry_row = document.createElement("tr");
+						
+						var entry_delete_cell = document.createElement("td");
+						var entry_delete_button = document.createElement("button");
+						$(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+						$(entry_delete_cell).append(entry_delete_button);
+						
+						var entry_date_cell = document.createElement("td");
+						var date = new Date(jsonResponse.data.submitted_date * 1000);
+						$(entry_date_cell).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate());
+						
+						var entry_content_cell = document.createElement("td");
+						var content = "";
+						if (typeof jsonResponse.data.edata.filename != "undefined") {
+							content = "<a href=\"" + ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + jsonResponse.data.pentry_id + "\">" + jsonResponse.data.edata.filename + "</a>";
+						} else {
+							content = jsonResponse.data.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						}
+						$(entry_content_cell).append(content);
+						
+						$(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell);
+						
+						$("#artifact-"+$("#pfartifact_id").val()).append(entry_row);
+						
+						$('#portfolio-modal').modal('hide');
+						
 					} else {
 						// Some kind of failure notification.
 					};
@@ -313,12 +339,15 @@ function getEntries (pfartifact_id) {
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
 					if (entry._edata.hasOwnProperty("description")) {
-						var description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						var description = "";
+						if (entry._edata.description != null) {
+							entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						}
 						jQuery(entry_content_td).html(description);
 					} 
 
 					if (entry._edata.hasOwnProperty("filename")) {
-						jQuery(entry_content_td).html(entry._edata.filename);
+						jQuery(entry_content_td).html("<a href=\"" + ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + entry.pentry_id + "\">" + entry._edata.filename + "</a>");
 					}
 
 					// Create delete button and icon

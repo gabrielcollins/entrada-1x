@@ -207,6 +207,42 @@ class Models_Eportfolio_Entry {
 		$permissions = Models_Eportfolio_Entry_Permission::fetchAll($this->pentry_id);
 	}
 	
+	public function saveFile($tmp_filename) {
+		$pfartifact = $this->getPfartifact();
+	
+		$pfolder = $pfartifact->getFolder();
+
+		$portfolio = $pfolder->getPortfolio();
+
+		if (!is_dir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID())) {
+			mkdir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID(), 0777);
+		}
+
+		if (!is_dir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID())) {
+			mkdir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID(), 0777);
+		}
+
+		if (!is_dir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID())) {
+			mkdir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID(), 0777);
+		}
+
+		if (!is_dir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$this->getProxyID())) {
+			mkdir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$this->getProxyID(), 0777);
+		}
+
+		if (is_dir(EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$this->getProxyID())) {
+			$file_realpath = EPORTFOLIO_STORAGE_PATH."/portfolio-".$portfolio->getID()."/folder-".$pfolder->getID()."/artifact-".$pfartifact->getID()."/user-".$this->getProxyID()."/".$this->getID();
+
+			if (copy($tmp_filename, $file_realpath)) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
 }
 
 ?>
