@@ -17,6 +17,11 @@ jQuery(function($) {
 		
 		e.preventDefault();
 	});
+	jQuery("#create-artifact").on("click", function () {
+		jQuery(".modal-header h3").html("Create Artifact");
+		jQuery("#save-button").html("Save Artifact").attr("data-type", "artifact");
+		artifactForm();
+	});
 	
 	$(".add-artifact").on("click", function(e) {
 		var link = $(this);
@@ -117,6 +122,7 @@ jQuery(function($) {
 				}
 				$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
 			break;
+			case "artifact" :
 			case "reflection" :
 				$.ajax({
 					url : ENTRADA_URL + "/api/eportfolio.api.php",
@@ -343,11 +349,6 @@ function getEntries (pfartifact_id) {
 		}	
 	});
 }
-jQuery("#create-artifact").on("click", function () {
-	jQuery(".modal-header h3").html("Create Artifact");
-	jQuery("#save-button").html("Save Artifact").attr("data-type", "artifact");
-	artifactForm();
-});
 
 function artifactForm () {
 	// Create the divs that will hold the form controls for the create artifact form
@@ -382,10 +383,6 @@ function artifactForm () {
 }
 
 function entryForm (pfartifact_id) {
-	if (jQuery("#portfolio-form .control-group").length) {
-		jQuery(".control-group").remove();
-	}
-
 	var pfartifact_id_input = document.createElement("input");
 	jQuery(pfartifact_id_input).attr({value: pfartifact_id, name: "pfartifact_id", id: "pfartifact_id", type: "hidden"});
 
