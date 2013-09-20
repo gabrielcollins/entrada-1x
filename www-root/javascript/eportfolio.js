@@ -78,7 +78,7 @@ jQuery(function($) {
 	$("#portfolio-form").on("submit", function(e) {
 				
 		if ($(".isie").length > 0) {
-			$("#method").attr("value", "create-entry");
+			$("#method").attr("value", "create-entry").attr("name", "method");
 		} else {
 
 			var xhr = new XMLHttpRequest();
@@ -140,6 +140,7 @@ jQuery(function($) {
 		e.preventDefault();
 		pfolder_id = $(this).data("id");
 		getFolder(pfolder_id);
+		location.hash = $(this).attr("data-id");
 	});
 
 	$("#save-button").on("click", function(e) {
@@ -431,7 +432,7 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	// Attach click event to reflection and media links to update the contents of the portfolio-modal
 	jQuery(artifact_option_reflection_a).on("click", function (e) {
 		e.preventDefault();
-		jQuery("#method").attr("value", "reflection-entry");
+		jQuery("#method").attr("value", "reflection-entry").attr("name", "method");
 		jQuery(".modal-header h3").html("Add Reflection");
 		jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);
@@ -440,7 +441,7 @@ function appendArtifact (pfartifact_id, artifact_title) {
 
 	jQuery(artifact_option_media_a).on("click", function (e) {
 		e.preventDefault();
-		jQuery("#method").attr("value", "media-entry");
+		jQuery("#method").attr("value", "media-entry").attr("name", "method");
 		jQuery(".modal-header h3").html("Add Media");
 		jQuery("#save-button").html("Save Media").attr("data-type", "file");
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);

@@ -120,24 +120,24 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$pentry = new Models_Eportfolio_Entry();
 						
 						if ($pentry->fromArray($PROCESSED)->insert()) {
-							
+							$pfartifact = $pentry->getPfartifact();
+							$pfolder = $pfartifact->getFolder();
 							if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
 								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-									header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
 								} else {
 									echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
 								}
 							} else {
 								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-									header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
 								} else {
 									echo json_encode(array("status" => "error", "data" => "Failed to save file"));
 								}
 							}
-							
 						} else {
 							if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-								header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+								header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
 							} else {
 								echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
 							}
