@@ -72,7 +72,7 @@ jQuery(function($) {
 	$("#portfolio-form").on("submit", function(e) {
 				
 		if ($(".isie").length > 0) {
-			// handle ie
+			$("#method").attr("value", "create-entry");
 		} else {
 
 			var xhr = new XMLHttpRequest();
@@ -126,10 +126,8 @@ jQuery(function($) {
 					// another failure notification.
 				}
 			}
-
+			e.preventDefault();
 		}
-
-		e.preventDefault();
 	})
 
 	$(".folder-item").on("click", function (e) {
@@ -195,7 +193,7 @@ function getFolder (pfolder_id) {
 		type: 'GET',
 		success:function (data) {
 			var jsonResponse = JSON.parse(data);
-			if (jsonResponse.status == "success") {
+			if (jsonResponse.status === "success") {
 				jQuery("#folder-title").html(jsonResponse.data.title);
 				getFolderArtifacts(pfolder_id);
 			}
@@ -373,7 +371,7 @@ function entryForm (pfartifact_id) {
 			jQuery(description_control_group).append(description_label).append(description_controls);
 			jQuery(entry_label).html("Attach File:").attr("for", "media-entry-upload");
 			var entry_input = document.createElement("input");
-			jQuery(entry_input).attr({type: "file", id: "media-entry-upload"});
+			jQuery(entry_input).attr({type: "file", id: "media-entry-upload", name: "file"});
 		break;
 		case "reflection-entry" :
 			jQuery(entry_label).html("Reflection Body:").attr("for", "reflection-entry");

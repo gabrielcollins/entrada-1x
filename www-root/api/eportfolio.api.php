@@ -61,8 +61,9 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	switch ($request) {
 		case "POST" :
 			switch ($method) {
+				case "media-entry" :
 				case "create-entry" :
-
+					
 					if(${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					} else {
@@ -121,13 +122,25 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						if ($pentry->fromArray($PROCESSED)->insert()) {
 							
 							if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
-								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+									header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+								} else {
+									echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+								}
 							} else {
-								echo json_encode(array("status" => "error", "data" => "Failed to save file"));
+								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+									header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+								} else {
+									echo json_encode(array("status" => "error", "data" => "Failed to save file"));
+								}
 							}
 							
 						} else {
-							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+							if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+								header('Location: '.ENTRADA_URL.'/profile/eportfolio');
+							} else {
+								echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+							}
 						}
 						
 					} else {
