@@ -60,4 +60,388 @@ jQuery(function($) {
 		
 		e.preventDefault();
 	});
+	
+	$("#portfolio-form").on("submit", function(e) {
+				
+		if ($(".isie").length > 0) {
+			// handle ie
+		} else {
+
+			var xhr = new XMLHttpRequest();
+			var fd = new FormData();
+			var file = $("#media-entry-upload").prop("files");
+
+			fd.append("method", "create-entry");
+			fd.append("title", $("#media-entry-title").val());
+			fd.append("description", $("#media-entry-description").val());
+			fd.append("pfartifact_id", $("#pfartifact_id").val());
+			fd.append("file", file[0]);
+
+			xhr.open('POST', ENTRADA_URL + "/api/eportfolio.api.php", true);
+			xhr.send(fd);
+
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					var jsonResponse = JSON.parse(xhr.responseText);
+					if (jsonResponse.status == "success") {
+						// success
+					} else {
+						// Some kind of failure notification.
+					};
+				} else {
+					// another failure notification.
+				}
+			}
+
+		}
+
+		e.preventDefault();
+	})
+
+	$(".folder-item").on("click", function (e) {
+		e.preventDefault();
+		pfolder_id = $(this).data("id");
+		getFolder(pfolder_id);
+	});
+
+	$("#save-button").on("click", function(e) {
+		var button = $(this);
+		var type = $(this).attr("data-type");
+
+		switch (type) {
+			case "file" :
+				if (window.FileReader) {
+
+				} else {
+					$("#portfolio-form").append("<input type=\"hidden\" name=\"isie\" value=\"isie\" class=\"isie\" />");
+				}
+				$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
+			break;
+			case "reflection" :
+				$.ajax({
+					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=create-artifact&pfolder_id=" + pfolder_id + $("#portfolio-form").serialize(),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "error") {
+							var msgs = new Array();
+							display_error(jsonResponse.data, "#modal-msg");
+						}
+					}
+				});
+			break;
+		}
+
+		e.preventDefault();
+	});
+
+	$("#portfolio-modal").on("hide", function () {
+		if ($("#portfolio-form .control-group").length) {
+			$(".control-group").remove();
+		}
+
+		if ($("#display-error-box-modal")) {
+			$("#modal-msg").empty();
+		}
+	});
 });
+
+function getFolder (pfolder_id) {
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-folder&pfolder_id=" + pfolder_id,
+		type: 'GET',
+		success:function (data) {
+			var jsonResponse = JSON.parse(data);
+			if (jsonResponse.status == "success") {
+				jQuery("#folder-title").html(jsonResponse.data.title);
+				getFolderArtifacts(pfolder_id);
+			}
+		}	
+	});
+}
+
+function getFolderArtifacts (pfolder_id) {
+	var proxy_id = PROXY_ID;
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
+		type: 'GET',
+		success:function (data) {
+			var jsonResponse = JSON.parse(data);
+			jQuery(".artifact-container").empty();
+			if (jsonResponse.status == "success") {
+				if (jQuery("#display-notice-box-modal").length) {
+					jQuery("#msgs").empty();
+				}
+
+				jQuery.each(jsonResponse.data, function (key, artifact) {
+					// Create the artifact container and set the heading to the title of the artifact
+					var folder_artifact = document.createElement("div");
+					var pfartifact_id = artifact.pfartifact_id;
+					var artifact_heading = document.createElement("h3");
+					jQuery(artifact_heading).html(artifact.title);
+
+					// Create the artifact meta data paragraph
+					var artifact_meta = document.createElement("p");
+					jQuery(artifact_meta).html((artifact.start_date > 0 ? "Created on: <strong>" + format_date(artifact.start_date) + "</strong>, " : "") + (artifact.finish_date > 0 ? "Due on: <strong>" + format_date(artifact.finish_date) + "</strong>" : "" )).addClass("muted");
+
+					// Create the button group for artifact Content 
+					var artifact_content = document.createElement("div");
+					jQuery(artifact_content).addClass("btn-group pull-right space-below");
+					var artifact_options_button = document.createElement("button");
+					jQuery(artifact_options_button).addClass("btn btn-primary dropdown-toggle").attr("data-toggle", "dropdown").html("Add Content ");
+					var artifact_options_span = document.createElement("span");
+					jQuery(artifact_options_span).addClass("caret");
+
+					// Append the the artifact content button to the button group
+					jQuery(artifact_options_button).append(artifact_options_span);
+					jQuery(artifact_content).append(artifact_options_button);
+
+					// Create the options list for the artifact content button group
+					var artifact_options = document.createElement("ul");
+					jQuery(artifact_options).addClass("dropdown-menu");
+
+					// Create list items and links
+					var artifact_option_reflection = document.createElement("li");
+					var artifact_option_media = document.createElement("li");
+					var artifact_option_reflection_a = document.createElement("a");
+					jQuery(artifact_option_reflection_a).html("Reflection");
+					jQuery(artifact_option_reflection_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("reflection-content");
+					var artifact_option_media_a = document.createElement("a");
+					jQuery(artifact_option_media_a).html("Media");
+					jQuery(artifact_option_media_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("media-content");
+
+					// Attach click event to reflection and media links to update the contents of the portfolio-modal
+					jQuery(artifact_option_reflection_a).on("click", function (e) {
+						e.preventDefault();
+						jQuery("#method").attr("value", "reflection-entry");
+						jQuery(".modal-header h3").html("Add Reflection");
+						jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
+						entryForm(pfartifact_id);
+					});
+
+					jQuery(artifact_option_media_a).on("click", function (e) {
+						e.preventDefault();
+						jQuery("#method").attr("value", "media-entry");
+						jQuery(".modal-header h3").html("Add Media");
+						jQuery("#save-button").html("Save Media").attr("data-type", "file");
+						entryForm(pfartifact_id);
+					});
+
+					// Append anchors to list items 
+					jQuery(artifact_option_reflection).append(artifact_option_reflection_a);
+					jQuery(artifact_option_media).append(artifact_option_media_a);
+
+					// Append list items to artifact options ul
+					jQuery(artifact_options).append(artifact_option_media);
+					jQuery(artifact_options).append(artifact_option_reflection);
+
+					// Append the artifact options ul to the button group
+					jQuery(artifact_content).append(artifact_options);
+
+					var artifact_row = document.createElement("div");
+					jQuery(artifact_row).addClass("row-fluid");
+
+					var artifact_entries = document.createElement("div");
+					jQuery(artifact_entries).addClass("span12");
+
+					var entries_table = document.createElement("table");
+					jQuery(entries_table).addClass("table table-striped table-bordered");
+					jQuery(entries_table).attr("id", "artifact-" + artifact.pfartifact_id);
+
+					var entries_thead = document.createElement("thead");
+					jQuery(entries_table).append(entries_thead);
+
+					var entries_thead_row = document.createElement("tr");
+					jQuery(entries_thead).append(entries_thead_row);
+
+					var entries_title_th =  document.createElement("th");
+					jQuery(entries_title_th).width("5%");
+					jQuery(entries_thead_row).append(entries_title_th);
+
+					var entries_date_th =  document.createElement("th");
+					jQuery(entries_date_th).width("25%");
+					jQuery(entries_date_th).html("Submitted Date");
+					jQuery(entries_thead_row).append(entries_date_th);
+
+					var entries_content_th =  document.createElement("th");
+					jQuery(entries_content_th).html("Content");
+					jQuery(entries_thead_row).append(entries_content_th);
+
+					jQuery(artifact_entries).append(entries_table);
+					jQuery(artifact_row).append(artifact_entries);
+					jQuery(folder_artifact).addClass("artifact").append(artifact_heading).append(artifact_meta).append(artifact_content).append(artifact_row);
+					jQuery(".artifact-container").append(folder_artifact);
+					getEntries(pfartifact_id);
+				});
+
+			} else {
+				var msgs = new Array();
+				msgs[0] = jsonResponse.data;
+				display_notice(msgs, "#msgs");
+			}
+		}	
+	});
+}
+
+function getEntries (pfartifact_id) {
+	var proxy_id = PROXY_ID;
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
+		type: 'GET',
+		success:function (data) {
+			var jsonResponse = JSON.parse(data);
+			if (jsonResponse.status == "success") {
+				jQuery.each(jsonResponse.data, function(key, entry) {
+					// Create row and cells for each entry
+					var entry_row = document.createElement("tr");
+					var delete_td = document.createElement("td");
+					var entry_date_td = document.createElement("td");
+					var entry_content_td = document.createElement("td");
+
+					// Append the date to the date cell
+					jQuery(entry_date_td).html(format_date(entry.submitted_date, "yyyy-mm-dd"));
+
+					// Check to see if the _edata object has a description or filename and put the data in the content cell
+					if (entry._edata.hasOwnProperty("description")) {
+						var description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						jQuery(entry_content_td).html(description);
+					} 
+
+					if (entry._edata.hasOwnProperty("filename")) {
+						jQuery(entry_content_td).html(entry._edata.filename);
+					}
+
+					// Create delete button and icon
+					var delete_button = document.createElement("button");
+					jQuery(delete_button).addClass("btn btn-mini btn-danger");
+
+					var delete_icon = document.createElement("i");
+					jQuery(delete_icon).addClass("icon-trash icon-white");
+
+					// Append the icon to the button and then append the button to the delete cell
+					jQuery(delete_button).append(delete_icon);								
+					jQuery(delete_td).append(delete_button);
+
+					// Append cells to the enrty row
+					jQuery(entry_row).append(delete_td).append(entry_date_td).append(entry_content_td);
+
+					// Append entry row to appropriate artifact
+					jQuery("#artifact-" + entry.pfartifact_id).append(entry_row);
+				});
+			} else {
+				// Create error row and cell
+				var error_row = document.createElement("tr");
+				var error_cell = document.createElement("td");
+				jQuery(error_cell).append(jsonResponse.data).attr("colspan", "3");
+				jQuery(error_row).append(error_cell);
+				jQuery("#artifact-" + pfartifact_id).append(error_row);
+			}
+		}	
+	});
+}
+jQuery("#create-artifact").on("click", function () {
+	jQuery(".modal-header h3").html("Create Artifact");
+	jQuery("#save-button").html("Save Artifact").attr("data-type", "artifact");
+	artifactForm();
+});
+
+function artifactForm () {
+	// Create the divs that will hold the form controls for the create artifact form
+	var title_control_group = document.createElement("div");
+	jQuery(title_control_group).addClass("control-group");
+	var title_controls = document.createElement("div");
+	jQuery(title_controls).addClass("controls");
+	var description_control_group = document.createElement("div");
+	jQuery(description_control_group).addClass("control-group");
+	var description_controls = document.createElement("div");
+	jQuery(description_controls).addClass("controls");
+
+	// Create the form controls
+	var title_input = document.createElement("input");
+	jQuery(title_input).attr({type: "text", name: "title", id: "artifact-title"}).addClass("input-large");
+
+	var description_textarea = document.createElement("textarea");
+	jQuery(description_textarea).attr({name: "description", id: "artifact-description"}).addClass("input-large");
+
+	// Create the labels for the create artifact form controls
+	var title_label = document.createElement("label");
+	jQuery(title_label).html("Title:").attr("for", "artifact-title").addClass("control-label");
+	var description_label = document.createElement("label");
+	jQuery(description_label).html("Description:").attr("for", "artifact-description").addClass("control-label");
+
+	// Put it all together
+	jQuery(title_controls).append(title_input);
+	jQuery(title_control_group).append(title_label).append(title_controls);
+	jQuery(description_controls).append(description_textarea);
+	jQuery(description_control_group).append(description_label).append(description_controls);
+	jQuery("#portfolio-form").append(title_control_group).append(description_control_group);
+}
+
+function entryForm (pfartifact_id) {
+	if (jQuery("#portfolio-form .control-group").length) {
+		jQuery(".control-group").remove();
+	}
+
+	var pfartifact_id_input = document.createElement("input");
+	jQuery(pfartifact_id_input).attr({value: pfartifact_id, name: "pfartifact_id", id: "pfartifact_id", type: "hidden"});
+
+	// Create the divs that will hold the form controls for the create artifact form
+	var title_control_group = document.createElement("div");
+	jQuery(title_control_group).addClass("control-group");
+	var title_controls = document.createElement("div");
+	jQuery(title_controls).addClass("controls");
+
+	// Create the form controls
+	var title_input = document.createElement("input");
+	jQuery(title_input).attr({type: "text", name: "title", id: "media-entry-title"}).addClass("input-large");
+
+
+	// Create the labels for the create artifact form controls
+	var title_label = document.createElement("label");
+	jQuery(title_label).html("Title:").attr("for", "media-entry-title").addClass("control-label");
+
+
+	// Put it all together
+	jQuery(title_controls).append(title_input);
+	jQuery(title_control_group).append(title_label).append(title_controls);
+
+	var entry_control_group = document.createElement("div");
+	jQuery(entry_control_group).addClass("control-group");
+	var entry_controls = document.createElement("div");
+	jQuery(entry_controls).addClass("controls");
+	var entry_label = document.createElement("label");
+	jQuery(entry_label).addClass("control-label");
+
+	// Add appropriate form controls depending on the selected content type
+	var method = jQuery("#method").val();
+	switch (method) {
+		case "media-entry" :
+			var description_control_group = document.createElement("div");
+			jQuery(description_control_group).addClass("control-group");
+			var description_controls = document.createElement("div");
+			jQuery(description_controls).addClass("controls");
+			var description_textarea = document.createElement("textarea");
+			jQuery(description_textarea).attr({name: "description", id: "media-entry-description"}).addClass("input-large");
+			var description_label = document.createElement("label");
+			jQuery(description_label).html("Description:").attr("for", "media-entry-description").addClass("control-label");
+			jQuery(description_controls).append(description_textarea);
+			jQuery(description_control_group).append(description_label).append(description_controls);
+			jQuery(entry_label).html("Attach File:").attr("for", "media-entry-upload");
+			var entry_input = document.createElement("input");
+			jQuery(entry_input).attr({type: "file", id: "media-entry-upload"});
+		break;
+		case "reflection-entry" :
+			jQuery(entry_label).html("Reflection Body:").attr("for", "reflection-entry");
+			var entry_input = document.createElement("textarea");
+			jQuery(entry_input).attr({id: "reflection-entry"});
+		break;
+	}
+	jQuery(entry_controls).append(entry_input);
+	jQuery(entry_control_group).append(entry_label).append(entry_controls);
+	jQuery("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group).append(pfartifact_id_input);
+	jQuery("#reflection-entry").ckeditor();
+}
