@@ -80,7 +80,6 @@ jQuery(function($) {
 		if ($(".isie").length > 0) {
 			$("#method").attr("value", "create-entry").attr("name", "method");
 		} else {
-
 			var xhr = new XMLHttpRequest();
 			var fd = new FormData();
 			var file = $("#media-entry-upload").prop("files");
@@ -127,14 +126,16 @@ jQuery(function($) {
 						
 					} else {
 						// Some kind of failure notification.
-					};
+					}
 				} else {
 					// another failure notification.
 				}
 			}
 			e.preventDefault();
 		}
-	})
+
+		e.preventDefault();
+	});
 
 	$(".folder-item").on("click", function (e) {
 		e.preventDefault();
@@ -160,15 +161,15 @@ jQuery(function($) {
 			case "artifact" :
 			case "reflection" :
 				var method = (type == "reflection" || type == "media" ? "create-entry&pfartifact_id=" + pfartifact_id : "create-artifact&pfolder_id=" + pfolder_id);
-				console.log(method);
 				$.ajax({
 					url : ENTRADA_URL + "/api/eportfolio.api.php",
 					type : "POST",
 					data : "method=" + method +  "&" + $("#portfolio-form").serialize(),
 					success: function(data) {
+						console.log(data);
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
-							appendContent(type, jsonResponse.data.pentry_id);
+							appendContent(type, jsonResponse.data, pfartifact_id);
 							$("#portfolio-modal").modal("hide");
 						} else {
 							var msgs = new Array();
@@ -259,9 +260,10 @@ function getEntries (pfartifact_id) {
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
 					if (entry._edata.hasOwnProperty("description")) {
+						
 						var description = "";
 						if (entry._edata.description != null) {
-							entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+							description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
 						}
 						jQuery(entry_content_td).html(description);
 					} 
@@ -292,7 +294,7 @@ function getEntries (pfartifact_id) {
 				var error_row = document.createElement("tr");
 				var error_cell = document.createElement("td");
 				jQuery(error_cell).append(jsonResponse.data).attr("colspan", "3");
-				jQuery(error_row).append(error_cell);
+				jQuery(error_row).append(error_cell).addClass("no-entries");
 				jQuery("#artifact-" + pfartifact_id).append(error_row);
 			}
 		}	
@@ -383,7 +385,7 @@ function entryForm (pfartifact_id) {
 		case "reflection-entry" :
 			jQuery(entry_label).html("Reflection Body:").attr("for", "reflection-entry");
 			var entry_input = document.createElement("textarea");
-			jQuery(entry_input).attr({id: "reflection-entry"});
+			jQuery(entry_input).attr({id: "reflection-entry", name: "description"});
 		break;
 	}
 	jQuery(entry_controls).append(entry_input);
@@ -494,11 +496,11 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	jQuery(".artifact-container").append(folder_artifact);
 }
 
-function appendContent (type, pfartifact_id) {
+function appendContent (type, jsonResponse, pfartifact_id) {
 	switch (type) {
 		case "artifact" :
 			var artifact_title = jQuery("#artifact-title").val();
-			appendArtifact(pfartifact_id, artifact_title);
+			appendArtifact(pfartifact_id, jsonResponse.title);
 			var entry_row = document.createElement("tr");
 			var entry_cell = document.createElement("td");
 			jQuery(entry_cell).append("No entries attached to this artifact.").attr("colspan", "3");
@@ -506,6 +508,29 @@ function appendContent (type, pfartifact_id) {
 			jQuery("#artifact-" + pfartifact_id).append(entry_row);
 		break;
 		case "reflection" :
+			var entry_row = document.createElement("tr");			
+			var entry_delete_cell = document.createElement("td");
+			var entry_delete_button = document.createElement("button");
+			jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+			jQuery(entry_delete_cell).append(entry_delete_button);
+
+			var entry_date_cell = document.createElement("td");
+			var date = new Date(jsonResponse.submitted_date * 1000);
+			jQuery(entry_date_cell).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate());
+
+			var entry_content_cell = document.createElement("td");
+			if (jsonResponse.edata.description.length > 80) {
+				content = jsonResponse.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+			} else {
+				content = jsonResponse.edata.description;
+			}
+
+			jQuery(entry_content_cell).append(content);
+			jQuery(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell);
+			jQuery("#artifact-" + pfartifact_id).append(entry_row);
+			if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
+				jQuery(".no-entries").remove();
+			}
 		break;
 		case "media" :
 		break;

@@ -24,8 +24,7 @@
  * @copyright Copyright 2013 Queen's University. All Rights Reserved.
  *
  */
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
 if (!defined("PARENT_INCLUDED")) {
 	exit;
 } elseif ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {

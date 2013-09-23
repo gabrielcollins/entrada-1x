@@ -70,7 +70,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						add_error("Invalid portfolio entry artifact id.");
 					}
 					
-					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim"))) {
 						$PROCESSED["description"] = $tmp_input;
 					} else {
 						$PROCESSED["description"] = "";
@@ -120,20 +120,22 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$pentry = new Models_Eportfolio_Entry();
 						
 						if ($pentry->fromArray($PROCESSED)->insert()) {
-							$pfartifact = $pentry->getPfartifact();
-							$pfolder = $pfartifact->getFolder();
-							if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
-								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+							if ($PROCESSED["filename"]) {
+								if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
+									if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+										header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+									} else {
+										echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+									}
 								} else {
-									echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+									if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+										header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+									} else {
+										echo json_encode(array("status" => "error", "data" => "Failed to save file"));
+									}
 								}
 							} else {
-								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
-								} else {
-									echo json_encode(array("status" => "error", "data" => "Failed to save file"));
-								}
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
 							}
 						} else {
 							if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
