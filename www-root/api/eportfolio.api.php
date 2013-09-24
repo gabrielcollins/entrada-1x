@@ -263,6 +263,23 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
 					}
 				break;
+				case "get-portfolio-members" :
+					if (${$request_var}["portfolio_id"] && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["portfolio_id"]) {
+						$portfolio = Models_Eportfolio::fetchRow($PROCESSED["portfolio_id"]);
+						if ($portfolio) {
+							$group = $portfolio->getGroup();
+							echo json_encode(array("status" => "success", "data" => $group));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No portfolio found with this portfolio ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "Invalid portfolio ID."));
+					}
+				break;
 				case "get-artifacts" :
 					$artifacts = Models_Eportfolio_Artifact::fetchAll();
 					if ($artifacts) {

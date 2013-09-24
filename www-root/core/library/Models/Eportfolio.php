@@ -138,6 +138,33 @@ class Models_Eportfolio {
 		return $this->group_id;
 	}
 	
+	public function getGroup() {
+		global $db;
+		
+		$query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($this->group_id)." AND `member_active` = 1";
+		$results = $db->GetAll($query);
+		if ($results) {
+			$g_members = array();
+			$i = 0;
+			foreach ($results as $result) {
+				$user = User::get($result["proxy_id"]);
+				if ($user) {
+					$g_members[$i]["proxy_id"] = $user->getID();
+					$g_members[$i]["firstname"] = $user->getFirstname();
+					$g_members[$i]["lastname"] = $user->getLastname();
+					$i++;
+				}
+			}
+			if (!empty($g_members)) {
+				return $g_members;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
 	public function getPortfolioName() {
 		return $this->portfolio_name;
 	}
