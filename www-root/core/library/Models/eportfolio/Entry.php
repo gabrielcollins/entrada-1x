@@ -27,6 +27,7 @@ class Models_Eportfolio_Entry {
 	private $pentry_id,
 			$pfartifact_id,
 			$proxy_id,
+			$type,
 			$submitted_date,
 			$reviewed_date,
 			$flag,
@@ -150,6 +151,10 @@ class Models_Eportfolio_Entry {
 	
 	public function getProxyID() {
 		return $this->proxy_id;
+	}
+	
+	public function getType() {
+		return $this->type;
 	}
 	
 	public function getSubmittedDate() {

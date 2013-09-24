@@ -80,6 +80,10 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["title"] = $tmp_input;
 					}
 					
+					if (${$request_var}["type"] && $tmp_input = clean_input(${$request_var}["type"], array("trim", "striptags"))) {
+						$PROCESSED["type"] = $tmp_input;
+					}
+					
 					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
 						$PROCESSED["filename"] = str_replace(" ", "_", $tmp_input);
 						
@@ -190,7 +194,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$pentry = new Models_Eportfolio_Folder_Artifact();
 						
 						if ($pentry->fromArray($PROCESSED)->insert()) {
-							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded())));
+							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
 						} else {
 							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry., DB said: ".$db->ErrorMsg()));
 						}
@@ -383,6 +387,24 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No artifact ID or invalid artifact ID."));
+					}
+				break;
+				case "get-entry" :
+					if (isset(${$request_var}["pentry_id"]) && $tmp_input = clean_input(${$request_var}["pentry_id"], "int")) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["pentry_id"]) {
+						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+						
+						if ($entry) {
+							$e_data = $entry->toArray();
+							echo json_encode(array("status" => "success", "data" => $e_data));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "No entry found with this ID."));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => "No entry ID or invalid entry ID."));
 					}
 				break;
 			}

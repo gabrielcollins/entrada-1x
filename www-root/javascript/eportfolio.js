@@ -85,9 +85,10 @@ jQuery(function($) {
 			var file = $("#media-entry-upload").prop("files");
 
 			fd.append("method", "create-entry");
-			fd.append("title", $("#media-entry-title").val());
-			fd.append("description", $("#media-entry-description").val());
-			fd.append("pfartifact_id", $("#pfartifact_id").val());
+			fd.append("title", jQuery("#media-entry-title").val());
+			fd.append("description", jQuery("#entry-description").val());
+			fd.append("pfartifact_id", jQuery("#pfartifact_id").val());
+			fd.append("type", "file");
 			fd.append("file", file[0]);
 
 			xhr.open('POST', ENTRADA_URL + "/api/eportfolio.api.php", true);
@@ -160,11 +161,11 @@ jQuery(function($) {
 			break;
 			case "artifact" :
 			case "reflection" :
-				var method = (type == "reflection" || type == "media" ? "create-entry&pfartifact_id=" + pfartifact_id : "create-artifact&pfolder_id=" + pfolder_id);
+				var method = (type == "reflection" || type == "file" ? "create-entry&pfartifact_id=" + pfartifact_id : "create-artifact&pfolder_id=" + pfolder_id);
 				$.ajax({
 					url : ENTRADA_URL + "/api/eportfolio.api.php",
 					type : "POST",
-					data : "method=" + method +  "&" + $("#portfolio-form").serialize(),
+					data : "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
 					success: function(data) {
 						console.log(data);
 						var jsonResponse = JSON.parse(data);
@@ -183,7 +184,11 @@ jQuery(function($) {
 		e.preventDefault();
 	});
 
-	$("#portfolio-modal").on("hide", function () {
+	jQuery("#portfolio-modal").on("hide", function () {
+		if (jQuery("#entry-description").length && jQuery("#entry-description").hasClass("reflection")) {
+			jQuery('#entry-description').ckeditorGet().destroy();
+		}
+		
 		if ($("#portfolio-form .control-group").length) {
 			$(".control-group").remove();
 		}
@@ -254,9 +259,12 @@ function getEntries (pfartifact_id) {
 					var delete_td = document.createElement("td");
 					var entry_date_td = document.createElement("td");
 					var entry_content_td = document.createElement("td");
+					var entry_date_a = document.createElement("a");
+					var entry_content_a = document.createElement("a");
 
 					// Append the date to the date cell
-					jQuery(entry_date_td).html(format_date(entry.submitted_date, "yyyy-mm-dd"));
+					jQuery(entry_date_a).html(format_date(entry.submitted_date, "yyyy-mm-dd")).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+					jQuery(entry_date_td).append(entry_date_a);
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
 					if (entry._edata.hasOwnProperty("description")) {
@@ -265,11 +273,13 @@ function getEntries (pfartifact_id) {
 						if (entry._edata.description != null) {
 							description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
 						}
-						jQuery(entry_content_td).html(description);
+						jQuery(entry_content_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_content_td).append(entry_content_a);
 					} 
 
 					if (entry._edata.hasOwnProperty("filename")) {
-						jQuery(entry_content_td).html("<a href=\"" + ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + entry.pentry_id + "\">" + entry._edata.filename + "</a>");
+						jQuery(entry_content_a).html(entry._edata.filename);
+						jQuery(entry_content_td).append(entry_content_a);
 					}
 
 					// Create delete button and icon
@@ -284,10 +294,18 @@ function getEntries (pfartifact_id) {
 					jQuery(delete_td).append(delete_button);
 
 					// Append cells to the enrty row
-					jQuery(entry_row).append(delete_td).append(entry_date_td).append(entry_content_td);
+					jQuery(entry_row).append(delete_td).append(entry_date_td).append(entry_content_td).attr("data-id", entry.pentry_id);
 
 					// Append entry row to appropriate artifact
 					jQuery("#artifact-" + entry.pfartifact_id).append(entry_row);
+				});
+				
+				jQuery("#artifact-" + pfartifact_id).on("click", ".edit-entry", function (e) {
+					e.preventDefault();
+					var pentry_id = jQuery(this).parent().parent().data("id");
+					jQuery("#method").attr("value", jQuery(this).data("type"));
+					jQuery("#save-button").attr("data-type", "edit-" + jQuery(this).data("type"));
+					populateEntryForm(pfartifact_id, pentry_id);
 				});
 			} else {
 				// Create error row and cell
@@ -367,31 +385,41 @@ function entryForm (pfartifact_id) {
 	// Add appropriate form controls depending on the selected content type
 	var method = jQuery("#method").val();
 	switch (method) {
-		case "media-entry" :
+		
+		case "file-entry" :
 			var description_control_group = document.createElement("div");
 			jQuery(description_control_group).addClass("control-group");
 			var description_controls = document.createElement("div");
 			jQuery(description_controls).addClass("controls");
 			var description_textarea = document.createElement("textarea");
-			jQuery(description_textarea).attr({name: "description", id: "media-entry-description"}).addClass("input-large");
+			jQuery(description_textarea).attr({name: "description", id: "entry-description"}).addClass("input-large");
 			var description_label = document.createElement("label");
-			jQuery(description_label).html("Description:").attr("for", "media-entry-description").addClass("control-label");
+			jQuery(description_label).html("Description:").attr("for", "entry-description").addClass("control-label");
 			jQuery(description_controls).append(description_textarea);
 			jQuery(description_control_group).append(description_label).append(description_controls);
-			jQuery(entry_label).html("Attach File:").attr("for", "media-entry-upload");
-			var entry_input = document.createElement("input");
-			jQuery(entry_input).attr({type: "file", id: "media-entry-upload", name: "file"});
+			if (jQuery("#save-button").attr("data-type") == "edit-file-entry") {
+				jQuery(entry_label).html("File Name:").attr("for", "media-entry-upload");
+				var entry_input = document.createElement("label");
+				jQuery(entry_input).attr({id: "media-entry-upload", name: "file"}).addClass("control-label");
+			} else {
+				jQuery(entry_label).html("Attach File:").attr("for", "media-entry-upload");
+				var entry_input = document.createElement("input");
+				jQuery(entry_input).attr({type: "file", id: "media-entry-upload", name: "file"});
+			}
+			
 		break;
 		case "reflection-entry" :
 			jQuery(entry_label).html("Reflection Body:").attr("for", "reflection-entry");
 			var entry_input = document.createElement("textarea");
-			jQuery(entry_input).attr({id: "reflection-entry", name: "description"});
+			jQuery(entry_input).attr({id: "entry-description", name: "description", "class": "reflection"});
 		break;
 	}
 	jQuery(entry_controls).append(entry_input);
 	jQuery(entry_control_group).append(entry_label).append(entry_controls);
 	jQuery("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group).append(pfartifact_id_input);
-	jQuery("#reflection-entry").ckeditor();
+	if (jQuery("#entry-description").hasClass("reflection")) {
+		jQuery("#entry-description").ckeditor();
+	}
 }
 
 function appendArtifact (pfartifact_id, artifact_title) {
@@ -434,7 +462,7 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	// Attach click event to reflection and media links to update the contents of the portfolio-modal
 	jQuery(artifact_option_reflection_a).on("click", function (e) {
 		e.preventDefault();
-		jQuery("#method").attr("value", "reflection-entry").attr("name", "method");
+		jQuery("#method").attr("value", "reflection-entry");
 		jQuery(".modal-header h3").html("Add Reflection");
 		jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);
@@ -443,7 +471,7 @@ function appendArtifact (pfartifact_id, artifact_title) {
 
 	jQuery(artifact_option_media_a).on("click", function (e) {
 		e.preventDefault();
-		jQuery("#method").attr("value", "media-entry").attr("name", "method");
+		jQuery("#method").attr("value", "file-entry");
 		jQuery(".modal-header h3").html("Add Media");
 		jQuery("#save-button").html("Save Media").attr("data-type", "file");
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);
@@ -497,6 +525,9 @@ function appendArtifact (pfartifact_id, artifact_title) {
 }
 
 function appendContent (type, jsonResponse, pfartifact_id) {
+	if (jQuery("#display-notice-box-modal").length) {
+		jQuery("#msgs").empty();
+	}
 	switch (type) {
 		case "artifact" :
 			var artifact_title = jQuery("#artifact-title").val();
@@ -511,12 +542,15 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 			var entry_row = document.createElement("tr");			
 			var entry_delete_cell = document.createElement("td");
 			var entry_delete_button = document.createElement("button");
+			var entry_date_a =  document.createElement("a");
+			var entry_content_a =  document.createElement("a");
 			jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
 			jQuery(entry_delete_cell).append(entry_delete_button);
 
 			var entry_date_cell = document.createElement("td");
 			var date = new Date(jsonResponse.submitted_date * 1000);
-			jQuery(entry_date_cell).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate());
+			jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+			jQuery(entry_date_cell).append(entry_date_a);
 
 			var entry_content_cell = document.createElement("td");
 			if (jsonResponse.edata.description.length > 80) {
@@ -524,9 +558,9 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 			} else {
 				content = jsonResponse.edata.description;
 			}
-
-			jQuery(entry_content_cell).append(content);
-			jQuery(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell);
+			jQuery(entry_content_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+			jQuery(entry_content_cell).append(entry_content_a);
+			jQuery(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell).attr("data-id", jsonResponse.pentry_id);
 			jQuery("#artifact-" + pfartifact_id).append(entry_row);
 			if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
 				jQuery(".no-entries").remove();
@@ -535,4 +569,42 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 		case "media" :
 		break;
 	}
+}
+
+function populateEntryForm(pfartifact_id, pentry_id) {
+	entryForm(pfartifact_id);
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-entry&pentry_id=" + pentry_id,
+		type: 'GET',
+		async: false,
+		success:function (data) {
+			var jsonResponse = JSON.parse(data);
+			if (jsonResponse.status === "success") {
+				jQuery("#media-entry-title").val(jsonResponse.data._edata.title);
+				jQuery("#entry-description").val(jsonResponse.data._edata.description);
+				switch (jsonResponse.data.type) {
+					case "reflection" :
+						jQuery(".modal-header h3").html("Edit Reflection");
+					break;
+					case "file" :
+						jQuery(".modal-header h3").html("Edit Media");
+						jQuery("#media-entry-upload").html(jsonResponse.data._edata.filename);
+						var control_group = document.createElement("div");
+						jQuery(control_group).addClass("control-group");
+						var controls = document.createElement("div");
+						jQuery(controls).addClass("controls");
+						var download_label = document.createElement("label");
+						jQuery(download_label).css("width", "150px").addClass("control-label");
+						var file_download_a = document.createElement("a");
+						jQuery(file_download_a).html("<i class=\"icon-download-alt icon-white\"></i> Download File").attr("href", ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + jsonResponse.data.pentry_id).addClass("btn btn-success");
+						jQuery(controls).append(file_download_a);
+						jQuery(control_group).append(download_label).append(controls);
+						jQuery("#portfolio-form").append(control_group);
+					break;
+				}
+			}
+		}	
+	});
+	
 }
