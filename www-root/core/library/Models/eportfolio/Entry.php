@@ -194,7 +194,7 @@ class Models_Eportfolio_Entry {
 		return $this->active;
 	}
 	
-	public function getUpdateDate() {
+	public function getUpdatedDate() {
 		return $this->updated_date;
 	}
 	

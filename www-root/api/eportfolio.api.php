@@ -85,10 +85,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					}
 					
 					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
-						$PROCESSED["filename"] = str_replace(" ", "_", $tmp_input);
+						$PROCESSED["filename"] = preg_replace('/[^a-zA-Z0-9-_\.]/', '', str_replace(" ", "-", trim($tmp_input)));
 						
 						$allowed_mime_types = array(
-							"image/jpeg", "image/png", "application/pdf", "application/x-pdf", "application/excel", "application/vnd.ms-excel", "application/msword", "application/mspowerpoint", "application/vnd.ms-powerpoint", "text/richtext", "application/rtf", "application/x-rtf"
+							"image/jpeg", "image/png", "application/pdf", 
+							"application/x-pdf", "application/excel", 
+							"application/vnd.ms-excel", "application/msword", 
+							"application/mspowerpoint", "application/vnd.ms-powerpoint", 
+							"text/richtext", "application/rtf", "application/x-rtf"
 						);
 						
 						$finfo = new finfo(FILEINFO_MIME);

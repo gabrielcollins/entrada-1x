@@ -56,10 +56,11 @@ if((isset($_SESSION["isAuthorized"])) && ($_SESSION["isAuthorized"])) {
 		$finfo = $finfo = new finfo(FILEINFO_MIME);
 		
 		$edata = $pentry->getEdataDecoded();
+		$filename = preg_replace('/[^a-zA-Z0-9-_\.]/', '', str_replace(" ", "-", trim($edata["filename"])));
 		
 		header('Content-Description: File Transfer');
 		header('Content-Type: '.$finfo->file($file_realpath));
-		header('Content-Disposition: attachment; filename='.$edata["filename"]);
+		header('Content-Disposition: attachment; filename='.strtolower($filename));
 		header('Content-Transfer-Encoding: binary');
 		header('Expires: 0');
 		header('Cache-Control: must-revalidate');

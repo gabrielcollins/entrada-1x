@@ -74,6 +74,9 @@ if (!defined("PARENT_INCLUDED")) {
 		<div id="msgs"></div>
 		<div class="artifact-container"></div>
 	</div>
+	<div class="pull-right">
+		<a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio?section=export-portfolio" class="btn btn-primary">Export My Portfolio</a>
+	</div>
 	<div class="modal hide fade" id="portfolio-modal" style="width:700px;">
 		<div class="modal-header">
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -91,41 +94,5 @@ if (!defined("PARENT_INCLUDED")) {
 		</div>
 	</div>
 	<?php
-	/*
-	if ($folders) {
-		echo "<ul>";
-		foreach ($folders as $folder) {
-			echo "<li>";
-			echo "<h3>".$folder->getTitle()."<a href=\"#\" data-pfolder-id=\"".$folder->getID()."\" class=\"add-artifact\"><i class=\"icon-plus-sign\"></i></a></h3>";
-			$artifacts = $folder->getArtifacts($ENTRADA_USER->getID());
-			if ($artifacts) {
-				echo "<ul>";
-				foreach ($artifacts as $artifact) {
-					echo "<li>";
-					echo "<h4>".$artifact->getTitle()."<a href=\"#\" data-pfartifact-id=\"".$artifact->getID()."\" class=\"add-entry\"><i class=\"icon-plus\"></i></a></h4>";
-					$entries = $artifact->getEntries($ENTRADA_USER->getID());
-					if ($entries) {
-						echo "<ul>";
-						foreach ($entries as $entry) {
-							echo "<li>";
-							$edata = $entry->getEdataDecoded(); 
-							if (isset($edata["filename"]) && !empty($edata["filename"])) {
-								echo "<a href=\"#\">".$edata["filename"]."</a>";
-							} else if (isset($edata["description"]) && !empty($edata["description"])) {
-								echo $edata["description"];
-							}
-							echo "</li>";
-						}
-						echo "</ul>";
-					}
-					echo "</li>";
-				}
-				echo "</ul>";
-			}
-			echo "</li>";
-		}
-		echo "</ul>";
-	}
-	*/
 }
 
