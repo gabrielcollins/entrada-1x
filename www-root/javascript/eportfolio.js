@@ -26,9 +26,10 @@ jQuery(function($) {
 		
 		e.preventDefault();
 	});
-	jQuery("#create-artifact").on("click", function () {
-		jQuery(".modal-header h3").html("Create Artifact");
-		jQuery("#save-button").html("Save Artifact").attr("data-type", "artifact");
+	
+	$("#create-artifact").on("click", function () {
+		$(".modal-header h3").html("Create Artifact");
+		$("#save-button").html("Save Artifact").attr("data-type", "artifact");
 		artifactForm();
 	});
 	

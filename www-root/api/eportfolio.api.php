@@ -276,10 +276,15 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["portfolio_id"] = $tmp_input;
 					}
 					
+					$flagged = false;
+					if (${$request_var}["flagged"] && ${$request_var}["flagged"] == true) {
+						$flagged = true;
+					}
+
 					if ($PROCESSED["portfolio_id"]) {
 						$portfolio = Models_Eportfolio::fetchRow($PROCESSED["portfolio_id"]);
 						if ($portfolio) {
-							$group = $portfolio->getGroup();
+							$group = $portfolio->getGroup($flagged);
 							echo json_encode(array("status" => "success", "data" => $group));
 						} else {
 							echo json_encode(array("status" => "error", "data" => "No portfolio found with this portfolio ID."));
@@ -304,8 +309,17 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["portfolio_id"] = $tmp_input;
 					}
 
+					$flagged = false;
+					if (${$request_var}["flagged"] && ${$request_var}["flagged"] == true) {
+						$flagged = true;
+					}
+					
+					if (${$request_var}["proxy_id"] && $tmp_input = clean_input(${$request_var}["proxy_id"], "int")) {
+						$PROCESSED["proxy_id"] = $tmp_input;
+					}
+					
 					if ($PROCESSED["portfolio_id"]) {
-						$folders = Models_Eportfolio_Folder::fetchAll($PROCESSED["portfolio_id"]);
+						$folders = Models_Eportfolio_Folder::fetchAll($PROCESSED["portfolio_id"], $flagged, $PROCESSED["proxy_id"]);
 						if ($folders) {
 							$f_data = array();
 							foreach ($folders as $folder) {

@@ -41,7 +41,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."'; var PROXY_ID = '".$ENTRADA_USER->getProxyId()."';</script>";
+	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."'; var PROXY_ID = '".$ENTRADA_USER->getProxyId()."'; var FLAGGED = false;</script>";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
 	load_rte("minimal");
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
@@ -54,13 +54,18 @@ if (!defined("PARENT_INCLUDED")) {
 		function getPortfolio(portfolio_id) {
 			jQuery.ajax({
 				url: ENTRADA_URL + "/api/eportfolio.api.php",
-				data: "method=get-portfolio-members&portfolio_id=" + portfolio_id,
+				data: "method=get-portfolio-members&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true" : ""),
 				type: 'GET',
 				success:function (data) {
 					var jsonResponse = JSON.parse(data);
 					if (jsonResponse.status == "success") {
-						jQuery("#portfolio-container").html("");
+						jQuery("#user-list").html("");
 						var user_list = document.createElement("ul");
+						var back_row = document.createElement("li");
+						var back_btn = document.createElement("a");
+						jQuery(back_row).append(back_btn);
+						jQuery(user_list).append(back_row);
+						jQuery(back_btn).html("<i class=\"icon-chevron-left\"></i> Back")
 						for (var i=0; i < jsonResponse.data.length; i++) {
 							var user_row = document.createElement("li");
 							var user_link = document.createElement("a");
@@ -69,7 +74,7 @@ if (!defined("PARENT_INCLUDED")) {
 							jQuery(user_row).append(user_link);
 							jQuery(user_list).append(user_row);
 						}
-						jQuery("#portfolio-container").append(user_list);
+						jQuery("#user-list").append(user_list);
 					}
 				}
 			});
@@ -78,12 +83,11 @@ if (!defined("PARENT_INCLUDED")) {
 		function getFolders(portfolio_id) {
 			jQuery.ajax({
 				url: ENTRADA_URL + "/api/eportfolio.api.php",
-				data: "method=get-folders&portfolio_id=" + portfolio_id,
+				data: "method=get-folders&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true&proxy_id="+PROXY_ID : ""),
 				type: 'GET',
 				success:function (data) {
 					var jsonResponse = JSON.parse(data);
 					if (jsonResponse.status == "success") {
-						jQuery("#portfolio-container").html("");
 						var folder_list = document.createElement("ul");
 						jQuery.each(jsonResponse.data, function(i, v) {
 							var folder_row = document.createElement("li");
@@ -93,26 +97,60 @@ if (!defined("PARENT_INCLUDED")) {
 							jQuery(folder_row).append(folder_link);
 							jQuery(folder_list).append(folder_row);
 						});
-						jQuery("#portfolio-container").append(folder_list);
+						jQuery("#user-portfolio").append(folder_list);
 					}
 				}
 			});
 		}
 		
 		jQuery(function($) {
-			$(".portfolio-item").on("click", function (e) {
+			$("#portfolio-list, #breadcrumb").on("click", ".portfolio-item", function (e) {
 				portfolio_id = $(this).data("id");
 				getPortfolio(portfolio_id);
 				location.hash = $(this).attr("data-id");
 				
+				$("#breadcrumb").html("");
+				$("#user-portfolio").html("");
+				var span = document.createElement("span");
+				var breadcrumb_link = $(this).clone();
+				$(span).append(breadcrumb_link);
+				$("#breadcrumb").append(span);
+				
+				jQuery("#user-portfolio").html("<h1>"+$(breadcrumb_link).html()+"</h1>");
+				display_notice(["Select a learner from the menu on the left to review their portfolio."], $("#user-portfolio"), "append");
+				
 				e.preventDefault();
 			});
-			$("#portfolio-container").on("click", ".portfolio-user", function(e) {
+			$("#portfolio-container, #breadcrumb").on("click", ".portfolio-user", function(e) {
+				$(".portfolio-user").removeClass("active");
+				$(this).addClass("active");
 				PROXY_ID = $(this).data("proxy-id");
 				portfolio_id = $(this).data("portfolio-id");
+				
+				$("#breadcrumb .portfolio-user").parent().remove();
+				$("#breadcrumb .portfolio-folder").parent().remove();
+				var span = document.createElement("span");
+				var breadcrumb_link = $(this).clone();
+				$(span).append(" / ").append(breadcrumb_link);
+				$("#breadcrumb").append(span);
+				
+				jQuery("#user-portfolio").html("<h1>"+$(breadcrumb_link).html()+"</h1>");
+				
 				getFolders(portfolio_id);
+				
+				e.preventDefault();
 			});
-			$("#portfolio-container").on("click", ".portfolio-folder", function(e) {
+			$("#portfolio-container, #breadcrumb").on("click", ".portfolio-folder", function(e) {
+				
+				$("#user-portfolio").html("");
+				
+				$("#breadcrumb .portfolio-folder").parent().remove();
+				var span = document.createElement("span");
+				var breadcrumb_link = $(this).clone();
+				$(span).append(" / ").append(breadcrumb_link);
+				$("#breadcrumb").append(span);
+				$("#user-portfolio").append("<h1>" + $(breadcrumb_link).html() + "</h1>");
+				
 				var pfolder_id = $(this).data("pfolder-id");
 				var proxy_id = PROXY_ID;
 				$.ajax({
@@ -122,66 +160,157 @@ if (!defined("PARENT_INCLUDED")) {
 					success:function (data) {
 						var jsonResponse = JSON.parse(data);
 						var artifact_list = document.createElement("ul");
-						$("#portfolio-container").html("");
-						$.each(jsonResponse.data, function(i, v) {
-							var artifact_row = document.createElement("li");
-							var artifact_title = document.createElement("h3");
-							var pfartifact_id = v.pfartifact_id;
-							$(artifact_title).html(v.title);
-							var entries = document.createElement("ul");
-							$.ajax({
-								url : ENTRADA_URL + "/api/eportfolio.api.php",
-								data : "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
-								type : 'GET',
-								success : function (data) {
-									var entryJsonResponse = JSON.parse(data);
-									$.each(entryJsonResponse.data, function(i, v) {
-										var entry_row = document.createElement("li");
-										if (typeof v._edata.title != 'undefined' && v._edata.description.title > 0) {
-											$(entry_row).append("<h4>" + v._edata.title + "</h4>");
+						
+						if (typeof jsonResponse.data != "string") {
+							$.each(jsonResponse.data, function(i, v) {
+								var artifact_row = document.createElement("li");
+								var artifact_title = document.createElement("h2");
+								var pfartifact_id = v.pfartifact_id;
+								$(artifact_title).html(v.title);
+								var entries = document.createElement("ul");
+								$.ajax({
+									url : ENTRADA_URL + "/api/eportfolio.api.php",
+									data : "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
+									type : 'GET',
+									success : function (data) {
+										var entryJsonResponse = JSON.parse(data);
+										if (typeof entryJsonResponse.data != "string") {
+											$.each(entryJsonResponse.data, function(i, v) {
+												var entry_row = document.createElement("li");
+												if (typeof v._edata != 'undefined') {
+													if (typeof v._edata.title != 'undefined' && v._edata.description.title > 0) {
+														$(entry_row).append("<h3>" + v._edata.title + "</h3>");
+													}
+													if (typeof v._edata.filename != 'undefined' && v._edata.filename.length > 0) {
+														var entry_link = document.createElement("a");
+														$(entry_link).attr("href", "#").html(v._edata.filename);
+														$(entry_row).append(entry_link);
+													}
+													if (typeof v._edata.description != 'undefined' && v._edata.description.length > 0) {
+														$(entry_row).append("<div>" + v._edata.description + "</div>");
+													}
+													$(entries).append(entry_row);
+												}
+											});
+										} else {
+											$(entries).append("<div class=\"alert alert-block alert-notice\"><ul><li>" + entryJsonResponse.data + "</li></ul></div>");
 										}
-										if (typeof v._edata.filename != 'undefined' && v._edata.filename.length > 0) {
-											var entry_link = document.createElement("a");
-											$(entry_link).attr("href", "#").html(v._edata.filename);
-											$(entry_row).append(entry_link);
-										}
-										if (typeof v._edata.description != 'undefined' && v._edata.description.length > 0) {
-											$(entry_row).append("<div>" + v._edata.description + "</div>");
-										}
-										$(entries).append(entry_row);
-									});
-								}
+									}
+								});
+
+								$(artifact_row).append(artifact_title).append(entries);
+								
+								$(artifact_list).append(artifact_row);
 							});
-							
-							$(artifact_row).append(artifact_title).append(entries);
-							$(artifact_list).append(artifact_row);
-						});
-						$("#portfolio-container").append(artifact_list);
+							$("#user-portfolio").append(artifact_list);
+						} else {
+							display_notice(["The folder you are attempting to view does not have any associated artifacts. Use the manage tab to add artifacts to the folder."], $("#user-portfolio"), "append");
+						}
 					}
 				});
+				e.preventDefault();
 			});
+			$("#flag-toggle button").on("click", function(e) {
+				$("#flag-toggle button").removeClass("active");
+				$(this).addClass("active");
+				if ($(this).hasClass("flagged")) {
+					FLAGGED = true;
+				} else {
+					FLAGGED = false;
+				}
+			
+				e.preventDefault();
+			})
 		});
 	</script>
+	<style type="text/css">
+		#portfolio-container {
+			border:1px solid #DDDDDD;
+			height: 500px;
+			border-radius:5px;
+		}
+		
+		#user-list, #user-portfolio {
+			overflow-y:scroll;
+			overflow-x:hidden;
+			height: 500px;
+		}
+		
+		#user-list ul {
+			list-style: none;
+			margin:0;
+			padding:0;
+		}
+		
+		#user-list ul li {
+			margin:0px;
+			padding:0px;
+		}
+		
+		#user-list ul li a {
+			display:block;
+			padding:12px 10px;
+		}
+		
+		#user-list ul li a.active {
+			background: #f9f9f9; /* Old browsers */
+			background: -moz-linear-gradient(top,  #f9f9f9 0%, #f2f2f2 100%); /* FF3.6+ */
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f9f9f9), color-stop(100%,#f2f2f2)); /* Chrome,Safari4+ */
+			background: -webkit-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* Chrome10+,Safari5.1+ */
+			background: -o-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* Opera 11.10+ */
+			background: -ms-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* IE10+ */
+			background: linear-gradient(to bottom,  #f9f9f9 0%,#f2f2f2 100%); /* W3C */
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f9f9f9', endColorstr='#f2f2f2',GradientType=0 ); /* IE6-9 */
+			border-bottom: none;
+		}
+		
+		#user-portfolio {
+			padding-right:2.12766%;
+		}
+		
+		#user-portfolio ul {
+			list-style:none;
+			margin:0px;
+			padding:0px;
+		}
+		
+		#user-portfolio .portfolio-folder {
+			display:block;
+			padding:12px 10px;
+		}
+		
+	</style>
 	<ul class="nav nav-tabs">
-		<li class="active"><a href="#">Manage Learners</a></li>
-		<li><a href="#">Manage Portfolios</a></li>
+		<li class="active"><a href="#">Review</a></li>
+		<li><a href="#">Manage</a></li>
+		<li><a href="#">Advisors</a></li>
     </ul>
-	<div id="breadcrumb">
-		<a href="#">Class of 2016</a> / <a href="#">Bowen, Milton</a> / Collaborator
+	<div class="row-fluid space-below">
+		<div class="btn-group">
+			<a class="btn btn-primary">Year</a>
+			<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+			<ul class="dropdown-menu" id="portfolio-list">
+			<?php foreach ($eportfolios as $eportfolio) { ?>
+				<li>
+					<a href="#" data-id="<?php echo $eportfolio->getID(); ?>" class="portfolio-item"><?php echo $eportfolio->getPortfolioName(); ?></a>
+				</li>
+			<?php } ?>
+			</ul>
+		</div>
+		<div class="btn-group" id="flag-toggle">
+			<button type="button" class="btn active">All</button>
+			<button type="button" class="btn flagged">Flagged</button>
+		</div>
 	</div>
-	<div class="btn-group">
-		<a class="btn btn-primary">Portfolios</a>
-		<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
-		<ul class="dropdown-menu" id="portfolio-list">
-		<?php foreach ($eportfolios as $eportfolio) { ?>
-			<li>
-				<a href="#" data-id="<?php echo $eportfolio->getID(); ?>" class="portfolio-item"><?php echo $eportfolio->getPortfolioName(); ?></a>
-			</li>
-		<?php } ?>
-		</ul>
+	<div id="breadcrumb" class="row-fluid space-below"></div>
+	<div id="portfolio-container" class="row-fluid">
+		<div id="user-list" class="span3"></div>
+		<div id="user-portfolio" class="span9">
+			<h1>Portfolio</h1>
+			<?php echo display_generic("Please select a year from the dropdown above to get started."); ?>
+		</div>
 	</div>
-	<div id="portfolio-container"></div>
-	<div id="entry-modal">
+	<div id="entry-modal" class="modal hide">
 		<div class="modal-header">
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 			<h3>View Entry</h3>

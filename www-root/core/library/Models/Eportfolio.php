@@ -138,10 +138,20 @@ class Models_Eportfolio {
 		return $this->group_id;
 	}
 	
-	public function getGroup() {
+	public function getGroup($flagged = false) {
 		global $db;
 		
-		$query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($this->group_id)." AND `member_active` = 1";
+		if ($flagged) {
+			$query = "SELECT a.`proxy_id`
+						FROM `group_members` AS a 
+						JOIN `portfolio_entries` AS b
+						ON a.`proxy_id` = b.`proxy_id`
+						WHERE a.`group_id` = ".$db->qstr($this->group_id)." AND a.`member_active` = 1
+						AND b.`flag` = 1
+						GROUP BY a.`gmember_id`, a.`proxy_id`";
+		} else {
+			$query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($this->group_id)." AND `member_active` = 1";
+		}
 		$results = $db->GetAll($query);
 		if ($results) {
 			$g_members = array();

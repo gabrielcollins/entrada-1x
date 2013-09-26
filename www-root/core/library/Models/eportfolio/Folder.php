@@ -72,10 +72,23 @@ class Models_Eportfolio_Folder {
 		}
 	}
 	
-	public static function fetchAll($portfolio_id = NULL, $active = 1) {
+	public static function fetchAll($portfolio_id = NULL, $flagged = false, $proxy_id = NULL, $active = 1) {
 		global $db;
 		
 		$query = "SELECT * FROM `portfolio_folders` WHERE ".(!is_null($portfolio_id) ? " `portfolio_id` = " .$db->qstr($portfolio_id) . " AND " : "")." `active` = ?";
+		
+		if ($flagged) {
+			$query = "SELECT a.*, c.`proxy_id`
+						FROM `portfolio_folders` AS a
+						LEFT JOIN `portfolio_folder_artifacts` AS b
+						ON a.`pfolder_id` = b.`pfolder_id`
+						LEFT JOIN `portfolio_entries` AS c
+						ON b.`pfartifact_id` = c.`pfartifact_id`
+						WHERE c.`flag` = 1
+						AND c.`proxy_id` = ".$db->qstr($proxy_id)."
+						AND a.`active` = ?";
+		}
+		
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
