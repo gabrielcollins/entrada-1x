@@ -193,9 +193,9 @@ if (!defined("PARENT_INCLUDED")) {
 													
 													if (typeof v.comments != 'undefined') {
 														var comment_container = document.createElement("div");
-														$(comment_container).addClass("comments well space-above").html("<strong>Comments:</strong><hr />");
+														$(comment_container).addClass("comments well space-above").html("<strong>Comments:</strong><hr />").attr("id", "comments-"+v.entry.pentry_id);
 														$.each(v.comments, function(c_i, comment) {
-															$(comment_container).append("&ldquo;"+comment.comment+"&rdquo;<br /><span class=\"muted content-small\">"+comment.commentor+" - "+comment.submitted_date+"</span><hr />");
+															$(comment_container).append("<div class=\"comment\">&ldquo;"+comment.comment+"&rdquo;<br /><span class=\"muted content-small\">"+comment.commentor+" - "+comment.submitted_date + "</span> - <i class=\"icon-trash comment-delete\" style=\"cursor:pointer;\" data-pecomment-id=\""+comment.pecomment_id+"\"></i><hr /></div>");
 														});
 														$(entry_row).append(comment_container);
 													}
@@ -204,14 +204,17 @@ if (!defined("PARENT_INCLUDED")) {
 													$(entry_controls).addClass("row-fluid space-above");
 													
 													var flag_btn = document.createElement("button");
-													$(flag_btn).addClass("btn btn-danger btn-mini pull-right add-flag space-right").attr("data-pentry-id", v.pentry_id).html("<i class=\"icon-flag icon-white\"></i> Flag")
+													$(flag_btn).addClass("btn btn-danger btn-mini pull-right add-flag space-right" + (v.entry.flag == 1 ? " flagged" : "")).attr("data-pentry-id", v.entry.pentry_id).html("<i class=\"icon-flag icon-white\"></i> " + (v.entry.flag == 1 ? "Flagged" : "Flag"))
 													
+													var review_btn = document.createElement("button");
+													$(review_btn).addClass("btn btn-mini pull-right add-review space-right" + (v.entry.reviewed_date > 0 ? " reviewed" : "")).attr("data-pentry-id", v.entry.pentry_id).html("<i class=\"icon-check\"></i> " + (v.entry.reviewed_date > 0 ? "Reviewed" : "Review"))
 													
 													var comment_btn = document.createElement("button");
-													$(comment_btn).addClass("btn btn-success btn-mini pull-right add-comment").attr("data-pentry-id", v.pentry_id).html("<i class=\"icon-plus-sign icon-white\"></i> Add Comment")
+													$(comment_btn).addClass("btn btn-success btn-mini pull-right add-comment").attr("data-pentry-id", v.entry.pentry_id).html("<i class=\"icon-plus-sign icon-white\"></i> Add Comment")
 													
 													$(entry_controls).append(comment_btn);
 													$(entry_controls).append(flag_btn);
+													$(entry_controls).append(review_btn);
 													
 													$(entry_row).append(entry_controls);
 													$(entries).append(entry_row);
@@ -272,7 +275,6 @@ if (!defined("PARENT_INCLUDED")) {
 				
 				e.preventDefault();
 			});
-			
 			$("#modal-form").on("submit", function(e) {
 				var form = $(this);
 				
@@ -283,7 +285,8 @@ if (!defined("PARENT_INCLUDED")) {
 					success: function(data) {
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
-							
+							var comment = "&ldquo;"+jsonResponse.data.comment+"&rdquo;<br /><span class=\"muted content-small\">"+jsonResponse.data.commentor+" - "+jsonResponse.data.submitted_date+"</span><hr />";
+							$("#comments-"+jsonResponse.data.pentry_id).append(comment);
 						}
 					}
 				});
@@ -292,6 +295,63 @@ if (!defined("PARENT_INCLUDED")) {
 			});
 			$("#entry-modal .modal-footer .btn-primary").on("click", function(e) {
 				$("#modal-form").submit();
+				e.preventDefault();
+			});
+			$("#user-portfolio").on("click", ".add-flag", function(e) {
+				var btn = $(this);
+				var action = "flag";
+				if (btn.hasClass("flagged")) {
+					action = "unflag";
+				}
+				$.ajax({
+				url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=pentry-flag&action="+action+"&pentry_id=" + btn.data("pentry-id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.data.flag == 1) {
+							btn.addClass("flagged").html("<i class=\"icon-flag icon-white\"></i> Flagged");
+						} else {
+							btn.removeClass("flagged").html("<i class=\"icon-flag icon-white\"></i> Flag");
+						}
+					}
+				});
+				e.preventDefault();
+			});
+			$("#user-portfolio").on("click", ".add-review", function(e) {
+				var btn = $(this);
+				var action = "review";
+				if (btn.hasClass("reviewed")) {
+					action = "unreview";
+				}
+				$.ajax({
+				url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=pentry-review&action="+action+"&pentry_id=" + btn.data("pentry-id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.data.reviewed_date > 0) {
+							btn.addClass("reviewed").html("<i class=\"icon-check\"></i> Reviewed");
+						} else {
+							btn.removeClass("reviewed").html("<i class=\"icon-check\"></i> Review");
+						}
+					}
+				});
+				e.preventDefault();
+			});
+			$("#user-portfolio").on("click", ".comment-delete", function(e) {
+				var btn = $(this);
+				$.ajax({
+				url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=delete-pentry-comment&pecomment_id=" + btn.data("pecomment-id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							btn.closest(".comment").remove();
+						}
+					}
+				});
 				e.preventDefault();
 			});
 		});

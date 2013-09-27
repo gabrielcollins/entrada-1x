@@ -272,10 +272,90 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$comment = new Models_Eportfolio_Entry_Comment($PROCESSED);
 						
 						if ($comment->insert()) {
-							echo json_encode(array("status" => "success", "data" => $comment->toArray()));
+							$comment_data = $comment->toArray();
+							$commentor = User::get($comment->getProxyID());
+							$comment_data["commentor"] = $commentor->getFullname(false);
+							$comment_data["submitted_date"] = date("Y-m-d H:i", $comment_data["submitted_date"]);
+							echo json_encode(array("status" => "success", "data" => $comment_data));
 						} else {
 							echo json_encode(array("status" => "error", "data" => "An error occurred when attempting to store the comment."));
 						}
+					}
+				break;
+				case "delete-pentry-comment" :
+					if(${$request_var}["pecomment_id"] && $tmp_input = clean_input(${$request_var}["pecomment_id"], array("int"))) {
+						$PROCESSED["pecomment_id"] = $tmp_input;
+					} else {
+						add_error("An error occured attempting to attach comment to entry.");
+					}
+					
+					if (!$ERROR) {
+						$comment = Models_Eportfolio_Entry_Comment::fetchRow($PROCESSED["pecomment_id"]);
+						$arr = array("active" => "0");
+						if ($comment->fromArray($arr)->update()) {
+							echo json_encode(array("status" => "success", "data" => $comment->toArray()));
+						}
+					}
+				break;
+				case "pentry-flag" :
+					if(${$request_var}["action"] && $tmp_input = clean_input(${$request_var}["action"], array("trim", "striptags"))) {
+						$PROCESSED["action"] = $tmp_input;
+					} else {
+						add_error("Invalid pentry_id.");
+					}
+					
+					if(${$request_var}["pentry_id"] && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					} else {
+						add_error("Invalid pentry_id.");
+					}
+					
+					if (!$ERROR) {
+						
+						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+						
+						if ($PROCESSED["action"] == "flag") {
+							$flag["flag"] = 1;
+						} else {
+							$flag["flag"] = "0";
+						}
+						$flag["flagged_by"] = $ENTRADA_USER->getID();
+						$flag["flagged_date"] = time();
+						
+						if ($entry->fromArray($flag)->update()) {
+							echo json_encode(array("status" => "success", "data" => $entry->toArray()));
+						}
+						
+					}
+				break;
+				case "pentry-review" :
+					if(${$request_var}["action"] && $tmp_input = clean_input(${$request_var}["action"], array("trim", "striptags"))) {
+						$PROCESSED["action"] = $tmp_input;
+					} else {
+						add_error("Invalid action specified.");
+					}
+					
+					if(${$request_var}["pentry_id"] && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					} else {
+						add_error("Invalid pentry_id.");
+					}
+					
+					if (!$ERROR) {
+						
+						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+						
+						if ($PROCESSED["action"] == "review") {
+							$review["reviewed_date"] = time();
+						} else {
+							$review["reviewed_date"] = 0;
+						}
+						$review["reviewed_by"] = $ENTRADA_USER->getID();
+						
+						if ($entry->fromArray($review)->update()) {
+							echo json_encode(array("status" => "success", "data" => $entry->toArray()));
+						}
+						
 					}
 				break;
 				case "create-portfolio" :

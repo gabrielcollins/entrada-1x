@@ -30,6 +30,7 @@ class Models_Eportfolio_Entry {
 			$type,
 			$submitted_date,
 			$reviewed_date,
+			$reviewed_by,
 			$flag,
 			$flagged_by,
 			$flagged_date,
@@ -120,7 +121,16 @@ class Models_Eportfolio_Entry {
 	
 	public function update() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_entries`", $this->toArray(), "UPDATE", "`pentry_id` = ".$db->qstr($this->getID()))) {
+		
+		$arr = array();
+		$class_vars = get_class_vars(get_called_class());
+		if (isset($class_vars)) {
+			foreach ($class_vars as $class_var => $value) {
+				$arr[$class_var] = $this->$class_var;
+			}
+		}
+		
+		if ($db->AutoExecute("`portfolio_entries`", $arr, "UPDATE", "`pentry_id` = ".$db->qstr($this->getID()))) {
 			return true;
 		} else {
 			return false;
