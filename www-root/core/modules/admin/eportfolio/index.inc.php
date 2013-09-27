@@ -177,18 +177,43 @@ if (!defined("PARENT_INCLUDED")) {
 										if (typeof entryJsonResponse.data != "string") {
 											$.each(entryJsonResponse.data, function(i, v) {
 												var entry_row = document.createElement("li");
-												if (typeof v._edata != 'undefined') {
-													if (typeof v._edata.title != 'undefined' && v._edata.description.title > 0) {
-														$(entry_row).append("<h3>" + v._edata.title + "</h3>");
+												$(entry_row).addClass("well");
+												if (typeof v.entry._edata != 'undefined') {
+													if (typeof v.entry._edata.title != 'undefined' && v.entry._edata.description.title > 0) {
+														$(entry_row).append("<h3>" + v.entry._edata.title + "</h3>");
 													}
-													if (typeof v._edata.filename != 'undefined' && v._edata.filename.length > 0) {
+													if (typeof v.entry._edata.filename != 'undefined' && v.entry._edata.filename.length > 0) {
 														var entry_link = document.createElement("a");
-														$(entry_link).attr("href", "#").html(v._edata.filename);
+														$(entry_link).attr("href", "#").html(v.entry._edata.filename);
 														$(entry_row).append(entry_link);
 													}
-													if (typeof v._edata.description != 'undefined' && v._edata.description.length > 0) {
-														$(entry_row).append("<div>" + v._edata.description + "</div>");
+													if (typeof v.entry._edata.description != 'undefined' && v.entry._edata.description.length > 0) {
+														$(entry_row).append("<div>" + v.entry._edata.description + "</div>");
 													}
+													
+													if (typeof v.comments != 'undefined') {
+														var comment_container = document.createElement("div");
+														$(comment_container).addClass("comments well space-above").html("<strong>Comments:</strong><hr />");
+														$.each(v.comments, function(c_i, comment) {
+															$(comment_container).append("&ldquo;"+comment.comment+"&rdquo;<br /><span class=\"muted content-small\">"+comment.commentor+" - "+comment.submitted_date+"</span><hr />");
+														});
+														$(entry_row).append(comment_container);
+													}
+													
+													var entry_controls = document.createElement("div");
+													$(entry_controls).addClass("row-fluid space-above");
+													
+													var flag_btn = document.createElement("button");
+													$(flag_btn).addClass("btn btn-danger btn-mini pull-right add-flag space-right").attr("data-pentry-id", v.pentry_id).html("<i class=\"icon-flag icon-white\"></i> Flag")
+													
+													
+													var comment_btn = document.createElement("button");
+													$(comment_btn).addClass("btn btn-success btn-mini pull-right add-comment").attr("data-pentry-id", v.pentry_id).html("<i class=\"icon-plus-sign icon-white\"></i> Add Comment")
+													
+													$(entry_controls).append(comment_btn);
+													$(entry_controls).append(flag_btn);
+													
+													$(entry_row).append(entry_controls);
 													$(entries).append(entry_row);
 												}
 											});
@@ -221,6 +246,54 @@ if (!defined("PARENT_INCLUDED")) {
 			
 				e.preventDefault();
 			})
+			$("#user-portfolio").on("click", ".add-comment", function(e) {
+
+				$("#entry-modal .modal-header h3").html("Add Comment");
+				$("#entry-modal .modal-footer .btn-primary").html("Save Comment");
+
+				var comment_row = document.createElement("div");
+				$(comment_row).addClass("control-group");
+				
+				var comment_label = document.createElement("label");
+				$(comment_label).addClass("control-label form-required").attr("for", "entry-comment").html("Comment");
+				
+				$(comment_row).append(comment_label);
+				
+				var comment_box_container = document.createElement("div");
+				$(comment_box_container).addClass("controls");
+				var comment_box = document.createElement("textarea");
+				$(comment_box).attr("id", "entry-comment").attr("name", "entry-comment");
+				
+				$(comment_box_container).append(comment_box);
+				$(comment_row).append(comment_box_container);
+				
+				$("#entry-modal .modal-body #modal-form").append(comment_row).append("<input type=\"hidden\" name=\"pentry_id\" value=\""+$(this).data("pentry-id")+"\" />");
+				$("#entry-modal").modal("show");
+				
+				e.preventDefault();
+			});
+			
+			$("#modal-form").on("submit", function(e) {
+				var form = $(this);
+				
+				$.ajax({
+				url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=add-pentry-comment&" + form.serialize(),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							
+						}
+					}
+				});
+
+				e.preventDefault();
+			});
+			$("#entry-modal .modal-footer .btn-primary").on("click", function(e) {
+				$("#modal-form").submit();
+				e.preventDefault();
+			});
 		});
 	</script>
 	<style type="text/css">
@@ -279,6 +352,10 @@ if (!defined("PARENT_INCLUDED")) {
 			padding:12px 10px;
 		}
 		
+		.well.comments {
+			background:#fff;
+		}
+		
 	</style>
 	<ul class="nav nav-tabs">
 		<li class="active"><a href="#">Review</a></li>
@@ -315,7 +392,9 @@ if (!defined("PARENT_INCLUDED")) {
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 			<h3>View Entry</h3>
 		</div>
-		<div class="modal-body"></div>
+		<div class="modal-body">
+			<form action="" method="POST" class="form-horizontal" id="modal-form"></form>
+		</div>
 		<div class="modal-footer">
 			<a href="#" class="btn">Close</a>
 			<a href="#" class="btn btn-primary">Save changes</a>

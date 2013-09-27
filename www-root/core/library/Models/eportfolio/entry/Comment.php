@@ -64,8 +64,8 @@ class Models_Eportfolio_Entry_Comment {
 		$query = "SELECT * FROM `portfolio_entry_comments` WHERE `pecomment_id` = ? AND `active` = ?";
 		$result = $db->GetRow($query, array($pecomment_id, $active));
 		if ($result) {
-			$folder = new self($result);
-			return $folder;
+			$comment = new self($result);
+			return $comment;
 		} else {
 			return false;
 		}
@@ -77,11 +77,11 @@ class Models_Eportfolio_Entry_Comment {
 		$query = "SELECT * FROM `portfolio_entry_comments` WHERE ".(!is_null($pentry_id) ? " `pentry_id` = " . $db->qstr($pentry_id) . " AND " : "")." `active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
-			$portfolios = array();
+			$comments = array();
 			foreach ($results as $result) {
-				$portfolios[] = new self($result);
+				$comments[] = new self($result);
 			}
-			return $portfolios;
+			return $comments;
 		} else {
 			return false;
 		}

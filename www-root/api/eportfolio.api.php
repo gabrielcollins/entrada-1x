@@ -247,6 +247,37 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
 					}
 				break;
+				case "add-pentry-comment" :
+					if(${$request_var}["entry-comment"] && $tmp_input = clean_input(${$request_var}["entry-comment"], array("trim", "allowedtags"))) {
+						$PROCESSED["comment"] = $tmp_input;
+					} else {
+						add_error("The comment field can not be empty.");
+					}
+					
+					if(${$request_var}["pentry_id"] && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					} else {
+						add_error("An error occured attempting to attach comment to entry.");
+					}
+					
+					if (!$ERROR) {
+						
+						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
+						$PROCESSED["submitted_date"] = time();
+						$PROCESSED["flag"] = 0;
+						$PROCESSED["active"] = 1;
+						$PROCESSED["updated_date"] = date(time());
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						
+						$comment = new Models_Eportfolio_Entry_Comment($PROCESSED);
+						
+						if ($comment->insert()) {
+							echo json_encode(array("status" => "success", "data" => $comment->toArray()));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "An error occurred when attempting to store the comment."));
+						}
+					}
+				break;
 				case "create-portfolio" :
 					
 				break;
@@ -396,8 +427,22 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$artifact_entries = Models_Eportfolio_Entry::fetchAll($PROCESSED["pfartifact_id"], (isset($proxy_id) ? $proxy_id : NULL));
 						if ($artifact_entries) {
 							$ae_data = array();
+							$i = 0;
 							foreach ($artifact_entries as $artifact_entry) {
-								$ae_data[] = $artifact_entry->toArray();
+								$ae_data[$i]["entry"] = $artifact_entry->toArray();
+								$comments = $artifact_entry->getComments();
+								if ($comments) {
+									$j = 0;
+									foreach ($comments as $comment) {
+										$commentor = User::get($comment->getProxyID());
+										$comments_array[$j] = $comment->toArray();
+										$comments_array[$j]["submitted_date"] = date("Y-m-d H:i", $comments_array[$j]["submitted_date"]);
+										$comments_array[$j]["commentor"] = $commentor->getFullname(false);
+										$j++;
+									}
+									$ae_data[$i]["comments"] = $comments_array;
+								}
+								$i++;
 							}
 							echo json_encode(array("status" => "success", "data" => $ae_data));
 						} else {

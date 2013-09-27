@@ -86,7 +86,8 @@ class Models_Eportfolio_Folder_Artifact {
 					(!is_null($pfolder_id) || !is_null($proxy_id) ? " WHERE " : "").
 					(!is_null($pfolder_id) ? "a.`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
 					(!is_null($proxy_id) ? "b.`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")." 
-					a.`active` = ?";
+					a.`active` = ?
+					GROUP BY a.`pfartifact_id`";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
