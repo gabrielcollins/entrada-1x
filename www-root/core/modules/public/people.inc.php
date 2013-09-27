@@ -99,7 +99,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	if (isset($load_profile) && $load_profile) {
 		$query_profile	= "
-						SELECT a.*, b.`group`, b.`role`
+						SELECT a.*, b.`group`, b.`role`, b.`organisation_id`
 						FROM `".AUTH_DATABASE."`.`user_data` AS a
 						LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 						ON b.`user_id` = a.`id`
@@ -758,7 +758,7 @@ if (!defined("PARENT_INCLUDED")) {
 			$results			= $db->GetAll($query_profile);
 			if (!$results) {
 				$query_profile	= "
-								SELECT a.*, b.`group`, b.`role`
+								SELECT a.*, b.`group`, b.`role`, b.`organisation_id`
 								FROM `".AUTH_DATABASE."`.`user_data` AS a
 								LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
 								ON b.`user_id` = a.`id`
@@ -848,7 +848,7 @@ if (!defined("PARENT_INCLUDED")) {
 					if ($result["group"] == "student") {
 						$cohort = groups_get_cohort($result["id"]);
 					}
-					echo ucwords($result["group"])." > ".($result["group"] == "student" ? $cohort["group_name"] : ucwords($result["role"]));
+					echo ucwords($result["group"])." > ".($result["group"] == "student" && isset($cohort["group_name"]) ? $cohort["group_name"] : ucwords($result["role"]));
 				}
 				echo (isset($ORGANISATIONS_BY_ID[$result["organisation_id"]]) ? "<br />".$ORGANISATIONS_BY_ID[$result["organisation_id"]]["organisation_title"] : "")."\n";
 					echo "<br />";

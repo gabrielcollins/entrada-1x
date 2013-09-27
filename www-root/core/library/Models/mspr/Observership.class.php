@@ -16,7 +16,6 @@
  */
 
 require_once 'core/library/Models/utility/ModelBase.class.php';
-require_once 'core/library/Models/utility/Editable.interface.php';
 require_once 'core/library/Models/utility/Validation.interface.php';
 class Observership extends ModelBase implements Editable, Validation {
 	protected $id;

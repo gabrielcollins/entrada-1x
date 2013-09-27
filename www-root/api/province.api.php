@@ -27,10 +27,10 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	$countries_id = ((isset($_GET["countries_id"])) ? clean_input($_GET["countries_id"], "int") : 0);
 	$tmp_input = ((isset($_GET["prov_state"])) ? clean_input(rawurldecode($_GET["prov_state"]), array("notags", "trim")) : "");
 
-	$province_id = 0; 
+	$province_id = 0;
 	$province ="";
 
-		
+
 	if (ctype_digit($tmp_input)) {
 		$province_id = (int) $tmp_input;
 	} else {
@@ -41,14 +41,14 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		$query		= "SELECT * FROM `global_lu_provinces` WHERE `country_id` = ".$db->qstr($countries_id)." ORDER BY `province` ASC";
 		$results	= $db->GetAll($query);
 		if ($results) {
-			echo "<select id=\"prov_state\" name=\"prov_state\" style=\"width: 256px\" \">\n";
+			echo "<select id=\"prov_state\" name=\"prov_state\">\n";
 			echo "<option value=\"0\"".((!$province_id) ? " selected=\"selected\"" : "").">-- Select Province / State --</option>\n";
 			foreach($results as $result) {
 				echo "<option value=\"".clean_input($result["province_id"], array("notags", "specialchars"))."\"".(($province_id == $result["province_id"]) ? " selected=\"selected\"" : ($province == clean_input($result["province"], array("notags", "specialchars")) ? " selected=\"selected\"" : "")).">".clean_input($result["province"], array("notags", "specialchars"))."</option>\n";
 			}
 			echo "</select>\n";
 		} else {
-			echo "<input type=\"text\" id=\"prov_state\" name=\"prov_state\" value=\"".clean_input($province, array("notags", "specialchars"))."\" maxlength=\"100\" style=\"width: 250px\" />";
+			echo "<input type=\"text\" id=\"prov_state\" name=\"prov_state\" value=\"".clean_input($province, array("notags", "specialchars"))."\" maxlength=\"100\" />";
 		}
 		exit;
 	}

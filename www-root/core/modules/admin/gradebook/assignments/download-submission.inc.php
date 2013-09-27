@@ -13,22 +13,17 @@
 if ((!defined("IN_GRADEBOOK"))) {
 	exit;
 } 
-if (!isset($RECORD_ID) || !$RECORD_ID) {
-	if (isset($_GET["id"]) && $tmp = clean_input($_GET["id"], "int")) {
-		$RECORD_ID = $tmp;
-	}
-}
-if ($RECORD_ID) {
+if ($ASSIGNMENT_ID) {
 	$query = "	SELECT a.*,b.`organisation_id` 
 				FROM `assignments` a
 				JOIN `courses` b
 				ON a.`course_id` = b.`course_id` 
-				WHERE a.`assignment_id` = ".$db->qstr($RECORD_ID)."
+				WHERE a.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID)."
 				AND a.`assignment_active` = '1'";
 	$assignment = $db->GetRow($query);	
 	if (isset($_GET["sid"]) && $tmp = clean_input($_GET["sid"], "int")) {
 		/** @todo this needs to make sure the user is a teacher for the course if this way is used, otherwise students could add another student's proxy*/
-		$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
+		$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 		if ($iscontact = $db->GetRow($query)) {
 			$USER_ID = $tmp;
 		} elseif ($assignment && $ENTRADA_ACL->amIAllowed(new CourseResource($assignment["course_id"], $assignment["organisation_id"]), "update")) {
@@ -50,7 +45,7 @@ if ($RECORD_ID) {
                                 JOIN `".AUTH_DATABASE."`.`user_data` AS c
                                 ON a.`proxy_id` = c.`id`
                                 WHERE `file_active` = '1'
-                                AND a.`assignment_id` = ".$db->qstr($RECORD_ID)."
+                                AND a.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID)."
                                 AND a.`proxy_id` = ".$db->qstr($USER_ID);
 			$file_record	= $db->GetRow($query);
 			if ($file_record) {
@@ -61,7 +56,7 @@ if ($RECORD_ID) {
 					 */
 					$query	= "SELECT *
                                 FROM `assignment_file_versions`
-                                WHERE `assignment_id` = ".$db->qstr($RECORD_ID)."
+                                WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)."
                                 AND `proxy_id` = ".$db->qstr($USER_ID)."
                                 AND `file_active` = '1'
                                 ORDER BY `file_version` DESC
@@ -94,7 +89,7 @@ if ($RECORD_ID) {
                             header("Content-Disposition: inline; filename=\"".$file_version["file_filename"]."\"");
                             header("Content-Length: ".@filesize($download_file));
                             header("Content-Transfer-Encoding: binary\n");
-							add_statistic("community:".$COMMUNITY_ID.":shares", "file_download", "csfile_id", $RECORD_ID);
+							add_statistic("community:".$COMMUNITY_ID.":shares", "file_download", "csfile_id", $ASSIGNMENT_ID);
 							echo @file_get_contents($download_file, FILE_BINARY);
 							exit;
 						}
@@ -113,13 +108,13 @@ if ($RECORD_ID) {
 						echo display_error();
 					}
 			} else {
-				header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$RECORD_ID);
+				header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$COURSE_ID . "&assignment_id=" . $ASSIGNMENT_ID);
 				//echo 'Invalid id specified. Redirect to submit page.';
 				exit;
 			}
 		}else{
-				application_log("error", "The provided file id was invalid [".$RECORD_ID."] (View File).");
-				//header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$RECORD_ID);
+				application_log("error", "The provided file id was invalid [".$ASSIGNMENT_ID."] (View File).");
+				//header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$ASSIGNMENT_ID);
 				echo 'Invalid id specified. No assignment found for that id.';
 				exit;		
 		}

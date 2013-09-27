@@ -1272,6 +1272,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													ON a.`quiz_id` = b.`quiz_id`
 													LEFT JOIN `quiz_questions` AS c
 													ON a.`quiz_id` = c.`quiz_id`
+													AND c.`question_active` = '1'
 													WHERE a.`quiz_active` = '1'
 													AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 													GROUP BY a.`quiz_id`
@@ -2557,6 +2558,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													ON a.`quiz_id` = b.`quiz_id`
 													LEFT JOIN `quiz_questions` AS c
 													ON a.`quiz_id` = c.`quiz_id`
+													AND c.`question_active` = '1'
 													WHERE a.`quiz_active` = '1'
 													AND b.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 													GROUP BY a.`quiz_id`

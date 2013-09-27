@@ -44,6 +44,44 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	$HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/objectives.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 	$HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/objectives_assessment.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";				
 	
+	if (isset($_POST["mode"]) && $_POST["mode"] == "ajax") {
+		
+		ob_clear_open_buffers();
+		
+		$method = clean_input($_POST["method"], array("trim", "striptags"));
+		
+		switch ($method) {
+			case "fetch-extended-options" :
+				
+				$current_type_id = clean_input($_POST["type"], "int");
+				
+				$query = "SELECT `type` FROM `assessments_lu_meta` WHERE `id` = ".$db->qstr($current_type_id);
+				$current_type = $db->GetOne($query);
+				
+				if (in_array($current_type, array("reflection", "paper", "project"))) {
+					$where = " WHERE `type` LIKE ".$db->qstr("%".$current_type."%");
+				} else if (in_array($current_type, array("exam", "quiz"))) {
+					$where = " WHERE `type` IS NULL ";
+				} else {
+					$where = " WHERE 'x' = 'y'";
+				}
+				$query = "SELECT `id`, `title` FROM `assessments_lu_meta_options`" . $where;
+				$assessment_options = $db->GetAll($query);
+				if ($assessment_options) {
+					foreach ($assessment_options as $assessment_option) {
+						echo "<label class=\"checkbox\" for=\"extended_option" . $assessment_option["id"] . "\"><input type=\"checkbox\" value=\"" . $assessment_option["id"] . "\" name=\"option[]\" id=\"extended_option" . $assessment_option["id"] . "\"/>" . $assessment_option["title"] . "</label><br />";
+					}
+				}
+				
+			break;
+			default:
+			continue;
+		}
+		
+		exit;
+		
+	}
+	
 	if ($COURSE_ID) {
 		$query = "	SELECT * FROM `courses`
 					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
@@ -94,19 +132,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						}
 					}
 					
-					if (isset($_POST["associated_audience"]) && $_POST["associated_audience"] == "manual_select") {
-						if((isset($_POST["cohort"])) && ($cohort = clean_input($_POST["cohort"], "credentials"))) {
+					if (isset($_POST["course_list"]) && $tmp_input = clean_input($_POST["course_list"], array("notags", "int"))) {
+						$PROCESSED["cohort"] = $tmp_input;
+					} else {
+						if ((isset($_POST["cohort"])) && ($cohort = clean_input($_POST["cohort"], "credentials"))) {
 							$PROCESSED["cohort"] = $cohort;
 						} else {
 							$ERROR++;
 							$ERRORSTR[] = "You must select an <strong>Audience</strong> for this assessment.";
-						}
-					} elseif($group_id = (int)$_POST["associated_audience"]) {
-						$PROCESSED["cohort"] = $group_id;
-					} else {
-						$ERROR++;
-						$ERRORSTR[] = "You must select an <strong>Audience</strong> for this assessment.";
-					}
+						}												
+					}										
 
 					if((isset($_POST["name"])) && ($name = clean_input($_POST["name"], array("notags", "trim")))) {
 						$PROCESSED["name"] = $name;
@@ -214,7 +249,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					}
 					//extended options check
 					if ((is_array($_POST["option"])) && (count($_POST["option"]))) {
-					$assessment_options_selected = array();
+						$assessment_options_selected = array();
 						foreach ($_POST["option"] as $option_id) {
 							if ($option_id = (int) $option_id) {
 								$query = "SELECT * FROM `assessments_lu_meta_options` 
@@ -461,43 +496,63 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									</td>
 								</tr>
 								<?php 					
-								$query = "SELECT * FROM `groups` WHERE `group_type` = 'course_list' AND `group_value` = ".$db->qstr($COURSE_ID)." AND `group_active` = '1'";
-								$course_list = $db->GetRow($query);
-								if($course_list){
+								$query = "	SELECT * 
+											FROM `groups` 
+											WHERE `group_type` = 'course_list' 
+											AND `group_value` = ".$db->qstr($COURSE_ID)." 
+											AND `group_active` = '1'
+											ORDER BY `group_name`";
+								$course_lists = $db->GetAll($query);
+								if($course_lists) {
+									if (count($course_lists) == 1) {
 									?>
-								<tr>
-									<td colspan="3">&nbsp;</td>
-								</tr>
-								<tr>
-									<td><input type="radio" name="associated_audience" id="course_list" value ="<?php echo $course_list["group_id"];?>" checked="checked"/></td>
-									<td><label for="course_list" class="radio form-required">Course List</label></td>
-									<td>
-										<span class="radio-group-title">All Learners in the <?php echo $course_details["course_code"];?> Course List Group</span>
-										<div class="content-small">This assessment is intended for all learners that are members of the <?php echo $course_details["course_code"];?> Course List.</div>
-									</td>
-								</tr>
+										<tr>
+											<td></td>
+											<td><label for="course_list" class="form-required">Course List:</label></td>
+											<td>
+												<span class="radio-group-title">All Learners in the <?php echo $course_details["course_code"];?> Course List Group</span>
+												<div class="content-small">This assessment is intended for all learners that are members of the <?php echo $course_details["course_code"];?> Course List.</div>
+												<input id="course_list" name="course_list" type="hidden" value="<?php echo $course_lists[0]["group_id"]; ?>">
+											</td>
+										</tr>
 								<?php
-								}
+									} else { ?>
+										<tr>
+										<td></td>
+										<td><label for="course_list" class="form-required">Course List:</label></td>
+										<td>
+											<select id="course_list" name="course_list" style="width: 250px">
+											<?php
+												foreach ($course_lists as $course_list) {
+													echo "<option value=\"".$course_list["group_id"]."\"".(($PROCESSED["cohort"] == $course_list["group_id"]) ? " selected=\"selected\"" : "").">".html_encode($course_list["group_name"])."</option>\n";
+												}											
+											?>
+											</select>							
+										</td>
+									</tr>									
+								<?php	
+									}									
+								} else {  
 								?>
-								<tr>
-									<td colspan="3">&nbsp;</td>
-								</tr>
-								<tr>
-									<td></td>
-									<td><label for="cohort" class="radio form-required"> <input type="radio" name="associated_audience" id="manual_select" value="manual_select"<?php echo (!$course_list?" checked=\"checked\"":"");?>/> Cohort</label></td>
-									<td>
-										<select id="cohort" name="cohort" style="width: 250px">
-										<?php
-										$active_cohorts = groups_get_all_cohorts($ENTRADA_USER->getActiveOrganisation());
-										if (isset($active_cohorts) && !empty($active_cohorts)) {
-											foreach ($active_cohorts as $cohort) {
-												echo "<option value=\"".$cohort["group_id"]."\"".(($PROCESSED["cohort"] == $cohort["group_id"]) ? " selected=\"selected\"" : "").">".html_encode($cohort["group_name"])."</option>\n";
+									<tr>
+										<td></td>
+										<td><label for="cohort" class="form-required">Cohort:</label></td>
+										<td>
+											<select id="cohort" name="cohort" style="width: 250px">
+											<?php
+											$active_cohorts = groups_get_all_cohorts($ENTRADA_USER->getActiveOrganisation());
+											if (isset($active_cohorts) && !empty($active_cohorts)) {
+												foreach ($active_cohorts as $cohort) {
+													echo "<option value=\"".$cohort["group_id"]."\"".(($PROCESSED["cohort"] == $cohort["group_id"]) ? " selected=\"selected\"" : "").">".html_encode($cohort["group_name"])."</option>\n";
+												}
 											}
-										}
-										?>
-										</select>							
-									</td>
-								</tr>
+											?>
+											</select>							
+										</td>
+									</tr>
+								<?php 								
+								} 
+								?>
 								<tr>
 									<td colspan="3">&nbsp;</td>
 								</tr>
@@ -531,7 +586,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									</td>
 								</tr>
 							</tbody>
-							<tbody id="assessment_required_options" style="display: none;">
+							<tbody id="assessment_required_options">
 								<tr>
 									<td>&nbsp;</td>
 									<td colspan="2" style="padding-top: 10px">
@@ -577,6 +632,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 													}
 
 													echo "<option value=\"" . $characteristic["id"] . "\" assessmenttype=\"" . $characteristic["type"] . "\"".(($PROCESSED["characteristic_id"] == $characteristic["id"]) ? " selected=\"selected\"" : "").">".$characteristic["title"]."</option>";
+													if ($PROCESSED["characteristic_id"] == $characteristic["id"]) {
+														$current_type = $characteristic["type"];
+													}
 												}
 												echo "</optgroup>";
 											}
@@ -585,24 +643,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									</td>
 								</tr>
 							</tbody>
-							<tbody id="assessment_options" style="display: none;">
-								<tr>
-									<td></td>
-									<td style="vertical-align: top;"><label class="form-nrequired">Extended Options</label></td>
-									<td>
-										<?php 
-										if ($assessment_options) {
-											foreach ($assessment_options as $assessment_option) {
-												echo "<input type=\"checkbox\" value=\"".$assessment_option["id"]."\" name=\"option[]\"" .((is_array($assessment_options_selected) && in_array($assessment_option["id"], $assessment_options_selected)) ? " checked=\"checked\"" : "") . " id=\"extended_option".$assessment_option["id"]. "\" /><label for=\"extended_option".$assessment_option["id"]."\">".$assessment_option["title"]."</label><br />";
-											}
-										}
-										?>
-									</td>
-								</tr>
-								<tr>
-									<td colspan="3">&nbsp;</td>
-								</tr>
-							</tbody>
+							<tbody id="assessment_options" style="display:none;">
+									<tr>
+										<td></td>
+										<td style="vertical-align: top;"><label for="extended_option1" class="form-nrequired">Extended Options</label></td>
+										<td class="options">
+										</td>
+									</tr>
+								</tbody>
 							<tbody>
 								<tr>
 									<td></td>
@@ -689,7 +737,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									jQuery('#numeric_marking_scheme_details').hide();
 								}
 							}).trigger('change');
-
+							/*
+							 *
+							 *  Removed as per under grad medicine request, commented out in case this functionality needs to re implemented								
 							jQuery('#grade_weighting').keyup(function() {
 								if (parseFloat(jQuery('#grade_weighting').val())) {
 									jQuery('#assessment_required_1').attr('checked', 'checked');
@@ -712,25 +762,46 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 								}
 							});
-
-							jQuery('#assessment_characteristic').change(function (){
-								jQuery('#assessment_options input:[type=checkbox]').removeAttr('checked');
-								var assessmentType = jQuery('#assessment_characteristic option:selected').attr('assessmenttype');
-								if(assessmentType == 'exam' || assessmentType == 'quiz') {
-									jQuery('#assessment_options').show();
-								} else {
-									jQuery('#assessment_options').hide();
-								}
+							*/
+							function fetchOptions(select, selected_options) {
+								jQuery.ajax({
+									url: "<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments/?section=add",
+									data: "mode=ajax&method=fetch-extended-options&type=" + select.val(),
+									type: "POST",
+									success: function(data) {
+										if (data.length > 0) {
+											jQuery("#assessment_options .options").append(data);
+											
+											if (typeof selected_options != "undefined") {
+												for (var i = 0; i < selected_options.length; i++) {
+													if (jQuery("#extended_option"+selected_options[i].length > 0)) {
+														jQuery("#extended_option"+selected_options[i]).attr("checked", "checked");
+													}
+												}
+											}
+											
+											if (!jQuery("#assessment_options").is(":visible")) {
+												jQuery("#assessment_options").show();
+											}
+										} else {
+											jQuery("#assessment_options").hide();
+										}
+									}
+								});
+							}
+							
+							jQuery('#assessment_characteristic').on("change", function(e) {
+								var select = jQuery(this);
+								jQuery("#assessment_options .options").html("");
+								fetchOptions(select);
+								e.preventDefault();
 							});
-
-							jQuery('#assessment_characteristic').ready(function (){
-								var assessmentType = jQuery('#assessment_characteristic option:selected').attr('assessmenttype');
-								if(assessmentType == 'exam' || assessmentType == 'quiz') {
-									jQuery('#assessment_options').show();
-								} else {
-									jQuery('#assessment_options').hide();
-								}
-							});
+							
+							<?php if ($ERROR) { ?>
+							var selected_options;
+							selected_options = JSON.parse("<?php echo json_encode($assessment_options_selected); ?>");
+							fetchOptions(jQuery('#assessment_characteristic'), selected_options);
+							<?php } ?>
 
 							jQuery("input[name='show_learner_option']").change(function(){
 								if (jQuery("input[name='show_learner_option']:checked").val() == 1) {
@@ -863,7 +934,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         </ul>
                                     </div>												
                                     <p class="well well-small content-small">
-                                        <strong>Helpful Tip:</strong> Click <strong>Map Aditional Objectives</strong> to view the list of available objective sets. Select an objective from the list on the left and it will be mapped to the assessment.
+                                        <strong>Helpful Tip:</strong> Click <strong>Map Additional Objectives</strong> to view the list of available objective sets. Select an objective from the list on the left and it will be mapped to the assessment.
                                     </p>
                                 <?php
                                     if ($hierarchical_objectives) {
@@ -983,10 +1054,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                     ?>
                                     </select>
 
-                                </div>
-                                <div style="clear:both;"></div>
-                                <div style="float:right;margin-top:10px;">
-                                    <input type="submit" value="Save"/>
                                 </div>
                                 <div style="clear:both;"></div>
 						<?php }	?>

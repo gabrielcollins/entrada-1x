@@ -59,6 +59,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 
 	if ($COURSE_ID) {
 		if($ASSIGNMENT_ID){
+			$query = "	SELECT *, b.`name` as `assessment_name` 
+						FROM `assignments` a
+						JOIN `assessments` b
+						ON a.`assessment_id` = b.`assessment_id`
+						WHERE a.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
+			$assessment_details = $db->getRow($query);
+			if ($assessment_details) {
+				$PROCESSED["name"] = $assessment_details["assessment_name"];
+			} else {
+				$PROCESSED["name"] = "";
+			}
+			
 			if($IS_CONTACT){
 				$query = "	SELECT * FROM `courses`
 							WHERE `course_id` = ".$db->qstr($COURSE_ID)."
@@ -207,10 +219,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						break;
 						case 1 :
 						default :
-							$query = "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
+							$query = "	SELECT *, b.`name` as `assessment_name` 
+										FROM `assignments` a
+										JOIN `assessments` b
+										ON a.`assessment_id` = b.`assessment_id`
+										WHERE a.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID);
 							if($assignment_record = $db->GetRow($query)){
 								$PROCESSED["assignment_id"] = $assignment_record["assignment_id"];
 								$PROCESSED["assignment_title"] = $assignment_record["assignment_title"];
+								$PROCESSED["name"] = $assignment_record["assessment_name"];
 								$PROCESSED["assignment_description"] = $assignment_record["assignment_description"];
 								$PROCESSED["assignment_uploads"] = $assignment_record["assignment_uploads"];
 								$PROCESSED["release_date"] = $assignment_record["release_date"];
@@ -220,8 +237,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							continue;
 						break;
 					}
-										$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assignments?".replace_query(array("section" => "grade", "id" => $COURSE_ID, "assignment_id"=>$PROCESSED["assignment_id"],"step" => false)), "title" => $PROCESSED["assignment_title"]);
-										$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "edit", "id" => $COURSE_ID, "step" => false)), "title" => "Edit Assignment Drop Box");
+					$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assignments?".replace_query(array("section" => "grade", "id" => $COURSE_ID, "assignment_id"=>$PROCESSED["assignment_id"],"step" => false)), "title" => $PROCESSED["assignment_title"]);
+					$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/".$MODULE."?".replace_query(array("section" => "edit", "id" => $COURSE_ID, "step" => false)), "title" => "Edit Assignment Drop Box");
 					// Display Content
 					switch ($STEP) {
 						case 2 :
@@ -244,11 +261,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 										ON `".AUTH_DATABASE."`.`user_access`.`user_id` = `".AUTH_DATABASE."`.`user_data`.`id`
 										LEFT JOIN `".AUTH_DATABASE."`.`organisations`
 										ON `".AUTH_DATABASE."`.`user_data`.`organisation_id` = `".AUTH_DATABASE."`.`organisations`.`organisation_id`
-										WHERE `".AUTH_DATABASE."`.`user_access`.`group` = 'faculty'
-										AND (`".AUTH_DATABASE."`.`user_access`.`role` = 'director' OR `".AUTH_DATABASE."`.`user_access`.`role` = 'admin')
+										WHERE (`".AUTH_DATABASE."`.`user_access`.`group` = 'faculty' OR
+										`".AUTH_DATABASE."`.`user_access`.`group` = 'staff' OR
+										(`".AUTH_DATABASE."`.`user_access`.`group` = 'resident' AND `".AUTH_DATABASE."`.`user_access`.`role` = 'lecturer')
+										OR `".AUTH_DATABASE."`.`user_access`.`group` = 'medtech')
 										AND `".AUTH_DATABASE."`.`user_access`.`app_id` = '".AUTH_APP_ID."'
 										AND `".AUTH_DATABASE."`.`user_access`.`account_active` = 'true'
-										ORDER BY `fullname` ASC";
+										AND `".AUTH_DATABASE."`.`user_access`.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+										ORDER BY `fullname` ASC";							
 							$results = ((USE_CACHE) ? $db->CacheGetAll(AUTH_CACHE_TIMEOUT, $query) : $db->GetAll($query));
 							if ($results) {
 								foreach($results as $result) {
@@ -400,11 +420,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 											$ONLOAD[] = "Sortable.create('director_list', {onUpdate : function() {updateOrder('director')}})";
 											$ONLOAD[] = "$('associated_director').value = Sortable.sequence('director_list')";
 											?>
-											<div class="autocomplete" id="director_name_auto_complete"></div><script type="text/javascript">new Ajax.Autocompleter('director_name', 'director_name_auto_complete', '<?php echo ENTRADA_RELATIVE; ?>/api/personnel.api.php?type=director', {frequency: 0.2, minChars: 2, afterUpdateElement: function (text, li) {selectItem(li.id, 'director'); copyItem('director');}});</script>
+											<div class="autocomplete" id="director_name_auto_complete"></div><script type="text/javascript">new Ajax.Autocompleter('director_name', 'director_name_auto_complete', '<?php echo ENTRADA_RELATIVE; ?>/api/personnel.api.php?type=facultyorstaff', {frequency: 0.2, minChars: 2, afterUpdateElement: function (text, li) {selectItem(li.id, 'director'); copyItem('director');}});</script>
 											<input type="hidden" id="associated_director" name="associated_director" />
 											<input type="button" class="btn" onclick="addItem('director');" value="Add" style="vertical-align: middle" />
 											<span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
-											<ul id="director_list" class="menu" style="margin-top: 15px">
+											<span class="content-small"><br><strong>Tip:</strong> You will automatically be added as a contact</span>
+                                            <ul id="director_list" class="menu" style="margin-top: 15px">
 												<?php
 												if (is_array($DIRECTOR_LIST) && is_array($chosen_course_directors) && count($chosen_course_directors)) {
 													foreach ($chosen_course_directors as $director) {

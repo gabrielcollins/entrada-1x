@@ -221,7 +221,7 @@ if ($COMMUNITY_URL) {
 						$month = clean_input($_GET["month"], "int");
 
 						$community_id = clean_input($_GET["community_id"], "int");
-						if (!isset($course_code)) {
+						if (!$course_code) {
 							$query = "	SELECT a.`course_id`, a.`course_code`
 										FROM `courses` AS a
 										JOIN `community_courses` AS b
@@ -233,7 +233,7 @@ if ($COMMUNITY_URL) {
 							}
 						}
 						if ($course_code) {
-							$file_realpath = ENTRADA_ABSOLUTE."/core/storage/syllabi/".$course_code."-syllabus-". ($year != 0 ? $year : date("Y", time())) . "-".$month.".pdf";
+							$file_realpath = SYLLABUS_STORAGE ."/".$course_code."-syllabus-". ($year != 0 ? $year : date("Y", time())) . "-".$month.".pdf";
 							if (file_exists($file_realpath)) {
 								header('Content-Description: File Transfer');
 								header('Content-Type: application/pdf');
@@ -838,7 +838,7 @@ if ($COMMUNITY_URL) {
 									WHERE b.`community_id` = ?";
 				$result = $db->GetRow($query, array($COMMUNITY_ID));
 				if ($result) {
-					$syllabi = glob(ENTRADA_ABSOLUTE."/core/storage/syllabi/".$result["course_code"]."-syllabus-" . ($year != 0 ? $year : date("Y", time())). "*");
+					$syllabi = glob(SYLLABUS_STORAGE ."/".$result["course_code"]."-syllabus-" . ($year != 0 ? $year : date("Y", time())). "*");
 					if ($syllabi) {
 						$syllabus_month = 0;
 						foreach ($syllabi as $syllabus) {
@@ -850,7 +850,7 @@ if ($COMMUNITY_URL) {
 						}
 					}
 
-					$file_realpath = ENTRADA_ABSOLUTE."/core/storage/syllabi/".$result["course_code"]."-syllabus-". ($year != 0 ? $year : date("Y", time())) . "-".$syllabus_month.".pdf";
+					$file_realpath = SYLLABUS_STORAGE ."/".$result["course_code"]."-syllabus-". ($year != 0 ? $year : date("Y", time())) . "-".$syllabus_month.".pdf";
 					if (file_exists($file_realpath)) {
 						$COMMUNITY_PAGES["navigation"][] = array(
 							"link_url" => "?method=serve-syllabus&community_id=".$COMMUNITY_ID."&month=".$syllabus_month,

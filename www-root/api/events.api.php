@@ -101,7 +101,7 @@ if (($event_id) && (isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAu
 						<?php if (trim($event_info["event_message"]) != "") : ?>
 						<tr>
 							<td colspan="2" style="padding-top: 15px">
-								<strong>Teachers Message</strong><br />
+								<strong>Required Preparation</strong><br />
 								<?php echo limit_chars(trim(strip_tags($event_info["event_message"])), 300); ?>
 							</td>
 						</tr>

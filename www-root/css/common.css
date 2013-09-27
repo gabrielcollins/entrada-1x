@@ -2337,8 +2337,17 @@ margin-right: 25px;
 }
 
 #form-questions-list > li.odd,
-#form-questions-list > div.odd {
+#form-questions-list > div.odd,
+#recurring-events-list > div.odd {
 background-color:#EEE;
+}
+
+#recurring-events-list div.restricted_message {
+display: none;
+}
+
+#recurring-events-list > div.restricted div.restricted_message {
+display: block;
 }
 
 #form-questions-list > li > div.controls,
@@ -2417,6 +2426,7 @@ border:1px solid #333;
 -moz-border-radius:10px;
 -webkit-border-radius:10px;
 border-radius:10px;
+position:absolute;
 }
 
 .modal-confirmation {
@@ -4379,6 +4389,9 @@ a.help {
 }
 .pad-above{
   padding-top:10px;
+}
+.pad-above-small{
+  padding-top:5px;
 }
 .pad-below{
   padding-bottom:10px;

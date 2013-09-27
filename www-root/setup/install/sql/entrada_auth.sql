@@ -123,7 +123,19 @@ INSERT INTO `acl_permissions` (`resource_type`, `resource_value`, `entity_type`,
 ('evaluation', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, 'EvaluationReviewer'),
 ('evaluationform', NULL, 'group', 'faculty', 1, 1, 1, 1, NULL, 'EvaluationFormAuthor'),
 ('evaluationquestion', NULL, 'group', 'faculty', 1, 1, 1, 1, NULL, NULL),
-('evaluationquestion', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL);
+('evaluationquestion', NULL, 'group:role', 'staff:admin', 1, 1, 1, 1, 1, NULL),
+('encounter_tracking', NULL, 'group', 'student', NULL, NULL, 1, NULL, NULL, 'LoggableFound'),
+('encounter_tracking', NULL, 'role', 'admin', NULL, NULL, 0, NULL, NULL, NULL),
+('coursecontent', NULL, 'group:role', 'staff:admin', 1, NULL, 0, NULL, NULL, 'NotCourseOwner'),
+('coursecontent', NULL, 'group', 'faculty', 1, NULL, 0, NULL, NULL, 'NotCourseOwner'),
+('gradebook', NULL, 'group', 'faculty', 1, NULL, 1, 1, NULL, 'GradebookDropbox'),
+('assignment', NULL, 'group', 'faculty', 1, NULL, 1, 1, NULL, 'AssignmentContact'),
+('assessment', NULL, 'group', 'faculty', 1, NULL, NULL, 1, NULL, 'AssessmentContact'),
+('assignment', NULL, 'group:role', 'staff:admin', 1, NULL, 1, 1, NULL, 'AssignmentContact'),
+('assessment', NULL, 'group:role', 'staff:admin', 1, NULL, NULL, 1, NULL, 'AssessmentContact'),
+('gradebook', NULL, 'group:role', 'staff:admin', 1, NULL, 1, 1, NULL, 'GradebookDropbox'),
+('gradebook', NULL, 'group:role', 'staff:admin', 1, NULL, 1, NULL, NULL, NULL),
+('gradebook', NULL, 'group', 'faculty', 1, NULL, 1, NULL, NULL, NULL);
 
 CREATE TABLE IF NOT EXISTS `departments` (
   `department_id` int(12) unsigned NOT NULL AUTO_INCREMENT,
@@ -369,7 +381,7 @@ CREATE TABLE IF NOT EXISTS `user_data` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 INSERT INTO `user_data` (`id`, `number`, `username`, `password`, `organisation_id`, `department`, `prefix`, `firstname`, `lastname`, `email`, `email_alt`, `google_id`, `telephone`, `fax`, `address`, `city`, `province`, `postcode`, `country`, `notes`, `office_hours`, `privacy_level`, `notifications`, `clinical`) VALUES
-(1, 0, '%ADMIN_USERNAME%', '%ADMIN_PASSWORD_HASH%', 1, NULL, '', '%ADMIN_FIRSTNAME%', '%ADMIN_LASTNAME%', '%ADMIN_EMAIL%', '', NULL, '', '', '', '', '', '', '', 'System Administrator', NULL, 0, 0, 1);
+(1, 0, '%ADMIN_USERNAME%', '%ADMIN_PASSWORD_HASH%', 1, NULL, '', '%ADMIN_FIRSTNAME%', '%ADMIN_LASTNAME%', '%ADMIN_EMAIL%', '', NULL, '', '', '', '', '', '', '', 'System Administrator', NULL, 0, 1, 1);
 
 CREATE TABLE `user_departments` (
   `udep_id` int(12) unsigned NOT NULL AUTO_INCREMENT,

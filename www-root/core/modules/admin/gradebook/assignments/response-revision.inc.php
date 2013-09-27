@@ -28,20 +28,20 @@ if(isset($_GET["fid"]) && $tmp_fid = (int)$_GET["fid"]){
 	$FILE_ID = false;
 }
 
-if(!$RECORD_ID){
-	if(isset($_GET["id"]) && $tmp_id = (int)$_GET["id"]){
-		$RECORD_ID = $tmp_id;
+if(!$ASSIGNMENT_ID){
+	if(isset($_GET["assignment_id"]) && $tmp_id = (int)$_GET["assignment_id"]){
+		$ASSIGNMENT_ID = $tmp_id;
 	}	
 }
-if ($RECORD_ID) {
+if ($ASSIGNMENT_ID) {
 	if($FILE_ID){
-		$query			= "SELECT * FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `afile_id` = ".$db->qstr($FILE_ID)."  AND `file_type` = 'submission' AND `file_active` = '1'";
+		$query			= "SELECT * FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `afile_id` = ".$db->qstr($FILE_ID)."  AND `file_type` = 'submission' AND `file_active` = '1'";
 		$file_record = $db->GetRow($query);
-		$query			= "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `assignment_active` = '1'";
+		$query			= "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `assignment_active` = '1'";
 		$folder_record	= $db->GetRow($query);
 		if ($folder_record){
-			//if user is member of group associated with assignment
-			if (true) {
+			//if user is member of group associated with assignment			
+			if ($ENTRADA_ACL->amIAllowed(new AssignmentResource($ASSIGNMENT_ID), "update")) {
 				$query = "SELECT CONCAT_WS(' ', `firstname`,`lastname`) AS `uploader` FROM `".AUTH_DATABASE."`.`user_data` WHERE `id` = ".$db->qstr($file_record["proxy_id"]);
 				$user_name = $db->GetOne($query);
 				$BREADCRUMB = array();
@@ -49,7 +49,7 @@ if ($RECORD_ID) {
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook", "title" => "Gradebook");
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook?".replace_query(array("section" => "view", "id" => $folder_record["course_id"], "step" => false)), "title" => "Assignments");
 				$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook/assignments?".replace_query(array("section" => "view", "id" => $file_record["assignment_id"], "pid"=>$file_record["proxy_id"], "step" => false)), "title" => $user_name."'s Submission");
-				$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-file&id=".$RECORD_ID, "title" => "Upload File");
+				$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-file&assignment_id=".$ASSIGNMENT_ID, "title" => "Upload File");
 
 				$file_uploads = array();
 				// Error Checking
@@ -68,7 +68,7 @@ if ($RECORD_ID) {
 								break;
 								case 1 :
 								case 2 :
-									add_error("The file that was uploaded is larger than ".readable_size($VALID_MAX_FILESIZE).". Please make the file smaller and try again.");
+									add_error("The file that was uploaded is larger than ".readable_size(MAX_UPLOAD_FILESIZE).". Please make the file smaller and try again.");
 								break;
 								case 3 :
 									add_error("The file that was uploaded did not complete the upload process or was interrupted; please try again.");
@@ -90,7 +90,7 @@ if ($RECORD_ID) {
 						$query = "	SELECT a.`file_version`, b.`afile_id` FROM `assignment_file_versions` AS a 
 									JOIN `assignment_files` AS b 
 									ON a.`afile_id` = b.`afile_id` 
-									WHERE b.`assignment_id` = ".$db->qstr($RECORD_ID)."
+									WHERE b.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID)."
 									AND b.`parent_id` = ".$db->qstr($FILE_ID)."
 									AND b.`file_type` = 'response'
 									ORDER BY a.`file_version` DESC
@@ -100,7 +100,7 @@ if ($RECORD_ID) {
 							add_error("No previous version could be found.");
 						}
 						if (!$ERROR) {
-							$PROCESSED["assignment_id"]		= $RECORD_ID;
+							$PROCESSED["assignment_id"]		= $ASSIGNMENT_ID;
 							$PROCESSED["proxy_id"]		= $ENTRADA_USER->getActiveId();
 							$PROCESSED["file_active"]	= 1;
 							$PROCESSED["updated_date"]	= time();
@@ -115,12 +115,12 @@ if ($RECORD_ID) {
 
 									if (assignments_process_file($_FILES["uploaded_file"]["tmp_name"], $VERSION_ID)) {										
 
-										$url = ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$RECORD_ID."&pid=".$file_record["proxy_id"];
+										$url = ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$ASSIGNMENT_ID."&pid=".$file_record["proxy_id"];
 										$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 
 										$SUCCESS++;
 										$SUCCESSSTR[]	= "You have successfully uploaded ".html_encode($PROCESSED["file_filename"])." (version 1).<br /><br />You will now be redirected to this files page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
-										add_statistic("assignment:".$RECORD_ID, "file_add", "afile_id", $FILE_ID);
+										add_statistic("assignment:".$ASSIGNMENT_ID, "file_add", "afile_id", $FILE_ID);
 									}											
 								}
 							}
@@ -129,7 +129,7 @@ if ($RECORD_ID) {
 							if (!$SUCCESS) {
 
 								if ($VERSION_ID) {
-									$query	= "DELETE FROM `assignment_file_versions` WHERE `afversion_id` = ".$db->qstr($VERSION_ID)." AND `afile_id` = ".$db->qstr($FILE_ID)." AND `assignment_id` = ".$db->qstr($RECORD_ID)." LIMIT 1";
+									$query	= "DELETE FROM `assignment_file_versions` WHERE `afversion_id` = ".$db->qstr($VERSION_ID)." AND `afile_id` = ".$db->qstr($FILE_ID)." AND `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." LIMIT 1";
 									@$db->Execute($query);
 								}
 
@@ -166,7 +166,7 @@ if ($RECORD_ID) {
 						if ($SUCCESS) {
 							echo display_success();
 							if (COMMUNITY_NOTIFICATIONS_ACTIVE) {
-								community_notify($COMMUNITY_ID, $FILE_ID, "file", COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&id=".$FILE_ID, $RECORD_ID, $PROCESSES["release_date"]);
+								community_notify($COMMUNITY_ID, $FILE_ID, "file", COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&id=".$FILE_ID, $ASSIGNMENT_ID, $PROCESSES["release_date"]);
 							}
 						}
 					break;
@@ -180,12 +180,12 @@ if ($RECORD_ID) {
 							echo display_notice();
 						}
 						
-						$query = "	SELECT *  FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `parent_id` = ".$db->qstr($FILE_ID);
+						$query = "	SELECT *  FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `parent_id` = ".$db->qstr($FILE_ID);
 						$original_file = $db->GetRow($query);					
 						?>
 
-						<form id="upload-file-form" action="<?php echo ENTRADA_URL."/admin/gradebook/assignments?section=response-revision&id=".$RECORD_ID."&fid=".$FILE_ID."&step=2"; ?>" method="post" enctype="multipart/form-data">
-						<input type="hidden" name="MAX_UPLOAD_FILESIZE" value="<?php echo $VALID_MAX_FILESIZE; ?>" />
+						<form id="upload-file-form" action="<?php echo ENTRADA_URL."/admin/gradebook/assignments?section=response-revision&assignment_id=".$ASSIGNMENT_ID."&fid=".$FILE_ID."&step=2"; ?>" method="post" enctype="multipart/form-data">
+						<input type="hidden" name="MAX_UPLOAD_FILESIZE" value="<?php echo MAX_UPLOAD_FILESIZE; ?>" />
 						<table style="width: 420px;" cellspacing="0" cellpadding="2" border="0" summary="Upload File">
 						<colgroup>
 							<col style="width: 3%" />
@@ -215,7 +215,7 @@ if ($RECORD_ID) {
 													<td style="vertical-align: top">
 														<input type="file" id="uploaded_file_1" name="uploaded_file" onchange="fetchFilename(1)" />
 														<div class="content-small" style="margin-top: 5px">
-															<strong>Notice:</strong> You may upload files under <?php echo readable_size($VALID_MAX_FILESIZE); ?>.
+															<strong>Notice:</strong> You may upload files under <?php echo readable_size(MAX_UPLOAD_FILESIZE); ?>.
 														</div>
 													</td>
 												</tr>									
@@ -240,6 +240,11 @@ if ($RECORD_ID) {
 					break;
 				}
 			} else {
+				$url = ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$ASSIGNMENT_ID."&pid=".$file_record["proxy_id"];
+				$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
+				
+				$ERROR++;
+				$ERRORSTR[] = "You do not have permission to upload an assignment response revision.<br /><br />You will now be redirected to this files page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 				if ($ERROR) {
 					echo display_error();
 				}

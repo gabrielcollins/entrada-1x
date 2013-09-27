@@ -3003,6 +3003,9 @@ function clean_input($string, $rules = array()) {
 					$string = preg_replace('/\<br\s*\/?\>/i', "\n", $string);
 					$string = str_replace("&nbsp;", " ", $string);
 				break;
+                case "utf8_convert" :
+                    $string = preg_replace_callback("/(&#[0-9]+;)/", function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $string);
+                break;
 				case "html_decode" :
 				case "decode" :			// Returns the output of the html_decode() function.
 					$string = html_decode($string);
@@ -4287,60 +4290,29 @@ function load_rte($toolbar_groups = array(), $plugins = array(), $other_options 
     if (!$toolbar_groups || (is_scalar($toolbar_groups) && ($toolbar_groups = clean_input($toolbar_groups, "alpha")))) {
         switch ($toolbar_groups) {
             case "full" :
-                $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("clipboard")),
-                    array("name" => "editing", "groups" => array("find", "selection", "spellchecker")),
-                    array("name" => "links"),
-                    array("name" => "insert"),
-                    array("name" => "forms"),
-                    array("name" => "tools"),
-                    array("name" => "document", "groups" => array("mode", "document", "doctools")),
-                    "/",
-                    array("name" => "basicstyles", "groups" => array("basicstyles", "cleanup")),
-                    array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
-                    array("name" => "styles"),
-                    array("name" => "colors"),
-                );
-            break;
             case "communityadvanced" :
             case "communitybasic" :
             case "advanced" :
                 $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("clipboard")),
-                    array("name" => "editing", "groups" => array("find", "selection", "spellchecker")),
+                    array("name" => "clipboard", "groups" => array("clipboard", "spellchecker")),
                     array("name" => "links"),
-                    array("name" => "insert"),
-                    array("name" => "forms"),
-                    array("name" => "document", "groups" => array("mode", "document", "doctools")),
-                    "/",
+                    array("name" => "insert", "groups" => array("mediaembed", "insert")),
+                    array("name" => "styles"),
                     array("name" => "basicstyles", "groups" => array("basicstyles", "cleanup")),
-                    array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
-                    array("name" => "colors"),
+                    array("name" => "paragraph", "groups" => array("colors", "list", "indent", "blocks", "align")),
+                    array("name" => "mode"),
                 );
             break;
             case "community" :
-            case "minimal" :
             case "mspr" :
-                $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("clipboard")),
-                    array("name" => "editing", "groups" => array("find", "selection", "spellchecker")),
-                    array("name" => "links"),
-                    array("name" => "insert"),
-                    array("name" => "document", "groups" => array("mode", "document", "doctools")),
-                    "/",
-                    array("name" => "basicstyles", "groups" => array("basicstyles", "cleanup")),
-                    array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
-                    array("name" => "document", "groups" => array("mode", "document", "doctools")),
-                );
-            break;
+            case "minimal" :
             case "basic" :
             default :
                 $toolbar_groups = array (
-                    array("name" => "clipboard", "groups" => array("clipboard")),
-                    array("name" => "editing", "groups" => array("find", "selection", "spellchecker")),
+                    array("name" => "clipboard", "groups" => array("clipboard", "spellchecker")),
                     array("name" => "links"),
-                    array("name" => "insert"),
-                    array("name" => "document", "groups" => array("mode", "document", "doctools")),
+                    array("name" => "paragraph", "groups" => array("list", "indent", "blocks", "align")),
+                    array("name" => "mode"),
                 );
             break;
         }
@@ -4350,6 +4322,7 @@ function load_rte($toolbar_groups = array(), $plugins = array(), $other_options 
 	$output .= "<script type=\"text/javascript\" defer=\"defer\">\n";
     $output .= "CKEDITOR.editorConfig = function( config ) {\n";
     $output .= "    config.customConfig = '';\n";
+    $output .= "    config.allowedContent = true;\n";
     $output .= "    config.baseHref = '".ENTRADA_URL."';\n";
     $output .= "    config.forcePasteAsPlainText = true;\n";
     $output .= "    config.autoParagraph = false;\n";
@@ -7383,7 +7356,7 @@ function google_create_id() {
 						try {
 							$client		= Zend_Gdata_ClientLogin::getHttpClient($GOOGLE_APPS["admin_username"], $GOOGLE_APPS["admin_password"], Zend_Gdata_Gapps::AUTH_SERVICE_NAME);
 							$service	= new Zend_Gdata_Gapps($client, $GOOGLE_APPS["domain"]);
-							$service->createUser($google_id, $firstname, $lastname, $password, "MD5");
+							$service->createUser($google_id, $firstname, $lastname, $password, "SHA-1");
 
 							$search		= array("%FIRSTNAME%", "%LASTNAME%", "%GOOGLE_APPS_DOMAIN%", "%GOOGLE_ID%", "%GOOGLE_APPS_QUOTA%", "%APPLICATION_NAME%", "%ADMINISTRATOR_NAME%", "%ADMINISTRATOR_EMAIL%");
 							$replace	= array($firstname, $lastname, $GOOGLE_APPS["domain"], $google_id, $GOOGLE_APPS["quota"], APPLICATION_NAME, $AGENT_CONTACTS["administrator"]["name"], $AGENT_CONTACTS["administrator"]["email"]);
@@ -9443,7 +9416,7 @@ function courses_subnavigation($course_details, $tab="details") {
 	if($ENTRADA_ACL->amIAllowed(new CourseResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
         echo "<li".($tab=="details"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses?".replace_query(array("section" => "edit", "id" => $course_details["course_id"], "step" => false))."\" >Details</a></li>\n";
 	}
-	if($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "read")) {
+	if($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "read") && $ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "read", true)) {
         echo "<li".($tab=="content"?" class=\"active\"":"")." style=\"width:16%;\"><a href=\"".ENTRADA_RELATIVE."/admin/courses?".replace_query(array("section" => "content", "id" => $course_details["course_id"], "step" => false))."\" >Content</a></li>\n";
 	}
 	if($ENTRADA_ACL->amIAllowed(new CourseResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
@@ -9753,6 +9726,21 @@ function courses_fetch_objectives($org_id, $course_ids, $top_level_id = -1, $par
 				$objectives["objectives"][$result["objective_id"]]["description"] = (isset($objectives["objectives"][$result["objective_id"]]["objective_details"]) && $objectives["objectives"][$result["objective_id"]]["objective_details"] ? $objectives["objectives"][$result["objective_id"]]["objective_details"] : $result["objective_description"]);
 				$objectives["objectives"][$result["objective_id"]]["parent"] = $top_level_id;
 				$objectives["objectives"][$result["objective_id"]]["parent_ids"] = array();
+				if (is_array($objectives["primary_ids"]) && array_search($result["objective_id"], $objectives["primary_ids"]) !== false) {
+					$objectives["objectives"][$result["objective_id"]]["primary"] = true;
+				} else {
+					$objectives["objectives"][$result["objective_id"]]["primary"] = false;
+				}
+				if (is_array($objectives["secondary_ids"]) && array_search($result["objective_id"], $objectives["secondary_ids"]) !== false) {
+					$objectives["objectives"][$result["objective_id"]]["secondary"] = true;
+				} else {
+					$objectives["objectives"][$result["objective_id"]]["secondary"] = false;
+				}
+				if (is_array($objectives["tertiary_ids"]) && array_search($result["objective_id"], $objectives["tertiary_ids"]) !== false) {
+					$objectives["objectives"][$result["objective_id"]]["tertiary"] = true;
+				} else {
+					$objectives["objectives"][$result["objective_id"]]["tertiary"] = false;
+				}
 			} else {
 				$objectives["objectives"][$result["objective_id"]]["objective_primary_children"] = 0;
 				$objectives["objectives"][$result["objective_id"]]["objective_secondary_children"] = 0;
@@ -9934,9 +9922,8 @@ function course_objective_child_recursive($objectives,$objective_id,$course_id,$
  * @param type $hierarchical
  * @return string
  */
-function course_objectives_in_list($objectives, $parent_id, $top_level_id, $edit_importance = false, $parent_active = false, $importance = 1, $selected_only = false, $top = true, $display_importance = "primary", $hierarchical = false, $full_objective_list = false, $org_id = 0) {
+function course_objectives_in_list($objectives, $parent_id, $top_level_id, $edit_importance = false, $parent_active = false, $importance = 1, $selected_only = false, $top = true, $display_importance = "primary", $hierarchical = true, $full_objective_list = false, $org_id = 0) {
 	global $ENTRADA_USER;
-
 	$output = "";
 	$active = array("primary" => false, "secondary" => false, "tertiary" => false);
 	$org_id = ($org_id == 0 ? $ENTRADA_USER->getActiveOrganisation() : (int) $org_id );
@@ -10006,7 +9993,7 @@ function course_objectives_in_list($objectives, $parent_id, $top_level_id, $edit
 	$flat_objective_list = events_flatten_objectives($full_objective_list);
 
 	if ((is_array($objectives)) && (count($objectives))) {
-		if (((isset($objectives[$parent_id]) && count($objectives[$parent_id]["parent_ids"])) || $hierarchical) && (!isset($objectives[$parent_id]["parent_ids"]) || count($objectives[$parent_id]["parent_ids"]) < 3)) {
+		if (((isset($objectives[$parent_id]) && count($objectives[$parent_id]["parent_ids"])) || ($hierarchical && (!$selected_only || isset($objective["event_objective"]) && $objective["event_objective"] && (isset($objective[$display_importance]) && $objective[$display_importance])))) && (!isset($objectives[$parent_id]["parent_ids"]) || count($objectives[$parent_id]["parent_ids"]) < 3)) {
 			$output .= "\n<ul class=\"objective-list\" id=\"objective_".$parent_id."_list\"".(((count($objectives[$parent_id]["parent_ids"]) < 2 && !$hierarchical) || ($hierarchical && $parent_id == $top_level_id)) ? " style=\"padding-left: 0; margin-top: 0\"" : "").">\n";
 		}
 		$iterated = false;
@@ -10027,33 +10014,31 @@ function course_objectives_in_list($objectives, $parent_id, $top_level_id, $edit
 
 				foreach ($flat_objective_list as $objective_id => $objective_active) {
 					$objective = $objectives[$objective_id];
-					if (($objective["parent"] == $parent_id) && (($objective["objective_".$display_importance."_children"]) || ((isset($objective[$display_importance]) && $objective[$display_importance]) || ($parent_active && count($objective["parent_ids"]) > 2) && !$selected_only) || ($selected_only && isset($objective["event_objective"]) && $objective["event_objective"] && (isset($objective[$display_importance]) && $objective[$display_importance])))) {
+					if (($objective["parent"] == $parent_id) && (((($objective["objective_".$display_importance."_children"]) || ((isset($objective[$display_importance]) && $objective[$display_importance]) || $parent_active)) && !$selected_only) || ($selected_only && isset($objective["event_objective"]) && $objective["event_objective"] && (isset($objective[$display_importance]) && $objective[$display_importance])))) {
 						$importance = ((isset($objective["primary"]) && $objective["primary"]) ? 1 : ((isset($objective["secondary"]) && $objective["secondary"]) ? 2 : ((isset($objective["tertiary"]) && $objective["tertiary"]) ? 3 : $importance)));
-						if ((count($objective["parent_ids"]) > 1) || $hierarchical) {
-							$output .= "<li".((($parent_active) || (isset($objective[$display_importance]) && $objective[$display_importance])) && (count($objective["parent_ids"]) > 2) ? " class=\"\"" : "")." id=\"objective_".$objective_id."_row\">\n";
-							if (($edit_importance) && (isset($objective[$display_importance]) && $objective[$display_importance])) {
-								$output .= "<select onchange=\"javascript: moveObjective('".$objective_id."', this.value);\" style=\"float: right; margin: 5px\">\n";
-								$output .= "	<option value=\"primary\"".(($objective["primary"]) ? " selected=\"selected\"" : "").">Primary</option>\n";
-								$output .= "	<option value=\"secondary\"".(($objective["secondary"]) ? " selected=\"selected\"" : "").">Secondary</option>\n";
-								$output .= "	<option value=\"tertiary\"".(($objective["tertiary"]) ? " selected=\"selected\"" : "").">Tertiary</option>\n";
-								$output .= "</select>";
-							}
-							if (count($objective["parent_ids"]) == 3) {
-								$output .= "	<div><div class=\"objective-title\">".$objective["name"]."</div>";
-								$output .= "	<div class=\"objective-description content-small\">".(isset($objective["objective_details"]) && $objective["objective_details"] ? $objective["objective_details"] : $objective["description"])."</div>";
-							} else {
-								$output .= "	<div class=\"objective-title\" id=\"objective_".$objective_id."\">".$objective["name"]."</div>\n";
-								$output .= "	<div class=\"objective-description content-small\">".(isset($objective["objective_details"]) && $objective["objective_details"] ? $objective["objective_details"] : $objective["description"]);
-							}
-							if (isset($objective["event_objective_details"]) && $objective["event_objective_details"]) {
-								$output .= "	<div class=\"objective-description content-small\"><em>".$objective["event_objective_details"]."</em></div>";
-							}
-							$output .= "	</div>";
-							$output .= "</li>";
-						}
+                        $output .= "<li".((($parent_active) || (isset($objective[$display_importance]) && $objective[$display_importance])) && (count($objective["parent_ids"]) > 2) ? " class=\"\"" : "")." id=\"objective_".$objective_id."_row\">\n";
+                        if (($edit_importance) && (isset($objective[$display_importance]) && $objective[$display_importance])) {
+                            $output .= "<select onchange=\"javascript: moveObjective('".$objective_id."', this.value);\" style=\"float: right; margin: 5px\">\n";
+                            $output .= "	<option value=\"primary\"".(($objective["primary"]) ? " selected=\"selected\"" : "").">Primary</option>\n";
+                            $output .= "	<option value=\"secondary\"".(($objective["secondary"]) ? " selected=\"selected\"" : "").">Secondary</option>\n";
+                            $output .= "	<option value=\"tertiary\"".(($objective["tertiary"]) ? " selected=\"selected\"" : "").">Tertiary</option>\n";
+                            $output .= "</select>";
+                        }
+                        if (count($objective["parent_ids"]) == 3) {
+                            $output .= "	<div><div class=\"objective-title\">".$objective["name"]."</div>";
+                            $output .= "	<div class=\"objective-description content-small\">".(isset($objective["objective_details"]) && $objective["objective_details"] ? $objective["objective_details"] : $objective["description"])."</div>";
+                        } else {
+                            $output .= "	<div class=\"objective-title\" id=\"objective_".$objective_id."\">".$objective["name"]."</div>\n";
+                            $output .= "	<div class=\"objective-description content-small\">".(isset($objective["objective_details"]) && $objective["objective_details"] ? $objective["objective_details"] : $objective["description"]);
+                        }
+                        if (isset($objective["event_objective_details"]) && $objective["event_objective_details"]) {
+                            $output .= "	<div class=\"objective-description content-small\"><em>".$objective["event_objective_details"]."</em></div>";
+                        }
+                        $output .= "	</div>";
+                        $output .= "</li>";
 					}
 					if ($objective["parent"] == $parent_id) {
-						$output .= course_objectives_in_list($objectives, $objective_id,$top_level_id, $edit_importance, ((isset($objective[$display_importance]) && $objective[$display_importance]) ? true : false), $importance, $selected_only, false, $display_importance, $hierarchical, $full_objective_list);
+						$output .= course_objectives_in_list($objectives, $objective_id,$top_level_id, $edit_importance, ((isset($objective[$display_importance]) && $objective[$display_importance]) || $parent_active ? true : false), $importance, $selected_only, false, $display_importance, $hierarchical, $full_objective_list);
 					}
 				}
 
@@ -10065,7 +10050,7 @@ function course_objectives_in_list($objectives, $parent_id, $top_level_id, $edit
 			$iterated = true;
 		} while ((($display_importance != "tertiary") && ($display_importance != "secondary" || $active["tertiary"]) && ($display_importance != "primary" || $active["secondary"] || $active["tertiary"])) && $top);
 
-		if (((isset($objectives[$parent_id]) && count($objectives[$parent_id]["parent_ids"])) || $hierarchical) && (!isset($objectives[$parent_id]["parent_ids"]) || count($objectives[$parent_id]["parent_ids"]) < 3)) {
+		if (((isset($objectives[$parent_id]) && count($objectives[$parent_id]["parent_ids"])) || ($hierarchical && (!$selected_only || isset($objective["event_objective"]) && $objective["event_objective"] && (isset($objective[$display_importance]) && $objective[$display_importance])))) && (!isset($objectives[$parent_id]["parent_ids"]) || count($objectives[$parent_id]["parent_ids"]) < 3)) {
 			$output .= "</ul>";
 		}
 	}
@@ -10125,7 +10110,7 @@ function course_fetch_course_audience($course_id = 0, $organisation_id = false,$
 				switch ($result["audience_type"]) {
 					case "cohort" :	// Cohorts
 					case "group_id" : // Course Groups
-						$query = "	SELECT u.*,u.`id` AS proxy_id, CONCAT_WS(', ',u.`lastname`,u.`firstname`) AS fullname, d.`eattendance_id` AS `has_attendance`
+						$query = "	SELECT u.*,u.`id` AS proxy_id, CONCAT_WS(', ',u.`lastname`,u.`firstname`) AS fullname
 									FROM `group_members` a
 									JOIN `".AUTH_DATABASE."`.`user_data` u
 									ON a.`proxy_id` = u.`id`
@@ -10160,8 +10145,6 @@ function course_fetch_course_audience($course_id = 0, $organisation_id = false,$
 						application_log("notice", "audience_type [".$result["audience_type"]."] is no longer supported, but is used in event_id [".$event_id."].");
 					break;
 				}
-
-
 			}
 			$course_audience = array_unique($course_audience,SORT_REGULAR);
 			usort($course_audience,"audience_sort");
@@ -11057,8 +11040,67 @@ function events_process_filters($action = "", $module_type = "") {
 	}
 }
 
-
-
+function events_process_recurring_eventtimes ($period = "daily", $start_date = 0, $offset = 7, $weekdays = array(), $recurring_end = false) {
+    if (!$start_date) {
+        $start_date = time();
+    }
+    if (!$recurring_end || $recurring_end > strtotime("+1 year", $start_date) || $recurring_end <= $start_date) {
+        $recurring_end = strtotime("+1 year", $start_date);
+    }
+    if (!$offset) {
+        $offset = 1;
+    }
+    $output_dates = array();
+    $current_session_date = $start_date;
+    switch ($period) {
+        case "daily" :
+            while ($current_session_date <= $recurring_end) {
+                $current_session_date = strtotime("+".$offset." days", $current_session_date);
+                if ($current_session_date <= $recurring_end) {
+                    $output_dates[] = $current_session_date;
+                }
+            }
+        break;
+        case "weekly" :
+            while ($current_session_date <= $recurring_end) {
+                $current_weekday = date("N", $current_session_date);
+                foreach ($weekdays as $weekday) {
+                    if ($weekday >= $current_weekday) {
+                        $weekday_difference = ($weekday - $current_weekday);
+                        $event_date = strtotime("+".$weekday_difference." days", $current_session_date);
+                        if ($event_date <= $recurring_end) {
+                            $output_dates[] = $event_date;
+                        }
+                    }
+                }
+                $current_session_date = strtotime("next monday", $current_session_date);
+            }
+        break;
+        case "monthly" :
+            
+                $month_numeric = (date("n", $current_session_date) + 1);
+                $year = date("Y", $current_session_date);
+                if ($month_numeric > 12) {
+                    $month_numeric = 1;
+                    $year++;
+                }
+            while ($current_session_date <= $recurring_end) {
+                $month = date("F", mktime(0, 0, 0, $month_numeric, 10));
+                $weekday = $weekdays[0];
+                $current_session_date = strtotime($month." ".$year." ".$offset." ".$weekday);
+                if ($current_session_date <= $recurring_end) {
+                    $output_dates[] = $current_session_date;
+                }
+                $month_numeric++;
+                if ($month_numeric > 12) {
+                    $month_numeric = 1;
+                    $year++;
+                }
+            }
+        break;
+    }
+    return $output_dates;
+}
 
 /**
  * Function used by community tracking to process the provided filter settings.
@@ -12416,6 +12458,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 	$fetch_quizzes = false;
 	$fetch_discussions = false;
 	$fetch_types = false;
+    $fetch_lti = false;
 
 	$output = array();
 
@@ -12448,6 +12491,7 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 			$fetch_quizzes = true;
 			$fetch_discussions = true;
 			$fetch_types = true;
+            $fetch_lti = true;
 		}
 
 		if (in_array("files", $options)) {
@@ -12489,6 +12533,10 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 		if (in_array("types", $exclude)) {
 			$fetch_types = false;
 		}
+
+        if (in_array("lti", $exclude)) {
+            $fetch_lti = false;
+        }
 
 		if ($fetch_files) {
 			/**
@@ -12570,6 +12618,14 @@ function events_fetch_event_resources($event_id = 0, $options = array(), $exclud
 						ORDER BY a.`eeventtype_id` ASC";
 			$output["types"] = $db->GetAll($query);
 		}
+
+        if ($fetch_lti) {
+            $query	= "	SELECT *
+						FROM `event_lti_consumers`
+						WHERE `event_id` = ".$db->qstr($event_id)."
+						ORDER BY `lti_title` ASC";
+            $output["lti"] = $db->GetAll($query);
+        }
 	}
 
 	return $output;
@@ -12785,28 +12841,28 @@ function assessment_objective_parent_mapped_recursive($objectives,$objective_id,
 /**
 * Calls event_objectives_bottom_leaves to get array of objectives to display, then calls event_objectives_display_leaf for each objective
 */
-function event_objectives_display_leafs($objectives,$course_id,$event_id){
+function event_objectives_display_leafs($objectives, $course_id, $event_id, $editable = true){
 	$leaves = event_objectives_bottom_leaves($objectives,$course_id,$event_id, false);
 	$displayed = array();
 	foreach ($leaves as $importance=>$leafs) {
 		//if no leaves, don't show category
 		if($leafs && !empty($leafs)){
-	?>
-	<a name="#<?php echo $importance;?>-objective-list"></a>
-	<h2 id="<?php echo $importance;?>-toggle"  title="<?php echo ucwords($importance);?> Objectives List" class="list-heading <?php echo $importance == 'primary'?'':'collapsed';?>"><?php echo ucwords($importance);?> Objectives</h2>
-	<div id="<?php echo $importance;?>-objectives-list">
-	<ul class="objective-list mapped-list" id="mapped_<?php echo $importance;?>_objectives" data-importance="hierarchical">
-	<?php
-		foreach($leafs as $leaf){
-			if (!in_array($leaf["objective_id"],$displayed)){
-				array_push($displayed,$leaf["objective_id"]);
-				event_objectives_display_leaf($leaf);
-			}
-		}
-	?>
-	</ul>
-	</div>
-	<?php
+            ?>
+            <a name="#<?php echo $importance;?>-objective-list"></a>
+            <h2 id="<?php echo $importance;?>-toggle"  title="<?php echo ucwords($importance);?> Objectives List" class="list-heading <?php echo $importance == 'primary'?'':'collapsed';?>"><?php echo ucwords($importance);?> Objectives</h2>
+            <div id="<?php echo $importance;?>-objectives-list">
+                <ul class="objective-list mapped-list" id="mapped_<?php echo $importance;?>_objectives" data-importance="hierarchical">
+                    <?php
+                    foreach($leafs as $leaf){
+                        if (!in_array($leaf["objective_id"],$displayed)){
+                            array_push($displayed,$leaf["objective_id"]);
+                            event_objectives_display_leaf($leaf, $editable);
+                        }
+                    }
+                    ?>
+                </ul>
+            </div>
+            <?php
 		}
 	}
 }
@@ -12820,9 +12876,10 @@ function event_objectives_bottom_leaves($objectives,$course_id,$event_id, $paren
 	$importances = array('primary','secondary','tertiary');
 	$list = array('primary' => array(),'secondary'=>array(),'tertiary'=>array());
 	foreach($objectives as $objective){
-		$imp = ($parent_importance?$parent_importance:($objective["importance"]?$objective["importance"]:3));
+		$imp = ($parent_importance ? $parent_importance : ($objective["importance"] ? $objective["importance"] : 1));
 		switch($imp){
 			case 1:
+			default:
 				$importance = "primary";
 				break;
 			case 2:
@@ -12831,8 +12888,6 @@ function event_objectives_bottom_leaves($objectives,$course_id,$event_id, $paren
 			case 3:
 				$importance = "tertiary";
 				break;
-			default:
-				$importance;
 		}
 		$query = "SELECT a.*,COALESCE(b.`objective_details`,a.`objective_description`) AS `objective_description` ,COALESCE(b.`objective_type`,c.`objective_type`) AS `objective_type`,
 					b.`importance`,c.`objective_details`, COALESCE(c.`eobjective_id`,0) AS `mapped`,
@@ -12844,26 +12899,31 @@ function event_objectives_bottom_leaves($objectives,$course_id,$event_id, $paren
 					LEFT JOIN `event_objectives` c
 					ON c.`objective_id` = a.`objective_id`
 					AND c.`event_id` = ".$db->qstr($event_id)."
+                    JOIN `courses` AS d
+                    ON d.`course_id` = ".$db->qstr($course_id)."
+                    JOIN `objective_organisation` AS e
+                    ON a.`objective_id` = e.`objective_id`
+                    AND d.`organisation_id` = e.`organisation_id`
 					WHERE a.`objective_active` = '1'
 					AND a.`objective_parent` = ".$db->qstr($objective["objective_id"])."
 					GROUP BY a.`objective_id`
 					ORDER BY a.`objective_order` ASC
 					";
 		$children = $db->GetAll($query);
-		$map = ($parent_mapped?true:($objective["mapped"]?true:false));
+		$map = ($parent_mapped ? true : ($objective["mapped"] ? true : false));
 		if (!$children) {
 			if ($map) {
 				$objective["mapped"] = 1;
 			}
 			array_push($list[$importance],$objective);
-		}else{
+		} else {
 
 			$response = event_objectives_bottom_leaves($children,$course_id,$event_id,$map,$imp);
 			if ($response) {
 				if ($parent_mapped) {
 					foreach($response as $imp=>$list){
-						foreach($list as $k=>$item){
-						$response[$imp][$k]["mapped"] = 1;
+						foreach($list as $k => $item){
+                            $response[$imp][$k]["mapped"] = 1;
 						}
 					}
 				}
@@ -12880,43 +12940,53 @@ function event_objectives_bottom_leaves($objectives,$course_id,$event_id, $paren
 /**
 * Displays the objective leaf as it is on the event content page
 */
-function event_objectives_display_leaf($objective){
-	$title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
-	?>
-		<li class = "mapped-objective"
-			id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
-			data-id = "<?php echo $objective["objective_id"]; ?>"
-			data-title="<?php echo $title;?>"
-			data-description="<?php echo htmlentities($objective["objective_description"]);?>">
-			<strong><?php echo $title; ?></strong>
-			<div class="objective-description">
-				<?php
-				$set = fetch_objective_set_for_objective_id($objective["objective_id"]);
-				if ($set) {
-					echo "From the Objective Set: <strong>".$set["objective_name"]."</strong><br/>";
-				}
-				?>
-				<?php echo $objective["objective_description"];?>
-			</div>
-			<div class="event-objective-controls">
-				<input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective['objective_id'];?>" value="<?php echo $objective['objective_id'];?>" <?php echo $objective["mapped"]?' checked="checked"':''; ?>/>
-			</div>
-			<?php if ($objective["mapped"]) { ?>
-			<div 	id="text_container_<?php echo $objective["objective_id"]; ?>"
-					class="objective_text_container"
-					data-id="<?php echo $objective["objective_id"]; ?>">
-				<label 	for="objective_text_<?php echo $objective["objective_id"]; ?>"
-						class="content-small" id="objective_<?php echo $objective["objective_id"]; ?>_append"
-						style="vertical-align: middle;">Provide your sessional free-text objective below as it relates to this curricular objective.</label>
-				<textarea 	name="objective_text[<?php echo $objective["objective_id"]; ?>]"
-							id="objective_text_<?php echo $objective["objective_id"]; ?>"
-							data-id="<?php echo $objective["objective_id"]; ?>"
-							class="expandable"
-							style="height: 28px; overflow: hidden;"><?php echo $objective["objective_details"];?></textarea>
-			</div>
-			<?php } ?>
-		</li>
-	<?php
+function event_objectives_display_leaf($objective, $editable = true){
+    if ($objective["mapped"] || $editable) {
+        $title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
+        ?>
+            <li class = "mapped-objective"
+                id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
+                data-id = "<?php echo $objective["objective_id"]; ?>"
+                data-title="<?php echo $title;?>"
+                data-description="<?php echo htmlentities($objective["objective_description"]);?>">
+                <strong><?php echo $title; ?></strong>
+                <div class="objective-description">
+                    <?php
+                    $set = fetch_objective_set_for_objective_id($objective["objective_id"]);
+                    if ($set) {
+                        echo "From the Objective Set: <strong>".$set["objective_name"]."</strong><br/>";
+                    }
+                    ?>
+                    <?php echo $objective["objective_description"];?>
+                </div>
+                <div class="event-objective-controls">
+                    <?php
+                    if ($editable) {
+                        ?>
+                        <input type="checkbox" class="checked-mapped" id="check_mapped_<?php echo $objective['objective_id'];?>" value="<?php echo $objective['objective_id'];?>" <?php echo ($objective["mapped"] ? ' checked="checked"':''); ?>/>
+                        <?php
+                    } else {
+                        echo "&nbsp;";
+                    }
+                    ?>
+                </div>
+                <?php if ($objective["mapped"] && $editable) { ?>
+                <div 	id="text_container_<?php echo $objective["objective_id"]; ?>"
+                        class="objective_text_container"
+                        data-id="<?php echo $objective["objective_id"]; ?>">
+                    <label 	for="objective_text_<?php echo $objective["objective_id"]; ?>"
+                            class="content-small" id="objective_<?php echo $objective["objective_id"]; ?>_append"
+                            style="vertical-align: middle;">Provide your sessional free-text objective below as it relates to this curricular objective.</label>
+                    <textarea 	name="objective_text[<?php echo $objective["objective_id"]; ?>]"
+                                id="objective_text_<?php echo $objective["objective_id"]; ?>"
+                                data-id="<?php echo $objective["objective_id"]; ?>"
+                                class="expandable"
+                                style="height: 28px; overflow: hidden;"><?php echo $objective["objective_details"];?></textarea>
+                </div>
+                <?php } ?>
+            </li>
+        <?php
+    }
 }
 
 /**
@@ -12974,7 +13044,7 @@ function event_objective_parent_mapped_recursive($objectives,$objective_id,$cour
 			return true;
 		}
 		if ($objective["objective_parent"]) {
-			$query = "	SELECT a.*, COALESCE(b.`cobjective_id`, 0) AS `mapped`
+			$query = "	SELECT a.*, COALESCE(b.`cobjective_id`, 0) AS `mapped`, b.`importance`
 						FROM `global_lu_objectives` a
 						LEFT JOIN `course_objectives` b
 						ON a.`objective_id` = b.`objective_id`
@@ -12994,7 +13064,7 @@ function event_objective_parent_mapped_recursive($objectives,$objective_id,$cour
 					return true;
 				}
 				if ($parent["mapped"]) {
-					return true;
+					return ($parent["importance"] ? $parent["importance"] : true);
 				}
 				$parents[] = $parent;
 			}
@@ -13190,6 +13260,26 @@ function events_flatten_objectives ($objectives) {
 	return $flat_objectives;
 }
 
+/**
+ * This function is used in conjunction with the output of events_fetch_objectives_structure and is used to
+ * find all the active objectives by objective name.
+ *
+ * @param type $objs - an array containing an objective set as produced by events_fetch_objectives_structure.
+ * @param type $output - an array of objective names of all the active objectives as accumlated by recursive call.
+ * @return type - an array of objective names of all the active objectives.
+ */
+function events_all_active_objectives($objs, $output = array()) {
+	foreach($objs as $obj_id => $details) {
+		if ($details["objective_active"]) {
+			$output[] = $details["objective_name"];
+		}
+		if ($details["children_active"]) {
+			$output = events_all_active_objectives($details["children"], $output);
+		}
+	}
+	return $output;
+}
+
 function events_fetch_objectives_structure($parent_id, $used_ids, $org_id = 0) {
 	global $db, $ENTRADA_USER;
 
@@ -13208,6 +13298,7 @@ function events_fetch_objectives_structure($parent_id, $used_ids, $org_id = 0) {
 	if ($objective_children) {
 		foreach ($objective_children as $objective) {
 			$full_objective_list[$objective["objective_id"]] = array(
+																		"objective_name" => $objective["objective_name"],
 																		"objective_active" => (is_array($used_ids) && array_search($objective["objective_id"], $used_ids) !== false ? true : false),
 																		"children_active" => false,
 																		"children" => array()
@@ -15525,41 +15616,6 @@ function displayARYearReported($year_reported, $AR_CUR_YEAR, $AR_PAST_YEARS, $AR
 	?>
 	</td>
 	<?php
-}
-
-/**
- * Adds the task sidebar, and populates it, only if there are tasks to be completed
- */
-function add_task_sidebar () {
-	require_once("Models/users/User.class.php");
-	require_once("Models/tasks/TaskCompletions.class.php");
-	global $ENTRADA_ACL, $ENTRADA_USER;
-
-	$proxy_id = $ENTRADA_USER->getActiveId();
-	$user = User::get($proxy_id);
-
-
-	$tasks_completions = TaskCompletions::getByRecipient($user, array('order_by'=>array(array('deadline', 'asc')), 'limit' => 5, 'where' => 'completed_date IS NULL'));
-
-	foreach ($tasks_completions as $completion) {
-		$tasks[] = $completion->getTask();
-	}
-	if (isset($tasks) && $tasks) {
-
-		$sidebar_html = "<ul>";
-		foreach ($tasks as $task) {
-			$sidebar_html .= "
-			<li>
-				<a href='".ENTRADA_URL."/tasks?section=details&id=".$task->getID()."'>".html_encode($task->getTitle())."</a>
-				<span class='content-small'>".(($task->getDeadline()) ? date(DEFAULT_DATE_FORMAT,$task->getDeadline()) : "")."</span>
-			</li>";
-		}
-		$sidebar_html .= "</ul>";
-
-		$sidebar_html .= "<a class='see-all' href='".ENTRADA_URL."/tasks'>See all tasks</a>";
-
-		new_sidebar_item("Upcoming Tasks", $sidebar_html, "task-list", "open");
-	}
 }
 
 /**

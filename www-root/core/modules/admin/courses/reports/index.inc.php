@@ -40,13 +40,36 @@ if (!defined("IN_COURSE_REPORTS")) {
 				AND `course_active` = '1'";
 	$course_details	= $db->GetRow($query);
 	courses_subnavigation($course_details,"reports");
+	
+	$query = "	SELECT *
+				FROM `course_lu_reports` a
+				JOIN `course_reports` b
+				ON a.`course_report_id` = b.`course_report_id`
+				WHERE b.`course_id` = " . $db->qstr($COURSE_ID) . "
+				ORDER BY a.`course_report_title` ASC";
+	$reports = $db->getAll($query);
 ?>
 
 	<h1>Available Reports</h1>
+	<?php if ($reports) { 
+	?>
 	<ul>
+	<?php
+			foreach($reports as $report) {
+	?>
 		<li>
-			<a href="<?php echo ENTRADA_URL . '/admin/courses/reports?section=my-teachers&id=' . $COURSE_ID; ?>">My Teachers</a>
+					<a href="<?php echo ENTRADA_URL . '/admin/courses/reports?section=' . $report["section"] . '&id=' . $COURSE_ID; ?>">
+						<?php echo $report["course_report_title"] ?>
+					</a>
 		</li>
+	<?php
+			}
+	?>
 	</ul>
 <?php
+	} else {
+		$NOTICE++;
+		$NOTICESTR[] = "Your " . $module_singular_name . " has no reports to display.  You can add reports on the " . $module_singular_name . " details page.";
+		echo display_notice();
+	}
 }

@@ -116,6 +116,13 @@ $CLERKSHIP_FIELD_STATUS["approval"] = array("name" => "Awaiting Approval", "visi
 $CLERKSHIP_FIELD_STATUS["trash"] = array("name" => "Trash", "visible" => false);
 $CLERKSHIP_FIELD_STATUS["cancelled"] = array("name" => "Cancelled", "visible" => false);
 
+/**
+ * The Course Report tab requires the event type ids that are to be reported on.
+ * Patient Contact Session is eventtype_id 4.
+*/
+$COURSE_REPORT_EVENT_TYPES = array(4);
+
+
 define("CURRICULAR_OBJECTIVES_PARENT_ID", 1);
 
 define("AUTH_PRODUCTION", ENTRADA_URL."/authentication/authenticate.php");		// Full URL to your production Entrada authentication server.
@@ -297,7 +304,7 @@ define("DEBUG_MODE", true);														// Some places have extra debug code to
 define("SHOW_LOAD_STATS", false);												// Do you want to see the time it takes to load each page?
 
 define("APPLICATION_NAME", "Entrada");											// The name of this application in your school (i.e. MedCentral, Osler, etc.)
-define("APPLICATION_VERSION", "1.5.0.1");										// The current filesystem version of Entrada.
+define("APPLICATION_VERSION", "1.6.0DEV");										// The current filesystem version of Entrada.
 define("APPLICATION_IDENTIFIER", "app-".AUTH_APP_ID);							// PHP does not allow session key's to be integers (sometimes), so we have to make it a string.
 
 $DEFAULT_META["title"] = "Entrada: An eLearning Ecosystem";
@@ -501,7 +508,6 @@ $MODULES["groups"] = array("title" => "Manage Cohorts", "resource" => "group", "
 $MODULES["events"] = array("title" => "Manage Events", "resource" => "eventcontent", "permission" => "update");
 $MODULES["gradebook"] = array("title" => "Manage Gradebook", "resource" => "gradebook", "permission" => "update");
 $MODULES["mspr"] = array("title" => "Manage MSPRs", "resource" => "mspr", "permission" => "create");
-$MODULES["tasks"] = array("title" => "Manage Tasks", "resource" => "task", "permission" => "create");
 $MODULES["notices"] = array("title" => "Manage Notices", "resource" => "notice", "permission" => "update");
 $MODULES["polls"] = array("title" => "Manage Polls", "resource" => "poll", "permission" => "update");
 $MODULES["quizzes"] = array("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update");
@@ -616,43 +622,6 @@ define("MSPR_CLERKSHIP_MERGE_DISTANCE", "+1 week");     // defines how close tog
 define("AUTO_APPROVE_ADMIN_MSPR_EDITS", true);          // if true, the comment will be cleared, and the entry approved.
 define("AUTO_APPROVE_ADMIN_MSPR_SUBMISSIONS", true);    // when adding to student submissions, admin contributions in these areas are automatically approved, if true.
 
-/**
- * Defines for Tasks Module
- *
- */
-define("TASK_OWNER_USER", "user");
-define("TASK_OWNER_COURSE", "course");
-define("TASK_OWNER_EVENT", "event");
-
-// Audience
-define("TASK_RECIPIENT_USER", "user");
-define("TASK_RECIPIENT_CLASS", "cohort");
-define("TASK_RECIPIENT_ORGANISATION", "organisation");
-
-define("TASK_VERIFICATION_NONE", "none");
-define("TASK_VERIFICATION_FACULTY","faculty");
-define("TASK_VERIFICATION_OTHER","other");
-
-define("TASK_VERIFICATION_NOTIFICATION_OFF", 0);
-define("TASK_VERIFICATION_NOTIFICATION_EMAIL", 1);
-define("TASK_VERIFICATION_NOTIFICATION_DASHBOARD", 2);
-
-define("TASK_COMMENT_NONE", "no_comments");
-define("TASK_COMMENT_ALLOW", "allow_comments");
-define("TASK_COMMENT_REQUIRE", "require_comments");
-
-define("TASK_FACULTY_SELECTION_ALLOW","allow");
-define("TASK_FACULTY_SELECTION_REQUIRE", "require");
-define("TASK_FACULTY_SELECTION_OFF", "off");
-
-// Defaults
-define("TASK_DEFAULT_RECIPIENT_TYPE", TASK_RECIPIENT_USER);
-define("TASK_DEFAULT_VERIFICATION_TYPE", TASK_VERIFICATION_NONE);
-define("TASK_DEFAULT_VERIFICATION_NOTIFICATION", TASK_VERIFICATION_NOTIFICATION_OFF);
-define("TASK_DEFAULT_COMPLETE_COMMENT", TASK_COMMENT_ALLOW);
-define("TASK_DEFAULT_REJECT_COMMENT", TASK_COMMENT_ALLOW);
-define("TASK_DEFAULT_FACULTY_SELECTION", TASK_FACULTY_SELECTION_ALLOW);
-
 define("PDF_PASSWORD", "MyPassword");                   // Used to set the owner password of the some PDF files.
 
 /**
@@ -661,3 +630,8 @@ define("PDF_PASSWORD", "MyPassword");                   // Used to set the owner
 define("GRADEBOOK_DISPLAY_WEIGHTED_TOTAL", 1);          // Used to determine whether or not to include final grade calculations in Grade Export.
 define("GRADEBOOK_DISPLAY_MEAN_GRADE", 1);              // Used to determine whether or not to include mean (average) grade calculations in student gradebook.
 define("GRADEBOOK_DISPLAY_MEDIAN_GRADE", 1);            // Used to determine whether or not to include median grade calculations in student gradebook.
+
+/**
+ * Learning Events Validation Constant
+ */
+define("LEARNING_EVENT_MIN_DURATION", 30);              // Used to determine the minimum event duration for validation when adding and editing learning events.

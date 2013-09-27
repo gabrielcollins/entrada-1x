@@ -153,24 +153,24 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				<div>
 					<div class="no-printing pull-right space-above">
 						<a 	href="<?php echo ENTRADA_URL."/".$MODULE."?id=".$course_details["course_id"]; ?>">
-							<img 	src="<?php echo ENTRADA_URL; ?>/images/page-link.gif" 
-									width="16" 
-									height="16" 
-									alt="Link to this page" 
-									title="Link to this page" 
+							<img 	src="<?php echo ENTRADA_URL; ?>/images/page-link.gif"
+									width="16"
+									height="16"
+									alt="Link to this page"
+									title="Link to this page"
 									border="0"/>
-						</a> 
+						</a>
 						<a href="<?php echo ENTRADA_URL."/".$MODULE."?id=".$course_details["course_id"]; ?>">
 						Link to this page
 						</a>
 						<a href="javascript:window.print()">
-							<img 	src="<?php echo ENTRADA_URL; ?>/images/page-print.gif" 
-									width="16" 
-									height="16" 
-									alt="Print this page" 
-									title="Print this page" 
+							<img 	src="<?php echo ENTRADA_URL; ?>/images/page-print.gif"
+									width="16"
+									height="16"
+									alt="Print this page"
+									title="Print this page"
 									border="0"/>
-						</a> 
+						</a>
 
 						<a href="javascript: window.print()">
 							Print this page
@@ -183,7 +183,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				<a name="course-details-section"></a>
 				<h2 title="Course Details Section"><?php echo $module_singular_name; ?> Details</h2>
 				<div id="course-details-section">
-					<?php 
+					<?php
 					if ($course_url = clean_input($course_details["course_url"], array("notags", "nows"))) { ?>
 					<div class="control-group">
 						<label for="external_website" class="form-nrequired control-label"></label>
@@ -215,7 +215,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								}
 							} else {
 								echo "To Be Announced";
-							}						
+							}
 						?>
 						</div>
 					</div>
@@ -240,20 +240,20 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								} else {
 									echo "To Be Announced";
 								}
-							?>							
+							?>
 						</div>
-					</div>	
-							
-					<?php 
+					</div>
+
+					<?php
 					if((int) $course_details["pcoord_id"]) { ?>
 						<div class="control-group">
 							<label for="program_coordinator" class="form-nrequired control-label"><strong>Program Coordinator</strong></label>
 							<div class="controls">
-								<a href="mailto:<?php echo get_account_data("email", $course_details["pcoord_id"]);?>"><?php echo get_account_data("fullname", $course_details["pcoord_id"]);?></a>								
+								<a href="mailto:<?php echo get_account_data("email", $course_details["pcoord_id"]);?>"><?php echo get_account_data("fullname", $course_details["pcoord_id"]);?></a>
 							</div>
-						</div>					
+						</div>
 					<?php
-					} 
+					}
 
 					if((int) $course_details["evalrep_id"]) { ?>
 						<div class="control-group">
@@ -262,8 +262,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								<a href="mailto:<?php echo get_account_data("email", $course_details["evalrep_id"]);?>"><?php echo get_account_data("fullname", $course_details["evalrep_id"]);?></a>
 							</div>
 						</div>
-					<?php					
-					} 	
+					<?php
+					}
 
 					if((int) $course_details["studrep_id"]) { ?>
 						<div class="control-group">
@@ -272,8 +272,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								<a href="mailto:<?php echo get_account_data("email", $course_details["studrep_id"]);?>"><?php echo get_account_data("fullname", $course_details["studrep_id"]);?></a>
 							</div>
 						</div>
-					<?php					
-					} 
+					<?php
+					}
 
 					if (clean_input($course_details["course_description"], array("notags", "nows")) != "") { ?>
 						<div class="control-group">
@@ -284,7 +284,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 							</div>
 						</div>
 					<?php
-					} 
+					}
 
 					if (clean_input($course_details["course_message"], array("notags", "nows")) != "") { ?>
 						<div class="control-group">
@@ -296,7 +296,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						</div>
 					<?php
 					} ?>
-				</div>			
+				</div>
 
 				<?php
 				$show_objectives = false;
@@ -325,23 +325,23 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						);
 					}
 					</script>
-					
+
 					<a name="course-objectives-section"></a>
 					<h2 title="Course Objectives Section"><?php echo  $module_singular_name ;?> Objectives</h2>
 					<div id="course-objectives-section">
-					<?php 
+					<?php
 					if (clean_input($course_details["course_objectives"], array("notags", "nows"))) {
 						$course_objectives_section = true;
 						echo trim(strip_selected_tags($course_details["course_objectives"], array("font")));
 					} ?>
 
-											
+
 					<h3>Curriculum Objectives</h3>
 					<p>The learner will be able to:</p>
 					<div id="objectives_list">
 						<?php echo course_objectives_in_list($objectives, $top_level_id,$top_level_id); ?>
 					</div>
-					<?php 
+					<?php
 					$query = "	SELECT b.*
 								FROM `course_objectives` AS a
 								JOIN `global_lu_objectives` AS b
@@ -359,36 +359,31 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					?>
 					<h3>Clinical Presentations</h3>
 					<ul class="objectives">
-					<?php 
-							$HEAD[] = "
-								<script type=\"text/javascript\" defer=\"defer\">
-								Event.observe(window, 'load', function() {";
-							foreach ($results as $result) {
-								$HEAD[] = "
-									new Control.Modal($('objective-".$result["objective_id"]."-details'), {
-										overlayOpacity:	0.75,
-										closeOnClick:	'overlay',
-										className:		'modal-description',
-										fade:			true,
-										fadeDuration:	0.30
-									});";
-								if ($result["objective_name"]) { ?>
-						<li>
-							<a id="objective-<?php echo $result["objective_id"];?>-details" href="<?php echo ENTRADA_URL;?>/courses/objectives?section=objective-details&api=true&oid=<?php echo $result["objective_id"]."&cid=".$COURSE_ID;?>">
-								<?php echo $result["objective_name"];?>
-							</a>
-						</li>
-								<?php
-								}
-
-							}
-							$HEAD[] = "
-								});
-								</script>";
-							?>
-					</ul>					
 					<?php
-					} 
+                    $HEAD[] = "<script type=\"text/javascript\" defer=\"defer\">Event.observe(window, 'load', function() {";
+                    foreach ($results as $result) {
+                        $HEAD[] = "new Control.Modal($('objective-".$result["objective_id"]."-details'), {
+                                overlayOpacity:	0.75,
+                                closeOnClick:	'overlay',
+                                className:		'modal-description',
+                                fade:			true,
+                                fadeDuration:	0.30
+                            });";
+                        if ($result["objective_name"]) {
+                            ?>
+                            <li>
+                                <a id="objective-<?php echo $result["objective_id"];?>-details" href="<?php echo ENTRADA_URL;?>/courses/objectives?section=objective-details&api=true&oid=<?php echo $result["objective_id"]."&cid=".$COURSE_ID;?>">
+                                    <?php echo $result["objective_name"];?>
+                                </a>
+                            </li>
+							<?php
+						}
+                    }
+                    $HEAD[] = "});</script>";
+                    ?>
+					</ul>
+					<?php
+					}
                 ?>
 				</div>
                 <?php
@@ -441,15 +436,15 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									<?php echo ((isset($RESOURCE_CATEGORIES["course"][$result["file_category"]])) ? html_encode($RESOURCE_CATEGORIES["course"][$result["file_category"]]) : "Unknown Category");?>
 								</td>
 								<td class="title" style="white-space: normal; overflow: visible">
-									<img 	src="<?php echo ENTRADA_URL;?>/serve-icon.php?ext=<?php echo $ext;?>" 
-											width="16" 
-											height="16" 
-											alt="<?php echo strtoupper($ext);?> Document" 
+									<img 	src="<?php echo ENTRADA_URL;?>/serve-icon.php?ext=<?php echo $ext;?>"
+											width="16"
+											height="16"
+											alt="<?php echo strtoupper($ext);?> Document"
 											title="<?php echo strtoupper($ext);?> Document"/>
 							<?php
 							if (((!(int) $result["valid_from"]) || ($result["valid_from"] <= time())) && ((!(int) $result["valid_until"]) || ($result["valid_until"] >= time()))) { ?>
-									<a 	href="<?php echo ENTRADA_URL;?>/file-course.php?id=<?php echo $result["id"];?>" 
-										title="Click to download <?php echo html_encode($result["file_title"]);?>" 
+									<a 	href="<?php echo ENTRADA_URL;?>/file-course.php?id=<?php echo $result["id"];?>"
+										title="Click to download <?php echo html_encode($result["file_title"]);?>"
 										<?php echo (((int) $result["access_method"]) ? " target=\"_blank\"" : "");?>>
 										<strong><?php echo html_encode($result["file_title"]);?></strong>
 									</a>
@@ -465,10 +460,10 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 							<?php
 							if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
 											This file will be available for downloading <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.
-							<?php 
+							<?php
 							} elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
 											This file was only available for download until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.
-							<?php 
+							<?php
 							}
 
 							if (clean_input($result["file_notes"], array("notags", "nows")) != "") {
@@ -481,8 +476,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									<?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
 								</td>
 							</tr>
-						<?php 
-						}						
+						<?php
+						}
 					} else { ?>
 							<tr>
 								<td colspan="4">
@@ -491,12 +486,12 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									</div>
 								</td>
 							</tr>
-					<?php 
+					<?php
 					} ?>
 						</tbody>
 					</table>
 					<br />
-					<?php 
+					<?php
 					$query = "SELECT * FROM `course_links` WHERE `course_id`=".$db->qstr($COURSE_ID)." ORDER BY `link_title` ASC";
 					$results = $db->GetAll($query);
 					?>
@@ -519,16 +514,16 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						foreach ($results as $result) { ?>
 							<tr style="vertical-align: top;">
 								<td class="modified">
-									<img 	src="<?php echo ENTRADA_URL;?>/images/url<?php echo (($result["proxify"] == "1") ? "-proxy" : "");?>.gif" 
-											width="16" 
-											height="16" 
+									<img 	src="<?php echo ENTRADA_URL;?>/images/url<?php echo (($result["proxify"] == "1") ? "-proxy" : "");?>.gif"
+											width="16"
+											height="16"
 											alt="" />
 								</td>
 								<td class="title" style="overflow: visible">
 							<?php
 							if (((!(int) $result["valid_from"]) || ($result["valid_from"] <= time())) && ((!(int) $result["valid_until"]) || ($result["valid_until"] >= time()))) { ?>
-									<a 	href="<?php echo ENTRADA_URL;?>/link-course.php?id=<?php echo $result["id"];?>" 
-										title="Click to visit <?php echo $result["link"];?>"  
+									<a 	href="<?php echo ENTRADA_URL;?>/link-course.php?id=<?php echo $result["id"];?>"
+										title="Click to visit <?php echo $result["link"];?>"
 										target="_blank">
 										<strong>
 										<?php echo (($result["link_title"] != "") ? html_encode($result["link_title"]) : $result["link"]);?>
@@ -554,7 +549,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 							<?php
 							}
 
-							if (clean_input($result["link_notes"], array("notags", "nows")) != "") { 
+							if (clean_input($result["link_notes"], array("notags", "nows")) != "") {
 									echo "<div class=\"clearfix\">".trim(strip_selected_tags($result["link_notes"], array("font")))."</div>";
 							} ?>
 									</div>
@@ -564,22 +559,148 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								</td>
 							</tr>
 						<?php
-						}					
-					} else { ?>
-							<tr>
-								<td colspan="2">
-									<div class="well well-small content-small">
-										There have been no linked resources added to this course.
-									</div>
-								</td>
-							</tr>
-					<?php
-					} ?>
+						}
+					} else {
+                        ?>
+                        <tr>
+                            <td colspan="3">
+                                <div class="well well-small content-small">
+                                    There have been no linked resources added to this course.
+                                </div>
+                            </td>
+                        </tr>
+                        <?php
+					}
+                    ?>
 						</tbody>
 					</table>
-					
-				</div>
+                    <br />
+                    <?php
+                    $query = "SELECT * FROM `course_lti_consumers` WHERE `course_id`=".$db->qstr($COURSE_ID)." ORDER BY `lti_title` ASC";
+                    $results = $db->GetAll($query);
+                    ?>
+                    <script type="text/javascript">
+                        var ajax_url = '';
+                        var modalDialog;
 
+                        function submitLTIForm() {
+                            jQuery('#ltiSubmitForm').submit();
+                        }
+
+                        function openLTIDialog(url) {
+                            var width  = jQuery(window).width() * 0.9,
+                                height = jQuery(window).height() * 0.9;
+
+                            if(width < 400) { width = 400; }
+                            if(height < 400) { height = 400; }
+
+                            modalDialog = new Control.Modal($('#false-link'), {
+                                position:		'center',
+                                overlayOpacity:	0.75,
+                                closeOnClick:	'overlay',
+                                className:		'modal',
+                                fade:			true,
+                                fadeDuration:	0.30,
+                                width: width,
+                                height: height,
+                                afterOpen: function(request) {
+                                    eval($('scripts-on-open').innerHTML);
+                                },
+                                beforeClose: function(request) {
+                                    jQuery('#ltiContainer').remove();
+                                }
+                            });
+
+                            new Ajax.Request(url, {
+                                method: 'get',
+                                parameters: 'width=' + width + '&height=' + height,
+                                onComplete: function(transport) {
+                                    modalDialog.container.update(transport.responseText);
+                                    modalDialog.open();
+                                }
+                            });
+                        }
+
+                        function closeLTIDialog() {
+                            modalDialog.close();
+                        }
+                    </script>
+
+                    <table class="tableList" cellspacing="0" summary="LTI Provider of Resources">
+                        <colgroup>
+                            <col class="modified" />
+                            <col class="title" />
+                            <col class="date" />
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <td class="modified">&nbsp;</td>
+                            <td class="title sortedASC"><div class="noLink">LTI Provider</div></td>
+                            <td class="date">Last Updated</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        if ($results) {
+                            foreach ($results as $result) { ?>
+                                <tr style="vertical-align: top;">
+                                    <td class="modified"></td>
+                                    <td class="title" style="overflow: visible">
+                                        <?php
+                                        if (((!(int) $result["valid_from"]) || ($result["valid_from"] <= time())) && ((!(int) $result["valid_until"]) || ($result["valid_until"] >= time()))) { ?>
+                                            <a href="javascript:void(0)"
+                                               onclick="openLTIDialog('<?php echo ENTRADA_URL;?>/api/lti-consumer-runner.api.php?ltiid=<?php echo $result["id"];?>')"
+                                               title="Click to visit <?php echo $result["lti_title"];?>">
+                                                <strong>
+                                                    <?php echo (($result["lti_title"] != "") ? html_encode($result["lti_title"]) : '');?>
+                                                </strong>
+                                            </a>
+                                        <?php
+                                        } else { ?>
+                                            <span style="color: #666666;">
+                                                <strong>
+                                                    <?php echo (($result["lti_title"] != "") ? html_encode($result["lti_title"]) : '');?>
+                                                </strong>
+                                            </span>
+                                        <?php
+                                        } ?>
+
+                                        <div class="content-small">
+                                            <?php
+                                            if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
+                                                This link will become accessible <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
+                                            <?php
+                                            } elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
+                                                This link was only accessible until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
+                                            <?php
+                                            }
+
+                                            if (clean_input($result["link_notes"], array("notags", "nows")) != "") {
+                                                echo "<div class=\"clearfix\">".trim(strip_selected_tags($result["link_notes"], array("font")))."</div>";
+                                            } ?>
+                                        </div>
+                                    </td>
+                                    <td class="date">
+                                        <?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
+                                    </td>
+                                </tr>
+                                <?php
+                            }
+                        } else {
+                            ?>
+                            <tr>
+                                <td colspan="3">
+                                    <div class="well well-small content-small">
+                                        There have been no linked resources added to this course.
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
 				<?php
 				/**
 				 * Sidebar item that will provide the links to the different sections within this page.
@@ -662,7 +783,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									ON a.`community_id` = b.`community_id`
 									WHERE a.`course_id` = ".$db->qstr($course["course_id"]);
 						$course_community = $db->GetOne($query);
-						
+
 						if ($course_community) {
 							$syllabi = glob(ENTRADA_ABSOLUTE."/core/storage/syllabi/".$course["course_code"]."-syllabus-" . ($year != 0 ? $year : date("Y", time())). "*");
 							if ($syllabi) {

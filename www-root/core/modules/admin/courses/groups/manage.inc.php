@@ -415,8 +415,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_GROUPS"))) {
 																AND b.`group` = 'student'
 																AND c.`audience_active` = 1
 																AND d.`group_active` = 1
-																AND (d.`start_date` <= ".$db->qstr(time())." OR d.`start_date` = 0)
-																AND (d.`expire_date` >= ".$db->qstr(time())." OR d.`expire_date` = 0)
+																AND (d.`start_date` <= ".$db->qstr(time())." OR d.`start_date` = 0 OR d.`start_date` IS NULL)
+																AND (d.`expire_date` >= ".$db->qstr(time())." OR d.`expire_date` = 0 OR d.`expire_date` IS NULL)
 																
 																GROUP BY a.`id`
 																ORDER BY `lastname` ASC, `firstname` ASC";

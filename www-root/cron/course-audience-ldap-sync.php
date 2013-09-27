@@ -141,6 +141,8 @@ if ($results) {
 		}
 		
 		if (!empty($course_codes)) {
+			$query = "SELECT `group_id` FROM `groups` WHERE `group_type` = 'course_list' AND `group_value` = ".$db->qstr($course["course_id"]);
+			$group_id = $db->GetOne($query);
 			foreach ($course_codes as $course_code) {
 				//create LDAP connection
 				if ($ldap->Connect(LDAP_HOST, LDAP_SEARCH_DN,LDAP_SEARCH_DN_PASS, LDAP_GROUPS_BASE_DN)) {
@@ -160,8 +162,6 @@ if ($results) {
 						foreach ($results as $result) {
 							//make new connection with the base set to people to get user information
 
-							$query = "SELECT `group_id` FROM `groups` WHERE `group_type` = 'course_list' AND `group_value` = ".$db->qstr($course["course_id"]);
-							$group_id = $db->GetOne($query);
 							$now = time();
 
 							if (!$group_id && count($result["uniqueMember"])) {
@@ -294,41 +294,41 @@ if ($results) {
 								$ldap->Close();
 							}
 						}
-						if (isset($course_audience) && $course_audience) {
-							$end_stamp = time();
-							foreach ($course_audience["id"] as $key=>$audience_member) {
-								$values = array();
-								$values["finish_date"] = $end_stamp;
-								$values["member_active"] = 0;
-								$values["updated_date"] = $end_stamp;
-								if ($db->AutoExecute("group_members",$values,"UPDATE","`group_id` = ".$db->qstr($group_id)." AND `proxy_id` = ".$db->qstr($audience_member))) {
-									application_log("success",$course_audience["number"][$key]." was successfully removed from  the group ".$group_id.".");
-								} else {
-									application_log("cron", "Error occurred while removing ".$pKey." from the group list ".$group_id.".");
-								}
-							}					
-						}
-						if ($comm_id) {
-							if (isset($community_audience) && $community_audience) {
-								$end_stamp = time();
-								foreach ($community_audience["id"] as $key=>$audience_member) {
-									$values = array();
-									$values["member_active"] = 0;
-									if ($db->AutoExecute("community_members",$values,"UPDATE","`community_id` = ".$db->qstr($comm_id)." AND `proxy_id` = ".$db->qstr($audience_member)." AND `member_active` = 1")) {
-										application_log("success",$audience_member." was successfully removed from the  course community ".$comm_id.".");
-									} else {
-										application_log("cron", "Error occurred while removing ".$pKey." from the community ".$comm_id.".");
-									}
-								}					
-							}
-						}
-
 					} else {
 						application_log("cron", "No results from LDAP server for course ".$course["course_code"].". Check that course code is valid.");
 					}
+					
 				} else {			
 					application_log("cron", "Could not connect to get course information.");
 					application_log("cron",$ldap->ErrorMsg());
+				}
+			}
+			if (isset($course_audience) && $course_audience) {
+				$end_stamp = time();
+				foreach ($course_audience["id"] as $key=>$audience_member) {
+					$values = array();
+					$values["finish_date"] = $end_stamp;
+					$values["member_active"] = 0;
+					$values["updated_date"] = $end_stamp;
+					if ($db->AutoExecute("group_members",$values,"UPDATE","`group_id` = ".$db->qstr($group_id)." AND `proxy_id` = ".$db->qstr($audience_member))) {
+						application_log("success",$course_audience["number"][$key]." was successfully removed from  the group ".$group_id.".");
+					} else {
+						application_log("cron", "Error occurred while removing ".$pKey." from the group list ".$group_id.".");
+					}
+				}					
+			}
+			if ($comm_id) {
+				if (isset($community_audience) && $community_audience) {
+					$end_stamp = time();
+					foreach ($community_audience["id"] as $key=>$audience_member) {
+						$values = array();
+						$values["member_active"] = 0;
+						if ($db->AutoExecute("community_members",$values,"UPDATE","`community_id` = ".$db->qstr($comm_id)." AND `proxy_id` = ".$db->qstr($audience_member)." AND `member_active` = 1")) {
+							application_log("success",$audience_member." was successfully removed from the  course community ".$comm_id.".");
+						} else {
+							application_log("cron", "Error occurred while removing ".$pKey." from the community ".$comm_id.".");
+						}
+					}					
 				}
 			}
 		} else {

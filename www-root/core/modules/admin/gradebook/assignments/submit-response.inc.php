@@ -68,7 +68,7 @@ if ($RECORD_ID) {
 								break;
 								case 1 :
 								case 2 :
-									add_error("The file that was uploaded is larger than ".readable_size($VALID_MAX_FILESIZE).". Please make the file smaller and try again.");
+									add_error("The file that was uploaded is larger than ".readable_size(MAX_UPLOAD_FILESIZE).". Please make the file smaller and try again.");
 								break;
 								case 3 :
 									add_error("The file that was uploaded did not complete the upload process or was interrupted; please try again.");
@@ -208,7 +208,7 @@ if ($RECORD_ID) {
 
 
 						<form id="upload-file-form" action="<?php echo ENTRADA_URL."/admin/gradebook/assignments?section=submit-response&id=".$RECORD_ID."&fid=".$FILE_ID."&step=2"; ?>" method="post" enctype="multipart/form-data">
-						<input type="hidden" name="MAX_UPLOAD_FILESIZE" value="<?php echo $VALID_MAX_FILESIZE; ?>" />
+						<input type="hidden" name="MAX_UPLOAD_FILESIZE" value="<?php echo MAX_UPLOAD_FILESIZE; ?>" />
 						<table style="width: 420px;" cellspacing="0" cellpadding="2" border="0" summary="Upload File">
 						<colgroup>
 							<col style="width: 3%" />
@@ -238,7 +238,7 @@ if ($RECORD_ID) {
 													<td style="vertical-align: top">
 														<input type="file" id="uploaded_file_1" name="uploaded_file" onchange="fetchFilename(1)" />
 														<div class="content-small" style="margin-top: 5px">
-															<strong>Notice:</strong> You may upload files under <?php echo readable_size($VALID_MAX_FILESIZE); ?>.
+															<strong>Notice:</strong> You may upload files under <?php echo readable_size(MAX_UPLOAD_FILESIZE); ?>.
 														</div>
 													</td>
 												</tr>

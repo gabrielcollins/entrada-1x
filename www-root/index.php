@@ -580,7 +580,7 @@ switch ($MODULE) {
                             $display_masks = true;
                         }
                         $added_users[] = $result["id"];
-                        $sidebar_html .= "<option value=\"".(($access_id == $ENTRADA_USER->getDefaultAccessId()) ? "close" : $result["permission_id"])."\"".(($result["id"] == $ENTRADA_USER->getActiveId()) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"]) . "</option>\n";
+                        $sidebar_html .= "<option value=\"".(($access_id == $ENTRADA_USER->getDefaultAccessId()) || !isset($result["permission_id"]) ? "close" : $result["permission_id"])."\"".(($result["id"] == $ENTRADA_USER->getActiveId()) ? " selected=\"selected\"" : "").">".html_encode($result["fullname"]) . "</option>\n";
                     }
                 }
                 $sidebar_html .= "</select>\n";
@@ -609,7 +609,6 @@ require_once(ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate().
  * Add the Feedback Sidebar Window.
  */
 if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
-	add_task_sidebar();
 	add_feedback_sidebar($ENTRADA_USER->getActiveGroup());
 	add_organisation_sidebar();
 }

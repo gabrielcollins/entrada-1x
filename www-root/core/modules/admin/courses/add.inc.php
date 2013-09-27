@@ -243,6 +243,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 
 			}
 
+			if (isset($_POST["course_report_ids"])) {						
+				$PROCESSED["course_report_ids"] = array();
+				foreach ($_POST["course_report_ids"] as $index => $tmp_input) {
+					if ($course_report_id = clean_input($tmp_input, "int")) {								
+						$PROCESSED["course_report_ids"][] = $course_report_id;
+					}
+				}
+			}
+
 			if (!has_error()) {
 				$PROCESSED["updated_date"] = time();
 				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
@@ -314,6 +323,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 										add_error("An error occurred while adding the student with id ".$member." as an audience member.");
 									}
 								}
+							}
+						}
+						if (isset($PROCESSED["course_report_ids"]) && count($PROCESSED["course_report_ids"]) > 0) {							
+							foreach ($PROCESSED["course_report_ids"] as $index => $course_report_id) {									
+								$PROCESSED["course_report_id"] = $course_report_id;		
+								$PROCESSED["course_id"] = $COURSE_ID;								
+
+								if ($db->AutoExecute("course_reports", $PROCESSED, "INSERT")) {											
+									add_statistic("Course Edit", "edit", "course_reports.course_report_id", $PROCESSED["course_report_id"], $ENTRADA_USER->getID());
+								} else {
+									add_error("An error occurred while adding course reports.  The system administrator was informed of this error; please try again later.");
+									application_log("error", "Error inserting course reports for course id: " . $COURSE_ID);
+								}									
 							}
 						}
 
@@ -1028,7 +1050,46 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				</div>
 					<?php 	} 	?>	
 
-
+				<h2 title="Course Reports Section"><?php echo $module_singular_name; ?> Reports</h2>
+				<div id="course-reports-section">
+					<div class="control-group">
+						<label for="course_report_ids" class="control-label form-nrequired">Report Types:</label>
+						<div class="controls">
+							<?php
+							$query = "	SELECT *
+										FROM `course_report_organisations` a
+										JOIN `course_lu_reports` b
+										ON a.`course_report_id` = b.`course_report_id`
+										WHERE a.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation());							
+							$results = $db->GetAll($query);
+							if ($results) {
+								?>
+								<select id="course_report_ids" name="course_report_ids[]" multiple data-placeholder="Choose reports..." class="chosen-select">
+									<?php
+									foreach($results as $result) {
+										$selected = false;
+										if (isset($PROCESSED["course_report_ids"]) && $PROCESSED["course_report_ids"] && in_array($result["course_report_id"], $PROCESSED["course_report_ids"])) {
+											$selected = true;
+										}
+										echo build_option($result["course_report_id"], $result["course_report_title"], $selected);
+									}
+								?>
+								</select>
+								<?php
+							} 
+							?>                               
+							<?php
+							if (is_array($PROCESSED["course_reports"])) {
+								foreach ($PROCESSED["course_reports"] as $course_report) {
+									echo "<li id=\"type_".$course_report[0]."\" class=\"\">".$course_report[2]."
+											<a href=\"#\" onclick=\"$(this).up().remove(); cleanupList(); return false;\" class=\"remove\"><img src=\"".ENTRADA_URL."/images/action-delete.gif\"></a>                                                
+											</li>";
+								}
+							}
+							?>                               
+						</div>
+					</div>
+				</div>
                 <!-- Course Audience-->
                 <h2><?php echo $module_singular_name; ?> Enrollment</h2>
                 <div class="control-group">
@@ -1145,6 +1206,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
                 </div>
 
                 <script type="text/javascript">
+					jQuery(function($) {						
+						$('.chosen-select').chosen({no_results_text: 'No Reports Available.'});	
+					});
                 var updaters = new Array();
                 function addPeriod(period_id,period_text,index){
                     jQuery("#period_select option[value='"+period_id+"']").attr('disabled','disabled');

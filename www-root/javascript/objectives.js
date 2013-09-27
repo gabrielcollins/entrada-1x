@@ -1,7 +1,154 @@
 var EDITABLE = false;
 var loaded = [];
 var loading_objectives = false;
+var linked_objective_id = 0;
 jQuery(document).ready(function(){	
+	jQuery("#child-objectives-section").on("click", ".objective-link-control", function(e) {
+		linked_objective_id = jQuery(this).attr("data-id");
+		var objective_id = jQuery(this).attr("data-id");
+		var linked_objective_list = jQuery(document.createElement("ul"));
+		var modal_data = jQuery(document.createElement("div"));
+		jQuery.ajax({
+			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + objective_id + "&mode=ajax",
+			type: "POST",
+			data: "method=fetch-linked-objectives&objective_set_id=" + objective_set_id,
+			async: false,
+			success: function(data) {
+				modal_data.append(data);
+			}
+		});
+		
+		var modal = jQuery("#objective-link-modal");
+		modal.append(modal_data);
+		modal.dialog({
+			title: "Link Objective",
+			modal: true,
+			draggable: false,
+			resizable: false,
+			width: 700,
+			minHeight: 550,
+			maxHeight: 700,
+			dialogClass: "fixed",
+			buttons: {
+				Close : function() {
+					jQuery(this).dialog( "close" );
+				}
+			},
+			close: function(event, ui) {
+				modal.html("");
+				jQuery(this).dialog( "destroy" );
+			}
+		});
+		e.preventDefault();
+	});
+	
+	jQuery("#objective-link-modal").on("click", "#objective-link-modal .objective", function(e) {
+		
+		var objective_id = jQuery(this).attr("data-id");
+		var clicked = jQuery(this);
+		if (clicked.hasClass("expanded")) {
+			clicked.siblings(".children").html("")
+			clicked.removeClass("expanded");
+		} else {
+			clicked.addClass("expanded");
+			jQuery.ajax({
+				url: SITE_URL + "/api/fetchobjectives.api.php?objective_id=" + objective_id,
+				type: "POST",
+				data: "method=fetch-linked-objectives",
+				async: false,
+				success: function(data) {
+					var objective_list = jQuery(document.createElement("ul"));
+					var jsonData = JSON.parse(data);
+					for (var i = 0; i < jsonData.length; i++) {
+						var objective_list_item = jQuery(document.createElement("li"));
+						var map_input = "";
+
+						var checked = "";
+						if (jQuery("#currently-linked-objectives li[data-id="+jsonData[i].objective_id+"]").length > 0) {
+							checked = "checked=\"checked\"";
+						}	
+						map_input = "<input class=\"objective-check\" type=\"checkbox\" name=\"\" data-id=\""+jsonData[i].objective_id+"\" " + checked + " />";
+
+						if (jsonData[i].has_child == true) {
+							var objective_link = jQuery(document.createElement("a"));
+						} else {
+							var objective_link = jQuery(document.createElement("span"));
+						}
+						objective_link.addClass("objective").attr("href", "#").attr("data-id", jsonData[i].objective_id).html(jsonData[i].objective_name + (jsonData[i].has_child == true ? " <i class=\"icon-chevron-down\"></i>" : ""));
+						objective_list_item.html(map_input + " ").append(objective_link).append("<div class=\"children\"></div>");
+						objective_list.append(objective_list_item);
+					}
+					clicked.siblings(".children").append(objective_list);
+				}
+			});
+		}
+		e.preventDefault();
+	});
+	
+	jQuery("#objective-link-modal").on("click", "#objective-link-modal .objective-check", function(e) {
+		
+		var checkbox = jQuery(this);
+		var target_objective_id = jQuery(this).attr("data-id");
+		var action = "unlink";
+		if (checkbox.is(":checked")) {
+			action = "link";
+		}
+		
+		jQuery.ajax({
+			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&mode=ajax",
+			type: "POST",
+			data: "method=link-objective&action="+action,
+			async: false,
+			success: function(data) {
+				var jsonResponse = JSON.parse(data);
+				if (jsonResponse.status == "success") {
+					if (jsonResponse.data.action == "link") {
+						var objectiveListItem = jQuery(document.createElement("li"));
+						objectiveListItem.attr("data-id", jsonResponse.data.target_objective_id);
+						objectiveListItem.html("<strong>" + jsonResponse.data.objective_name + "</strong><a href=\"#\" class=\"unlink\"><i class=\"icon-trash\"></i></a>" + (jsonResponse.data.parent_objective != null ? "<br /><small class=\"content-small\">From " + jsonResponse.data.parent_objective + "</small>" : "") + (jsonResponse.data.objective_description != null ? "<br />" + jsonResponse.data.objective_description : ""));
+						jQuery("#currently-linked-objectives").append(objectiveListItem);
+						if (jQuery("#currently-linked-objectives .no-objectives").length > 0) {
+							jQuery("#currently-linked-objectives .no-objectives").remove();
+						}
+					} else {
+						jQuery("#currently-linked-objectives li[data-id='" + jsonResponse.data.target_objective_id + "']").remove();
+						if (jQuery("#currently-linked-objectives li").length <= 0) {
+							jQuery("#currently-linked-objectives").append("<li class=\"no-objectives\">This objective is not currently linked to any other objectives.</li>");
+						}
+					}
+				}
+			}
+		});
+		
+	});
+	
+	jQuery("#objective-link-modal").on("click", "#objective-link-modal .unlink", function(e) {
+		
+		var target_objective_id = jQuery(this).parent().attr("data-id");
+		var action = "unlink";
+		
+		jQuery.ajax({
+			url: SITE_URL + "/admin/settings/manage/objectives?org=" + org_id + "&section=edit&id=" + linked_objective_id + "&target_objective_id=" + target_objective_id + "&mode=ajax",
+			type: "POST",
+			data: "method=link-objective&action="+action,
+			async: false,
+			success: function(data) {
+				var jsonResponse = JSON.parse(data);
+				if (jsonResponse.status == "success") {
+					jQuery("#currently-linked-objectives li[data-id='" + jsonResponse.data.target_objective_id + "']").remove();
+					if (jQuery("#currently-linked-objectives li").length <= 0) {
+						jQuery("#currently-linked-objectives").append("<li class=\"no-objectives\">This objective is not currently linked to any other objectives.</li>");
+					}
+					if (jQuery(".objective-check[data-id='" + jsonResponse.data.target_objective_id + "']").is(":checked")) {
+						jQuery(".objective-check[data-id='" + jsonResponse.data.target_objective_id + "']").attr("checked", false);
+					}
+				}
+			}
+		});
+		
+		e.preventDefault();
+	});
+	
 	jQuery('.objective-collapse-control').live('click',function(){
 		var id = jQuery(this).attr('data-id');
 		if(jQuery('#children_'+id).is(':visible')){
@@ -12,7 +159,6 @@ jQuery(document).ready(function(){
 			jQuery('#children_'+id).slideDown();
 		}
 	});
-	
 
 	jQuery('.objective-title').live('click',function(){
 		var id = jQuery(this).attr('data-id');		
@@ -41,7 +187,7 @@ jQuery(document).ready(function(){
 									.attr('alt','Loading...')
 									.attr('class','loading')
 									.attr('id','loading_'+id);
-				jQuery('#objective_controls_'+id).append(loading);				
+				jQuery('#objective_controls_'+id).append(loading);
 				loading_objectives = true;				
 				jQuery.ajax({
 						url:SITE_URL+'/api/fetchobjectives.api.php',
@@ -191,9 +337,9 @@ jQuery(document).ready(function(){
                                            jQuery(document.createElement("ul")).attr("id", "objective_list_"+jsonData.updates.objective_id).addClass("objective-list")
                                        )
                                     );
-                                list_item.children(".objective-controls").append(jQuery(document.createElement("i")).addClass("objective-edit-control").attr("data-id", jsonData.updates.objective_id))
-                                     .append(jQuery(document.createElement("i")).addClass("objective-add-control").attr("data-id", jsonData.updates.objective_id))
-                                     .append(jQuery(document.createElement("i")).addClass("objective-delete-control").attr("data-id", jsonData.updates.objective_id));
+                                list_item.children(".objective-controls").append(jQuery(document.createElement("i")).addClass("objective-edit-control").addClass("icon-edit").attr("data-id", jsonData.updates.objective_id))
+                                     .append(jQuery(document.createElement("i")).addClass("objective-add-control").addClass("icon-plus-sign").attr("data-id", jsonData.updates.objective_id))
+                                     .append(jQuery(document.createElement("i")).addClass("objective-delete-control").addClass("icon-minus-sign").attr("data-id", jsonData.updates.objective_id));
 
                                 if (jQuery("#children_" + objective_parent + " #objective_list_" + objective_parent).children().length != order) {
                                     jQuery("#children_" + objective_parent + " #objective_list_" + objective_parent + " li").eq(order).before(list_item)
@@ -233,7 +379,6 @@ jQuery(document).ready(function(){
 					jQuery(this).dialog( "close" );
 				},
 				Delete : function() {
-					console.log(modal_container.children("form").serialize());
 					jQuery.ajax({
 						url: modal_container.children("form").attr("action"),
 						type: "POST",
@@ -262,7 +407,7 @@ jQuery(document).ready(function(){
 });
 
 function buildDOM(children,id){
-	var container,title,title_text,controls,check,d_control,e_control,a_control,description,child_container;
+	var container,title,title_text,controls,check,d_control,e_control,a_control,m_control,description,child_container;
 	jQuery('#children_'+id).hide();
 	if(children.error !== undefined){
 		if(!EDITABLE){
@@ -302,13 +447,16 @@ function buildDOM(children,id){
 		// 			.html('Collapse');
 		if(EDITABLE == true){						
 			e_control = jQuery(document.createElement('i'))
-						.attr('class','objective-edit-control')
+						.attr('class','objective-edit-control icon-edit')
 						.attr('data-id',children[i].objective_id);
 			a_control = jQuery(document.createElement('i'))
-						.attr('class','objective-add-control')
+						.attr('class','objective-add-control icon-plus-sign')
 						.attr('data-id',children[i].objective_id);	
 			d_control = jQuery(document.createElement('i'))
-						.attr('class','objective-delete-control')
+						.attr('class','objective-delete-control icon-minus-sign')
+						.attr('data-id',children[i].objective_id);
+			m_control = jQuery(document.createElement('i'))
+						.attr('class','objective-link-control icon-link')
 						.attr('data-id',children[i].objective_id);
 		} else {
 			check = 	jQuery(document.createElement('input'))
@@ -342,7 +490,8 @@ function buildDOM(children,id){
 		if(EDITABLE == true){
 		jQuery(controls).append(e_control)
 						.append(a_control)
-						.append(d_control);
+						.append(d_control)
+						.append(m_control);
 		}
 		jQuery(container).append(title)
 							.append(controls)

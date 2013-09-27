@@ -126,7 +126,6 @@ if ($apartments = $db->GetAll($query)) {
 		}
 
 		unset($mail);
-		exit;
 	}
 	
 } else {

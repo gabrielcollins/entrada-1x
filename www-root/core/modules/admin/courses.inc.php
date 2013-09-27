@@ -39,6 +39,8 @@ if(!defined("PARENT_INCLUDED")) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	define("IN_COURSES", true);
+	$HEAD[]	= "<script type=\"text/javascript\" src=\"".ENTRADA_RELATIVE."/javascript/jquery/chosen.jquery.min.js\"></script>\n";
+    $HEAD[]	= "<link rel=\"stylesheet\" type=\"text/css\"  href=\"".ENTRADA_RELATIVE."/css/jquery/chosen.css\"></script>\n";
 
 	$module_title = $translate->_("courses");
 	$module_singular_name = $translate->_("course");

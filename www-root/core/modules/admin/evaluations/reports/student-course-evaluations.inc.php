@@ -313,9 +313,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 						AND elt.`target_active` = 1
 						AND a.`app_id` = ".$db->qstr(AUTH_APP_ID)."
 						AND a.`account_active` = 'true'
-						AND (ev.`evaluator_type` = 'cohort'
-						OR ev.`evaluator_type` = 'proxy_id'
-						AND a.`group`= 'student')
 						GROUP BY `evaluation_id`";
 			$results = $db->GetAll($query);
 				
@@ -332,7 +329,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 									AND elt.`target_active` = 1 
 									AND a.`app_id` = ".$db->qstr(AUTH_APP_ID)."
 									AND a.`account_active` = 'true'
-									AND (ev.`evaluator_type` = 'cohort' OR ev.`evaluator_type` = 'proxy_id' AND a.`group`= 'student')
 				                    GROUP BY e.`evaluation_id`
 				                    ORDER BY %s
 				                    LIMIT %s, %s";
@@ -451,6 +447,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 										WHERE ev.`evaluator_type` = 'cohort'
 										AND ev.`evaluator_value` = a.`group_id`
 										AND a.`member_active` = 'true'
+										AND ev.`evaluation_id` = ".$db->qstr($result["evaluation_id"])."
+										UNION
+										SELECT a.`user_id` `evaluator`
+										FROM `course_group_audience` a , `evaluation_evaluators` ev
+										WHERE ev.`evaluator_type` = 'cgroup_id'
+										AND ev.`evaluator_value` = a.`cgroup_id`
+										AND a.`active` = 1
 										AND ev.`evaluation_id` = ".$db->qstr($result["evaluation_id"])."
 									) t";
 						$evaluators	= $db->GetOne($query);

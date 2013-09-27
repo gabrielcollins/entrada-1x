@@ -44,7 +44,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 			$method = clean_input($_POST["method"], array("trim", "striptags"));
 
 			switch ($method) {
-				case "store-late" :
+				case "store-resubmit" :
 					
 					if (isset($_POST["aovalue_id"]) && $tmp_input = clean_input($_POST["aovalue_id"], "int")) {
 						$PROCESSED["aovalue_id"] = $tmp_input;
@@ -67,7 +67,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					if (isset($_POST["value"]) && $tmp_input = clean_input($_POST["value"], "int")) {
 						$PROCESSED["value"] = clean_input($_POST["value"], "int");
 					} else {
-						add_error("Invalid lates value provided");
+						$PROCESSED["value"] = 0;
 					}
 					
 					if (!$ERROR) {
@@ -84,7 +84,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					}
 					
 				break;
-				case "store-resubmit" :
+				case "store-late" :
 					
 					if (isset($_POST["aovalue_id"]) && $tmp_input = clean_input($_POST["aovalue_id"], "int")) {
 						$PROCESSED["aovalue_id"] = $tmp_input;
@@ -238,6 +238,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					<div id="graph" class="pull-right"></div>
 					<p><strong class="span3">Assessment Type:</strong> <?php echo $assessment["type"]; ?> Assessment</p>
 					<p><strong class="span3">Assessment Weighting:</strong> <?php echo $assessment["grade_weighting"]."%"; ?></p>
+					<script type="text/javascript">
+						var marking_scheme_id = "<?php echo $assessment["marking_scheme_id"]; ?>";
+					</script>
 					<?php 
 					switch($assessment["marking_scheme_id"]) {
 						case 1:
@@ -245,8 +248,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							//pass/fail
 							$grades = array(0,0,0);
 							$unentered = 0;
-
-							foreach ($students as $key => $student) {
+                            
+                            foreach ($students as $key => &$student) {
 								if ($student["grade_value"] == "") {
 									$unentered++;
 								} elseif ($student["grade_value"] > 50){
@@ -287,7 +290,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							$unentered = 0;
 
 							$grade_values = array();
-							foreach ($students as $key => $student) {
+							foreach ($students as $key => &$student) {
 								if (!isset($student["grade_value"]) || !$student["grade_value"]) {
 									//$grades[11]++;
 									$unentered++;
@@ -300,7 +303,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 									$grades[$key]++;
 								}
 							}
-
+                            
 							$grade_data = array();
 							foreach ($grades as $key => $grade) {
 								$grade_data[] = "[$key, $grade]";
@@ -401,14 +404,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 													<?php if ($assessment["marking_scheme_id"] == 3) { ?>
 													<td id="percentage_<?php echo $assessment["assessment_id"]; ?>_<?php echo $student["proxy_id"] ?>"><?php echo round($student["grade_value"],2);?>%</td>
 													<?php } ?>
-													<?php if (array_key_exists("5", $assessment_options)) { ?>
-													<td class="late-submissions">
-														<span class="late pull-left" data-id="<?php echo $assessment_options[5]; ?>" data-proxy-id="<?php echo $student["proxy_id"]; ?>" data-aovalue-id="<?php echo !empty($option_values[$assessment_options[5]]["aovalue_id"]) ? $option_values[$assessment_options[5]]["aovalue_id"] : "" ?>"><?php echo empty($option_values[$assessment_options[5]]["value"]) ? "-" : $option_values[$assessment_options[5]]["value"]; ?></span><i class="late-button icon-edit pull-right"></i>
-													</td>
-													<?php } ?>
 													<?php if (array_key_exists("6", $assessment_options)) { ?>
 													<td class="resubmissions">
-														<input type="checkbox" data-id="<?php echo $assessment_options[6]; ?>" data-proxy-id="<?php echo $student["proxy_id"]; ?>" data-aovalue-id="<?php echo !empty($option_values[$assessment_options[6]]["aovalue_id"]) ? $option_values[$assessment_options[6]]["aovalue_id"] : "" ?>" <?php echo $option_values[$assessment_options[6]]["value"] == "1" ? "checked=\"checked\"" : ""; ?> />
+														<span class="resubmit pull-left" data-id="<?php echo $assessment_options[6]; ?>" data-proxy-id="<?php echo $student["proxy_id"]; ?>" data-aovalue-id="<?php echo !empty($option_values[$assessment_options[6]]["aovalue_id"]) ? $option_values[$assessment_options[6]]["aovalue_id"] : "" ?>"><?php echo empty($option_values[$assessment_options[6]]["value"]) ? "-" : $option_values[$assessment_options[6]]["value"]; ?></span><i class="resubmit-button icon-edit pull-right"></i>                                                        
+													</td>
+													<?php } ?>
+                                                    <?php if (array_key_exists("5", $assessment_options)) { ?>
+													<td class="late-submissions" style="text-align: center; vertical-align: middle;">
+														<input type="checkbox" data-id="<?php echo $assessment_options[5]; ?>" data-proxy-id="<?php echo $student["proxy_id"]; ?>" data-aovalue-id="<?php echo !empty($option_values[$assessment_options[5]]["aovalue_id"]) ? $option_values[$assessment_options[5]]["aovalue_id"] : "" ?>" <?php echo $option_values[$assessment_options[5]]["value"] == "1" ? "checked=\"checked\"" : ""; ?> />
 													</td>
 													<?php } ?>
 												</tr>

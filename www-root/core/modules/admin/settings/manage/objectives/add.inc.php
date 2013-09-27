@@ -92,6 +92,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 				} else {
 					$PROCESSED["objective_description"] = "";
 				}
+				
+				/**
+				* Non-required field "objective_loggable" / Objective Loggable
+				*/
+				if (isset($_POST["objective_loggable"]) && $_POST["objective_loggable"]) {
+					$PROCESSED["objective_loggable"] = 1;
+				} else {
+					$PROCESSED["objective_loggable"] = 0;
+				}
 
 				/**
 				* Required field "objective_order" / Objective Order
@@ -197,6 +206,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_OBJECTIVES"))) {
 								<textarea id="objective_description" name="objective_description" style="width: 98%; height: 200px" rows="20" cols="70"><?php echo ((isset($PROCESSED["objective_description"])) ? html_encode($PROCESSED["objective_description"]) : ""); ?></textarea>
 							</td>
 						</tr>
+                        <tr>
+                            <td colspan="2">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; padding-top: 15px"><label for="objective_loggable" class="form-nrequired">Objective Loggable:</label></td>
+                            <td style="vertical-align: top"><input type="checkbox" id="objective_loggable" name="objective_loggable" value="1"<?php echo (isset($PROCESSED["objective_loggable"]) && $PROCESSED["objective_loggable"] ? " checked=\"checked\"" : ""); ?> /></td>
+                        </tr>
 						<tr>
 							<td colspan="2">&nbsp;</td>
 						</tr>

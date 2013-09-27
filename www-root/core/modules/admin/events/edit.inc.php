@@ -37,9 +37,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
-	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eventtypes_list.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
-	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
-	echo "<script language=\"text/javascript\">var DELETE_IMAGE_URL = '".ENTRADA_URL."/images/action-delete.gif';</script>";
 
 	if (isset($_GET["mode"]) && $_GET["mode"] == "draft") {
 		$is_draft				= true;
@@ -93,6 +90,214 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 				// Error Checking
 				switch($STEP) {
+					case 3 :
+                        $query = "	SELECT `course_id`, `event_title`, `recurring_id`".(isset($_POST["fields"]) && @count($_POST["fields"]) && in_array("event_location", $_POST["fields"]) ? ", `event_location`" : "")."
+                                    FROM `events`
+                                    WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                        $event_info	= $db->GetRow($query);
+                        
+                        if ($event_info && isset($_POST["recurring_event_ids"]) && @count($_POST["recurring_event_ids"])) {
+                            $recurring_events = array();
+                            $query = "SELECT * FROM `events` 
+                                        WHERE `recurring_id` = ".$db->qstr($event_info["recurring_id"])." 
+                                        AND `event_id` != ".$db->qstr($EVENT_ID)."
+                                        ORDER BY `event_start` ASC";
+                            $temp_recurring_events = $db->GetAll($query);
+                            if ($temp_recurring_events) {
+                                foreach ($temp_recurring_events as $temp_event) {
+                                    if (in_array($temp_event["event_id"], $_POST["recurring_event_ids"])) {
+                                        $recurring_events[] = $temp_event;
+                                    }
+                                }
+                            }
+                            $PROCESSED = $event_info;
+                            unset($PROCESSED["recurring_id"]);
+                            if ($recurring_events) {
+                                if (isset($_POST["fields"]) && in_array("event_types", $_POST["fields"])) {
+                                    $query = "SELECT * FROM `event_eventtypes` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                                    $results = $db->GetAll($query);
+                                    if ($results) {
+                                        foreach($results as $order => $result) {
+                                            $PROCESSED["event_types"][(int) $order] = $result["eventtype_id"];
+                                            $PROCESSED["event_type_duration"][(int)$order] = $result["duration"];
+                                        }
+                                    }
+                                }
+                                if (isset($_POST["fields"]) && in_array("associated_faculty", $_POST["fields"])) {
+                                    $query = "SELECT * FROM `event_contacts` WHERE `event_id` = ".$db->qstr($EVENT_ID)." ORDER BY `contact_order` ASC";
+                                    $results = $db->GetAll($query);
+                                    if ($results) {
+                                        foreach($results as $contact_order => $result) {
+                                            $PROCESSED["associated_faculty"][(int) $contact_order] = $result["proxy_id"];
+                                            $PROCESSED["contact_role"][(int)$contact_order] = $result["contact_role"];
+                                        }
+                                    }
+                                }
+                                if (isset($_POST["fields"]) && in_array("audience_list", $_POST["fields"])) {
+                                    $query = "SELECT * FROM `event_audience` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                                    $results = $db->GetAll($query);
+                                    if ($results) {
+                                        foreach($results as $order => $result) {
+                                            $PROCESSED["associated_audience"][(int) $order] = $result["audience_value"];
+                                            $PROCESSED["audience_type"][(int)$order] = $result["audience_type"];
+                                        }
+                                    }
+                                }
+                                foreach ($recurring_events as $order => $recurring_event) {
+                                    if (isset($PROCESSED["event_types"]) && $PROCESSED["event_types"]) {
+                                        $query = "DELETE FROM `event_eventtypes` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
+                                        if ($db->Execute($query)) {
+                                            foreach($PROCESSED["event_types"] as $key => $event_type) {
+                                                $eventtype_data = array("event_id" => $recurring_event["event_id"], "eventtype_id" => $event_type, "duration" => $PROCESSED["event_type_duration"][$key]);
+                                                if (!$db->AutoExecute("`event_eventtypes`", $eventtype_data, "INSERT")) {
+                                                    add_error("There was an error while trying to save the selected <strong>Event Type</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                                    application_log("error", "Unable to insert a new event_eventtypes record while editing a recurring event. Database said: ".$db->ErrorMsg());
+                                                }
+                                            }
+                                        } else {
+                                            add_error("There was an error while trying to update the selected <strong>Event Types</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                            application_log("error", "Unable to delete any eventtype records while editing an event. Database said: ".$db->ErrorMsg());
+                                        }
+                                    }
+                                    if (isset($PROCESSED["associated_faculty"]) && $PROCESSED["associated_faculty"]) {
+                                        $query = "DELETE FROM `event_contacts` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
+                                        if ($db->Execute($query)) {
+                                            foreach($PROCESSED["associated_faculty"] as $key => $event_contact) {
+                                                $event_contact_data = array("event_id" => $recurring_event["event_id"], "proxy_id" => $event_contact, "contact_role" => $PROCESSED["contact_role"][$key], "contact_order" => $key);
+                                                if (!$db->AutoExecute("`event_contacts`", $event_contact_data, "INSERT")) {
+                                                    add_error("There was an error while trying to save the selected <strong>Associated Faculty</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                                    application_log("error", "Unable to insert a new event_contacts record while editing a recurring event. Database said: ".$db->ErrorMsg());
+                                                }
+                                            }
+                                        } else {
+                                            add_error("There was an error while trying to update the selected <strong>Associated Faculty</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                            application_log("error", "Unable to delete any event_contacts records while editing an event. Database said: ".$db->ErrorMsg());
+                                        }
+                                    }
+                                    if (isset($PROCESSED["associated_audience"]) && $PROCESSED["associated_audience"]) {
+                                        $query = "DELETE FROM `event_audience` WHERE `event_id` = ".$db->qstr($recurring_event["event_id"]);
+                                        if ($db->Execute($query)) {
+                                            foreach($PROCESSED["associated_audience"] as $key => $event_audience) {
+                                                $event_audience_data = array("event_id" => $recurring_event["event_id"], "audience_value" => $event_audience, "audience_type" => $PROCESSED["audience_type"][$key]);
+                                                if (!$db->AutoExecute("`event_audience`", $event_audience_data, "INSERT")) {
+                                                    add_error("There was an error while trying to save the selected <strong>Associated Learners</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                                    application_log("error", "Unable to insert a new event_audience record while editing a recurring event. Database said: ".$db->ErrorMsg());
+                                                }
+                                            }
+                                        } else {
+                                            add_error("There was an error while trying to update the selected <strong>Associated Learners</strong> for a recurring event.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                            application_log("error", "Unable to delete any event_audience records while editing an event. Database said: ".$db->ErrorMsg());
+                                        }
+                                    }
+                                    if (isset($_POST["recurring_event_start_".$recurring_event["event_id"]]) && $_POST["recurring_event_start_".$recurring_event["event_id"]] && strtotime($_POST["recurring_event_start_".$recurring_event["event_id"]])) {
+                                        $event_start = trim($_POST["recurring_event_start_".$recurring_event["event_id"]]);
+                                        if (isset($_POST["recurring_event_start_time_".$recurring_event["event_id"]]) && $tmp_input = clean_input($_POST["recurring_event_start_time_".$recurring_event["event_id"]], array("trim", "striptags"))) {
+                                            $time = $tmp_input;
+                                        } else {
+                                            $time = "00:00";
+                                        }
+                                        $time = strtotime($event_start . " " . $time);
+                                    }
+                                    if ($time) {
+                                        $recurring_event_date = $time;
+                                    } else {
+                                        add_error("One of the <strong>recurring events</strong> did not have a valid start date, please fill out a Event Start for <strong>Event ".($order+1)."</strong> under the Recurring Events now.");
+                                    }
+                                    if (isset($_POST["recurring_event_title_".$recurring_event["event_id"]]) && ($recurring_event_title = clean_input($_POST["recurring_event_title_".$recurring_event["event_id"]], array("notags", "trim")))) {
+                                        $event_finish = $recurring_event_date;
+                                        $event_duration = 0;
+                                        foreach($PROCESSED["event_types"] as $event_type) {
+                                            $event_finish += $event_type[1]*60;
+                                            $event_duration += $event_type[1];
+                                        }
+                                        
+                                        $PROCESSED_RECURRING_EVENT = array(     "course_id" => $event_info["course_id"],
+                                                                                "event_title" => $recurring_event_title, 
+                                                                                "event_start" => $recurring_event_date, 
+                                                                                "event_finish" => $event_finish, 
+                                                                                "event_duration" => $event_duration);
+                                    } else {
+                                        add_error("One of the <strong>recurring events</strong> did not have a valid title, please fill out a title for <strong>Event ".($order+1)."</strong> under the Recurring Events now.");
+                                    }
+                                    if (isset($PROCESSED["event_location"])) {
+                                        $PROCESSED_RECURRING_EVENT["event_location"] = $PROCESSED["event_location"];
+                                    }
+                                    if (!has_error()) {
+                                        if (!$db->AutoExecute("`events`", $PROCESSED_RECURRING_EVENT, "UPDATE", "`event_id` = ".$db->qstr($recurring_event["event_id"]))) {
+                                            add_error("There was an error while trying to save changes to the selected <strong>Recurring Event</strong>.<br /><br />The system administrator was informed of this error; please try again later.");
+
+                                            application_log("error", "Unable to update an event record while editing a recurring event. Database said: ".$db->ErrorMsg());
+                                        }
+                                    }
+                                    
+                                }
+                                if (!has_error()) {
+                                    if (isset($_POST["post_action"])) {
+                                        switch($_POST["post_action"]) {
+                                            case "content" :
+                                                $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "content";
+                                                $url	= ENTRADA_URL."/admin/events?section=content&id=".$EVENT_ID;
+                                                $msg	= "You will now be redirected to the event content page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                                            break;
+                                            case "new" :
+                                                $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "new";
+                                                $url	= ENTRADA_URL."/admin/events?section=add";
+                                                $msg	= "You will now be redirected to add a new event; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                                            break;
+                                            case "index" :
+                                            default :
+                                                $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "index";
+                                                $url	= ENTRADA_URL."/admin/events";
+                                                $msg	= "You will now be redirected to the event index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                                            break;
+                                        }
+                                    } else {
+                                        if (!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"])) {
+                                            $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "content";
+                                        }
+                                        $url	= ENTRADA_URL."/admin/events?section=content&id=".$EVENT_ID;
+                                        $msg	= "You will now be redirected to the event content page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+                                    }
+
+                                    if (!$ERROR) {
+                                        $query = "	SELECT b.*
+                                                    FROM `community_courses` AS a
+                                                    LEFT JOIN `community_pages` AS b
+                                                    ON a.`community_id` = b.`community_id`
+                                                    LEFT JOIN `community_page_options` AS c
+                                                    ON b.`community_id` = c.`community_id`
+                                                    WHERE c.`option_title` = 'show_history'
+                                                    AND c.`option_value` = 1
+                                                    AND b.`page_url` = 'course_calendar'
+                                                    AND b.`page_active` = 1
+                                                    AND a.`course_id` = ".$db->qstr($PROCESSED["course_id"]);
+                                        $result = $db->GetRow($query);
+                                        if ($result) {
+                                            $COMMUNITY_ID = $result["community_id"];
+                                            $PAGE_ID = $result["cpage_id"];
+                                            communities_log_history($COMMUNITY_ID, $PAGE_ID, $event_info["recurring_id"], "community_history_edit_recurring_events", 1);
+                                        }
+
+                                        $STEP = 2;
+                                        $SUCCESS++;
+                                        $SUCCESSSTR[] = "You have successfully edited the recurring events associated with <strong>".html_encode($event_info["event_title"])."</strong> in the system.<br /><br />".$msg;
+                                        $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+
+                                        application_log("success", "Recurring Events [".$event_info["recurring_id"]."] have been modified.");
+                                    }
+                                }
+                            }
+                        }
+						if ($ERROR) {
+							$STEP = 3;
+						}
+					break;
 					case 2 :
 						/**
 						 * Required field "course_id" / Course
@@ -304,6 +509,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 						if (isset($_POST["post_action"])) {
 							switch($_POST["post_action"]) {
+								case "cascade" :
+									$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "cascade";
+								break;
 								case "content" :
 									$_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] = "content";
 								break;
@@ -528,9 +736,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 										communities_log_history($COMMUNITY_ID, $PAGE_ID, $EVENT_ID, "community_history_edit_learning_event", 1);
 									}
 
-									$SUCCESS++;
-									$SUCCESSSTR[] = "You have successfully edited <strong>".html_encode($PROCESSED["event_title"])."</strong> in the system.<br /><br />".$msg;
-									$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+                                    if (!$event_info["recurring_id"] || !isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) || $_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] != "cascade") {
+                                        $SUCCESS++;
+                                        $SUCCESSSTR[] = "You have successfully edited <strong>".html_encode($PROCESSED["event_title"])."</strong> in the system.<br /><br />".$msg;
+                                        $ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+                                    } else {
+                                        $SUCCESS++;
+                                        $SUCCESSSTR[] = "You have successfully edited <strong>".html_encode($PROCESSED["event_title"])."</strong> in the system.<br /><br />Now, please select which related recurring events the changes should be applied to, and which fields should be applied, as well as making any necessary changes to the event titles and start dates, on the form below.";
+                                        $STEP = 3;
+                                    }
 
 									application_log("success", "Event [".$EVENT_ID."] has been modified.");
 								}
@@ -607,13 +821,405 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 
 				// Display Content
 				switch($STEP) {
+					case 3 :
+						display_status_messages();
+                        
+                        echo "<h1>Select which events to update:</h1>";
+                        
+                        $query = "	SELECT a.*, b.`organisation_id`
+                                    FROM `events` AS a
+                                    LEFT JOIN `courses` AS b
+                                    ON b.`course_id` = a.`course_id`
+                                    WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                        $event_info	= $db->GetRow($query);
+                        
+                       $query = "SELECT * FROM `events` 
+                                    WHERE `recurring_id` = ".$db->qstr($event_info["recurring_id"])." 
+                                    AND `event_id` != ".$db->qstr($EVENT_ID)."
+                                    ORDER BY `event_start` ASC";
+                        $recurring_events = $db->getAll($query);
+                        
+                        if ($event_info && $recurring_events) {
+                            $FACULTY_LIST = array();
+                            $query = "	SELECT a.`id` AS `proxy_id`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, a.`organisation_id`
+                                        FROM `".AUTH_DATABASE."`.`user_data` AS a
+                                        LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+                                        ON b.`user_id` = a.`id`
+                                        WHERE b.`app_id` = '".AUTH_APP_ID."'
+                                        AND (b.`group` = 'faculty' OR (b.`group` = 'resident' AND b.`role` = 'lecturer'))
+                                        ORDER BY a.`lastname` ASC, a.`firstname` ASC";
+                            $results = $db->GetAll($query);
+                            if ($results) {
+                                foreach($results as $result) {
+                                    $FACULTY_LIST[$result["proxy_id"]] = array('proxy_id'=>$result["proxy_id"], 'fullname'=>$result["fullname"], 'organisation_id'=>$result['organisation_id']);
+                                }
+                            }
+
+                            /**
+                             * Compiles the list of students.
+                             */
+                            $STUDENT_LIST = array();
+                            $query = "	SELECT a.`id` AS `proxy_id`, b.`role`, CONCAT_WS(', ', a.`lastname`, a.`firstname`) AS `fullname`, a.`organisation_id`
+                                        FROM `".AUTH_DATABASE."`.`user_data` AS a
+                                        LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS b
+                                        ON a.`id` = b.`user_id`
+                                        WHERE b.`app_id` = ".$db->qstr(AUTH_APP_ID)."
+                                        AND b.`account_active` = 'true'
+                                        AND (b.`access_starts` = '0' OR b.`access_starts` <= ".$db->qstr(time()).")
+                                        AND (b.`access_expires` = '0' OR b.`access_expires` > ".$db->qstr(time()).")
+                                        AND b.`group` = 'student'
+                                        AND b.`role` >= '".(date("Y") - ((date("m") < 7) ?  2 : 1))."'
+                                        ORDER BY b.`role` ASC, a.`lastname` ASC, a.`firstname` ASC";
+                            $results = $db->GetAll($query);
+                            if ($results) {
+                                foreach($results as $result) {
+                                    $STUDENT_LIST[$result["proxy_id"]] = array("proxy_id" => $result["proxy_id"], "fullname" => $result["fullname"], "organisation_id" => $result["organisation_id"]);
+                                }
+                            }
+
+                            /**
+                             * Compiles the list of groups.
+                             */
+                            $GROUP_LIST = array();
+                            $query = "	SELECT *
+                                        FROM `course_groups`
+                                        WHERE `course_id` = ".$db->qstr($PROCESSED["course_id"])."
+                                        AND (`active` = '1' OR `course_id` = ".$db->qstr($event_info["course_id"]).")
+                                        ORDER BY LENGTH(`group_name`), `group_name` ASC";
+                            $results = $db->GetAll($query);
+                            if ($results) {
+                                foreach($results as $result) {
+                                    $GROUP_LIST[$result["cgroup_id"]] = $result;
+                                }
+                            }
+
+                            /**
+                             * Compiles the list of groups.
+                             */
+                            $COHORT_LIST = array();
+                            $query = "	SELECT *
+                                        FROM `groups`
+                                        WHERE `group_active` = '1'
+                                        AND `group_type` = 'cohort'
+                                        ORDER BY `group_name` ASC";
+                            $results = $db->GetAll($query);
+                            if ($results) {
+                                foreach($results as $result) {
+                                    $COHORT_LIST[$result["group_id"]] = $result;
+                                }
+                            }
+                            $associated_course_ids = array();
+                            $associated_cohort_ids = array();
+                            $associated_cgroup_ids = array();
+                            $associated_proxy_ids = array();
+                            
+                            $query = "SELECT * FROM `event_audience` WHERE `event_id` = ".$db->qstr($EVENT_ID);
+                            $results = $db->GetAll($query);
+                            if ($results) {
+                                $event_audience_type = "custom";
+
+                                foreach($results as $result) {
+                                    switch($result["audience_type"]) {
+                                        case "course_id" :
+                                            $event_audience_type = "course";
+
+                                            $associated_course_ids = (int) $result["audience_value"];
+                                        break;
+                                        case "cohort" :
+                                            $associated_cohort_ids[] = (int) $result["audience_value"];
+                                        break;
+                                        case "group_id" :
+                                            $associated_cgroup_ids[] = (int) $result["audience_value"];
+                                        break;
+                                        case "proxy_id" :
+                                            $associated_proxy_ids[] = (int) $result["audience_value"];
+                                        break;
+                                    }
+                                }
+                            }
+                            $ONLOAD[] = "jQuery('.inpage-datepicker').datepicker({
+                                            dateFormat: 'yy-mm-dd'
+                                        })";
+                            $ONLOAD[] = "jQuery('.timepicker').timepicker({
+                                            showPeriodLabels: false
+                                        })";
+                            $ONLOAD[] = "jQuery('.inpage-add-on').on('click', function() {
+                                            if (jQuery(this).siblings('input').is(':enabled')) {
+                                                jQuery(this).siblings('input').focus();
+                                            }
+                                        })";
+                            $ONLOAD[] = "jQuery('.restricted').popover({
+                                            trigger: 'manual',
+                                            placement: 'right',
+                                            title: 'Error',
+                                            content: 'This day is restricted. Please ensure this is the correct date before continuing.',
+                                            template: '<div class=\"popover alert alert-error\"><div class=\"arrow\"></div><div class=\"popover-inner\"><div class=\"popover-content\"><p></p></div></div></div>'
+                                        }).click(function(e) {
+                                            jQuery(this).popover('hide');
+                                            jQuery(this).show();
+                                            e.stopPropagation();
+                                        })";
+                            $ONLOAD[] = "jQuery('.restricted').popover('show')";
+                            ?>
+                            <script type="text/javascript">
+                                function checkEventDate(event_num) {
+                                    var date = new Date(jQuery('#recurring_event_start_'+event_num).val());
+                                    var event_date = (date.getTime() / 1000) + (date.getTimezoneOffset() * 60);
+                                    jQuery.ajax({
+                                            type: "POST",
+                                            url: '<?php echo ENTRADA_URL ?>/admin/events?section=api-check-date',
+                                            data: 'event_start='+event_date+'&organisation_id=<?php echo $ENTRADA_USER->getActiveOrganisation(); ?>',
+                                            success: function (data) {
+                                                if (data == 'Found') {
+                                                    if (!jQuery('#recurring-event-'+event_num).hasClass('restricted')) {
+                                                        jQuery('#recurring-event-'+event_num).addClass('restricted');
+                                                    }
+                                                    jQuery('.restricted').popover('destroy');
+                                                    jQuery('.restricted').popover({
+                                                        trigger: 'manual',
+                                                        placement: 'right',
+                                                        title: 'Error',
+                                                        content: 'This day is restricted. Please ensure this is the correct date before continuing.',
+                                                        template: '<div class=\"popover alert alert-error\"><div class=\"arrow\"></div><div class=\"popover-inner\"><div class=\"popover-content\"><p></p></div></div></div>'
+                                                    }).click(function(e) {
+                                                        jQuery(this).popover('hide');
+                                                        jQuery(this).show();
+                                                        e.stopPropagation();
+                                                    });
+                                                    jQuery('.restricted').popover('show');
+                                                } else if (jQuery('#recurring-event-'+event_num).hasClass('restricted')) {
+                                                    jQuery('#recurring-event-'+event_num).removeClass('restricted');
+                                                }
+                                            },
+                                            error: function () {
+                                                alert("error");
+                                            }
+                                        });
+                                }
+                            </script>
+                            <form name="editEventForm" id="editEventForm" action="<?php echo ENTRADA_URL; ?>/admin/events?<?php echo replace_query(array("step" => 3)); ?>" method="post" class="form-horizontal">
+                                <div id="recurring-events-list">
+                                    <?php
+                                    $restricted_days = Models_RestrictedDays::fetchAll($ENTRADA_USER->getActiveOrganisation());
+                                    foreach ($recurring_events as $key => $recurring_event) {
+                                        $restricted = false;
+                                        if ($restricted_days && @count($restricted_days)) {
+                                            $date_string = date("Y-m-d", $recurring_event["event_start"]);
+                                            foreach ($restricted_days as $restricted_day) {
+                                                $restricted_string = date("Y-m-d", $restricted_day->getCalculatedDate(date("Y", $recurring_event["event_start"]), date("n", $recurring_event["event_start"]), $recurring_event["event_start"]));
+                                                if ($restricted_string == $date_string) {
+                                                    $restricted = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        ?>
+                                        <div id="recurring-event-<?php echo ($recurring_event["event_id"]); ?>" class="row-fluid pad-above<?php echo ($key % 2 == 0 ? " odd" : "").($restricted ? " restricted" : ""); ?>">
+                                            <label class="span3 content-small pad-left" for="recurring_event_<?php echo $recurring_event["event_id"]; ?>">
+                                                <input type="checkbox" name="recurring_event_ids[]" id="recurring_event_<?php echo $recurring_event["event_id"]; ?>" value="<?php echo $recurring_event["event_id"]."\"".(!isset($PROCESSED["recurring_event_ids"]) || in_array($recurring_event["event_id"], $PROCESSED["recurring_event_ids"]) ? " checked=\"checked" : ""); ?>" />
+                                                Event <?php echo ($key + 1); ?>:
+                                            </label>
+                                            <span class="span8">
+                                                <div class="row-fluid">
+                                                    <label for="recurring_event_title_<?php echo $recurring_event["event_id"]; ?>" class="span2 form-required">Title:</label>
+                                                    <span class="span7">
+                                                        <input type="text" id="recurring_event_title_<?php echo $recurring_event["event_id"]; ?>" name="recurring_event_title_<?php echo $recurring_event["event_id"]; ?>" value="<?php echo html_encode($recurring_event["event_title"]); ?>" maxlength="255" style="width: 95%; font-size: 150%; padding: 3px" />
+                                                    </span>
+                                                </div>
+                                                <div class="row-fluid">
+                                                    <label class="span2" for="recurring_event_start_<?php echo $recurring_event["event_id"]; ?>">Event Start:</label>
+                                                    <span class="span7">
+                                                        <div class="input-append">
+                                                            <input type="text" class="input-small inpage-datepicker" value="<?php echo date("Y-m-d", $recurring_event["event_start"]); ?>" name="recurring_event_start_<?php echo $recurring_event["event_id"]; ?>" onchange="checkEventDate('<?php echo $recurring_event["event_id"]; ?>')" id="recurring_event_start_<?php echo $recurring_event["event_id"]; ?>" />
+                                                            <span class="add-on pointer inpage-add-on"><i class="icon-calendar"></i></span>
+                                                        </div>
+                                                        &nbsp;
+                                                        <div class="input-append">
+                                                            <input type="text" class="input-mini timepicker" value="<?php echo date("H:i", $recurring_event["event_start"]); ?>" name="recurring_event_start_time_<?php echo $recurring_event["event_id"]; ?>" id="recurring_event_start_time_<?php echo $recurring_event["event_id"]; ?>" />
+                                                            <span class="add-on pointer inpage-add-on"><i class="icon-time"></i></span>
+                                                        </div>
+                                                    </span>
+                                                </div>
+                                            </span>
+                                        </div>
+                                        <?php
+                                    }
+                                    ?>
+                                </div>    
+                                <?php
+
+                                echo "<h1>Select which fields to update:</h1>";
+                                $query = "SELECT CONCAT_WS(': ', `course_code`, `course_name`) FROM `courses`
+                                            WHERE `course_id` = ".$db->qstr($event_info["course_id"]);
+                                $course_name = $db->GetOne($query);
+                                ?>
+
+                                <div class="row-fluid space-above">
+                                    <label for="field_course" class="span3 content-small pad-left">
+                                        <input type="checkbox" name="fields[]" id="field_course" checked="checked" disabled="disabled" />
+                                        Course
+                                    </label>
+                                    <span class="span9">
+                                        <span>
+                                            <?php
+                                            echo html_encode($course_name);
+                                            ?>
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <div class="row-fluid space-above">
+                                    <label for="field_event_location" class="span3 content-small pad-left">
+                                        <input type="checkbox" name="fields[]" id="field_event_location" value="event_location"<?php echo (!isset($PROCESSED["fields"]) || in_array("event_location", $PROCESSED["fields"]) ? " checked=\"checked\"" : ""); ?> />
+                                        Event Location
+                                    </label>
+                                    <span class="span9">
+                                        <span>
+                                            <?php
+                                            echo html_encode($event_info["event_location"]);
+                                            ?>
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="row-fluid space-above">
+                                    <label for="field_event_types" class="span3 content-small pad-left">
+                                        <input type="checkbox" name="fields[]" id="field_event_types" value="event_types"<?php echo (!isset($PROCESSED["fields"]) || in_array("event_types", $PROCESSED["fields"]) ? " checked=\"checked\"" : ""); ?> />
+                                        Event Types
+                                    </label>
+                                    <span class="span9">
+                                        <ol id="duration_container" class="sortableList" style="margin-top: -10px;">
+                                        <?php
+                                        
+                                        $query = "	SELECT a.`eventtype_id`, a.`duration`, b.`eventtype_title`
+                                                    FROM `event_eventtypes` AS a
+                                                    LEFT JOIN `events_lu_eventtypes` AS b
+                                                    ON b.`eventtype_id` = a.`eventtype_id` 
+                                                    WHERE `event_id` = ".$db->qstr($EVENT_ID)."
+                                                    ORDER BY a.`eventtype_id` ASC";
+                                        $event_types = $db->GetAll($query);
+                                        $total_duration = 0;
+                                        if ($event_types) {
+                                            foreach ($event_types as $eventtype) {
+                                                $total_duration += $eventtype["duration"];
+                                                echo "  <li id=\"type_".$eventtype["eventtype_id"]."\" style=\"cursor: auto;\">".$eventtype["eventtype_title"]."
+                                                            <span class=\"duration_segment_container\">Duration: ".$eventtype["duration"]." minutes</span>
+                                                        </li>";
+                                            }
+                                        }
+                                        ?>
+                                        </ol>
+                                        <div id="total_duration" class="content-small">Total time: <?php echo ((int)$total_duration); ?> minutes.</div>
+                                    </span>
+                                </div>
+                                <div class="row-fluid space-above">
+                                    <label for="field_associated_faculty" class="span3 content-small pad-left">
+                                        <input type="checkbox" name="fields[]" id="field_associated_faculty" value="associated_faculty"<?php echo (!isset($PROCESSED["fields"]) || in_array("associated_faculty", $PROCESSED["fields"]) ? " checked=\"checked\"" : ""); ?> />
+                                        Associated Faculty
+                                    </label>
+                                    <span class="span9">
+                                        <ul id="faculty_list" class="menu">
+                                            <?php
+                                            $associated_faculty = array();
+                                            $display_roles = array();
+                                            $query = "SELECT * FROM `event_contacts` WHERE `event_id` = ".$db->qstr($EVENT_ID)." ORDER BY `contact_order` ASC";
+                                            $results = $db->GetAll($query);
+                                            if ($results) {
+                                                foreach($results as $contact_order => $result) {
+                                                    $associated_faculty[(int) $contact_order] = $result["proxy_id"];
+                                                    $display_roles[(int)$result["proxy_id"]] = $result["contact_role"];
+                                                }
+                                            }
+                                            if (is_array($associated_faculty) && count($associated_faculty)) {
+                                                foreach ($associated_faculty as $faculty) {
+                                                    if ((array_key_exists($faculty, $FACULTY_LIST)) && is_array($FACULTY_LIST[$faculty])) {
+                                                        ?>
+                                                        <li class="user" id="faculty_<?php echo $FACULTY_LIST[$faculty]["proxy_id"]; ?>" style="margin-bottom:10px;width:350px; cursor: auto;"><?php echo $FACULTY_LIST[$faculty]["fullname"]; ?><span class="pull-right space-right content-small">(<?php echo ucwords($display_roles[$faculty]); ?>)</span></li>
+                                                        <?php
+                                                    }
+                                                }
+                                            }
+                                            ?>
+                                        </ul>
+                                    </span>
+                                </div>
+                                <div class="row-fluid space-above">
+                                    <label for="field_audience_list" class="span3 content-small pad-left">
+                                        <input type="checkbox" name="fields[]" id="field_audience_list" value="audience_list"<?php echo (!isset($PROCESSED["fields"]) || in_array("audience_list", $PROCESSED["fields"]) ? " checked=\"checked\"" : ""); ?> />
+                                        Associated Learners
+                                    </label>
+                                    <span class="span9">
+                                        <ul class="menu multiselect" id="audience_list">
+                                        <?php
+                                        if (is_array($associated_cohort_ids) && count($associated_cohort_ids)) {
+                                            foreach ($associated_cohort_ids as $group) {
+                                                if ((array_key_exists($group, $COHORT_LIST)) && is_array($COHORT_LIST[$group])) {
+                                                    ?>
+                                                    <li class="group" id="audience_group_<?php echo $COHORT_LIST[$group]["group_id"]; ?>"><?php echo $COHORT_LIST[$group]["group_name"]; ?></li>
+                                                    <?php
+                                                }
+                                            }
+                                        }
+
+                                        if (is_array($associated_cgroup_ids) && count($associated_cgroup_ids)) {
+                                            foreach ($associated_cgroup_ids as $group) {
+                                                if ((array_key_exists($group, $GROUP_LIST)) && is_array($GROUP_LIST[$group])) {
+                                                    ?>
+                                                    <li class="group" id="audience_cgroup_<?php echo $GROUP_LIST[$group]["cgroup_id"]; ?>"><?php echo $GROUP_LIST[$group]["group_name"]; ?></li>
+                                                    <?php
+                                                }
+                                            }
+                                        }
+
+                                        if (is_array($associated_proxy_ids) && count($associated_proxy_ids)) {
+                                            foreach ($associated_proxy_ids as $student) {
+                                                if ((array_key_exists($student, $STUDENT_LIST)) && is_array($STUDENT_LIST[$student])) {
+                                                    ?>
+                                                    <li class="user" id="audience_student_<?php echo $STUDENT_LIST[$student]["proxy_id"]; ?>"><?php echo $STUDENT_LIST[$student]["fullname"]; ?></li>
+                                                    <?php
+                                                }
+                                            }
+                                        }
+                                        ?>
+                                        </ul>
+                                    </span>
+                                </div>
+                                <div class="control-group space-above">
+                                    <a class="btn" href="<?php echo ENTRADA_RELATIVE; ?>/admin/events<?php echo (($is_draft) ? "/drafts?section=edit&draft_id=".$event_info["draft_id"] : "" ); ?>">Cancel</a>
+                                    <div class="pull-right">
+                                        <?php
+                                        if (!$is_draft) {
+                                            ?>
+                                            <span class="content-small">After saving:</span>
+                                            <select id="post_action" name="post_action">
+                                                <option value="content"<?php echo (((!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) && !$event_info["recurring_id"]) || ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "content")) ? " selected=\"selected\"" : ""); ?>>Add content to this event</option>
+                                                <option value="new"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "new") ? " selected=\"selected\"" : ""); ?>>Add a new event</option>
+                                                <option value="index"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "index") ? " selected=\"selected\"" : ""); ?>>Return to Manage Events</option>
+                                            </select>
+                                            <?php
+                                        } else {
+                                            ?>
+                                            <input type="hidden" id="post_action" name="post_action" value="draft" />
+                                            <?php
+                                        }
+                                        ?>
+                                        <input type="submit" class="btn btn-primary" value="Save" />
+                                    </div>
+                                </div>
+                            </form>
+                            <?php
+                        }
+                        
+					break;
 					case 2 :
 						display_status_messages();
 					break;
 					case 1 :
 					default :
 
+                        $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eventtypes_list.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
+                        $HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 						$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/elementresizer.js\"></script>\n";
+                        $HEAD[] = "<script language=\"text/javascript\">var DELETE_IMAGE_URL = '".ENTRADA_URL."/images/action-delete.gif';</script>";
 
 						$LASTUPDATED = $result["updated_date"];
 
@@ -926,7 +1532,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                                     ?>
                                     <span class="content-small">After saving:</span>
                                     <select id="post_action" name="post_action">
-                                        <option value="content"<?php echo (((!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"])) || ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "content")) ? " selected=\"selected\"" : ""); ?>>Add content to this event</option>
+                                        <?php
+                                        if ($event_info["recurring_id"]) {
+                                            ?>
+                                            <option value="cascade"<?php echo (((!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"])) || ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "cascade")) ? " selected=\"selected\"" : ""); ?>>Cascade the changes to other recurring events</option>
+                                            <?php
+                                        }
+                                        ?>
+                                        <option value="content"<?php echo (((!isset($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"]) && !$event_info["recurring_id"]) || ($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "content")) ? " selected=\"selected\"" : ""); ?>>Add content to this event</option>
                                         <option value="new"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "new") ? " selected=\"selected\"" : ""); ?>>Add a new event</option>
                                         <option value="copy"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "copy") ? " selected=\"selected\"" : ""); ?>>Duplicate this event</option>
                                         <option value="index"<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["tmp"]["post_action"] == "index") ? " selected=\"selected\"" : ""); ?>>Return to Manage Events</option>

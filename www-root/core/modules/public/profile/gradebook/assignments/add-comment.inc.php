@@ -50,8 +50,8 @@ if ($RECORD_ID && $FILE_ID) {
 				}
 			}
 			if ($allowed){//shares_module_access($file_record["cshare_id"], "add-comment")) {
-				$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$RECORD_ID.(isset($assignment_contact)&&$assignment_contact?"&pid=".$file_record["proxy_id"]:""), "title" => limit_chars($file_record["file_title"], 32));
-				$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook/assignments?section=add-comment&id=".$RECORD_ID."&fid=".$FILE_ID, "title" => "Add File Comment");
+				$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$RECORD_ID.(isset($assignment_contact)&&$assignment_contact?"&pid=".$file_record["proxy_id"]:""), "title" => limit_chars($file_record["file_title"], 32));
+				$BREADCRUMB[] = array("url" => ENTRADA_URL."/profile/gradebook/assignments?section=add-comment&assignment_id=".$RECORD_ID."&fid=".$FILE_ID, "title" => "Add File Comment");
 
 				load_rte();
 
@@ -74,6 +74,7 @@ if ($RECORD_ID && $FILE_ID) {
 						if ((isset($_POST["comment_description"])) && ($description = clean_input($_POST["comment_description"], array("trim", "allowedtags")))) {
 							$PROCESSED["comment_description"] = $description;
 						} else {
+							$ERROR++;
 							$ERRORSTR[] = "The <strong>Comment Body</strong> field is required, this is the comment you're making.";
 						}
 
@@ -97,7 +98,7 @@ if ($RECORD_ID && $FILE_ID) {
 
 							if ($db->AutoExecute("assignment_comments", $PROCESSED, "INSERT")) {
 								if ($COMMENT_ID = $db->Insert_Id()) {
-									$url			= ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$RECORD_ID.(isset($assignment_contact)&&$assignment_contact?"&pid=".$file_record["proxy_id"]:"")."#comment-".$COMMENT_ID;
+									$url			= ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$RECORD_ID.(isset($assignment_contact)&&$assignment_contact?"&pid=".$file_record["proxy_id"]:"")."#comment-".$COMMENT_ID;
 									$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 
 									$SUCCESS++;
@@ -144,7 +145,7 @@ if ($RECORD_ID && $FILE_ID) {
 						echo display_notice();
 					}
 					?>
-					<form action="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=add-comment&amp;id=".$RECORD_ID."&amp;fid=".$FILE_ID; ?>&amp;step=2" method="post">
+					<form action="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=add-comment&amp;assignment_id=".$RECORD_ID."&amp;fid=".$FILE_ID; ?>&amp;step=2" method="post">
 					<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Add File Comment">
 					<colgroup>
 						<col style="width: 3%" />
@@ -180,9 +181,12 @@ if ($RECORD_ID && $FILE_ID) {
 					<?php
 					break;
 				}
-			} else {
+			} else {						
+				$url			= ENTRADA_URL."/profile/gradebook/assignments";
+				$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
+				
 				$ERROR++;
-				$ERRORSTR[] = "You are not authorized to add a comment to this file.";
+				$ERRORSTR[] = "You are not authorized to add a comment to this file.<br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
 				if ($ERROR) {
 					echo display_error();
 				}
@@ -191,24 +195,33 @@ if ($RECORD_ID && $FILE_ID) {
 				}
 			}
 		} else {
+			$url			= ENTRADA_URL."/profile/gradebook/assignments";
+			$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
+			
 			$NOTICE++;
-			$NOTICESTR[] = "The file that you are trying to comment on was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.";
+			$NOTICESTR[] = "The file that you are trying to comment on was deactivated <strong>".date(DEFAULT_DATE_FORMAT, $file_record["updated_date"])."</strong> by <strong>".html_encode(get_account_data("firstlast", $file_record["updated_by"]))."</strong>.<br /><br />If there has been a mistake or you have questions relating to this issue please contact the MEdTech Unit directly.<br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
 
 			echo display_notice();
 
 			application_log("error", "The file record id [".$RECORD_ID."] is deactivated; however, ".$_SESSION["details"]["firstname"]." ".$_SESSION["details"]["lastname"]." [".$ENTRADA_USER->getID()."] has tried to comment on it.");
 		}
 	} else {
+		$url			= ENTRADA_URL."/profile/gradebook/assignments";
+		$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
+		
 		$ERROR++;
-		$ERRORSTR[] = "The file id that you have provided does not exist in the system. Please provide a valid record id to proceed.";
+		$ERRORSTR[] = "The file id that you have provided does not exist in the system. Please provide a valid record id to proceed.<br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
 
 		echo display_error();
 
 		application_log("error", "The provided file id was invalid [".$RECORD_ID."] (Add Comment).");
 	}
 } else {
+	$url			= ENTRADA_URL."/profile/gradebook/assignments";
+	$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
+	
 	$ERROR++;
-	$ERRORSTR[] = "Please provide a valid file id to proceed.";
+	$ERRORSTR[] = "Please provide a valid file id to proceed. <br /><br />You will now be redirected back to the assignment index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue";
 
 	echo display_error();
 

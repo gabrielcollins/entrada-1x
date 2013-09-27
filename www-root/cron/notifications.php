@@ -240,7 +240,7 @@ function notifications_send($timestamp_start = 0, $timestamp_end = 0, $notice = 
 								ENTRADA_URL."/templates/".$ENTRADA_TEMPLATE->activeTemplate()."/images"
 							);
 
-
+								$mail->clearSubject();
                                 $mail->setSubject(str_replace(array("%EVENT_DATE%", "%SUBJECT_SUFFIX%"), array(date("Y-m-d", $event["event_start"]), (($notice["subject_suffix"] != "") ? " ".$notice["subject_suffix"] : "")), $NOTIFICATION_MESSAGE["subject"]));
                                 $mail->setBodyText(str_replace($search, $replace, $NOTIFICATION_MESSAGE["textbody"]));
                                 $mail->setBodyHtml(str_replace($search, $replace, $NOTIFICATION_MESSAGE["htmlbody"]));

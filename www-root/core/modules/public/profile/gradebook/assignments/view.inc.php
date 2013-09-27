@@ -15,7 +15,7 @@ if ((!defined("IN_PUBLIC_ASSIGNMENTS"))) {
 }
 
 if (!$RECORD_ID) {
-	if (isset($_GET["id"]) && $tmp = clean_input($_GET["id"], "int")) {
+	if (isset($_GET["assignment_id"]) && $tmp = clean_input($_GET["assignment_id"], "int")) {
 		$RECORD_ID = $tmp;
 	}
 }
@@ -189,9 +189,8 @@ if ($RECORD_ID) {
 								$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook?".replace_query(array("section" => "view", "id" => $file_record["course_id"])), "title" => "Assignments");
 								$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assignments?".replace_query(array("section" => "grade", "id" => $file_record["course_id"], "assignment_id"=>$file_record["assignment_id"], "step" => false)), "title" => $file_record["assignment_title"]);
 								$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook/assignments?".replace_query(array("section" => "grade", "id" => $file_record["course_id"], "assignment_id"=>$file_record["assignment_id"], "step" => false)), "title" => $user_name."'s Submission");
-							} else {
-								$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$file_record["cshare_id"], "title" => limit_chars($file_record["folder_title"], 32));
-								$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&id=".$RECORD_ID, "title" => limit_chars($file_record["file_title"], 32));
+							} else {								
+								$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-file&assignment_id=".$RECORD_ID, "title" => limit_chars($file_record["file_title"], 32));
 							}
 							$ADD_COMMENT	= true;//shares_module_access($file_record["cshare_id"], "add-comment");
 							$ADD_REVISION	= $assignment["assignment_uploads"]==1?false:true;//shares_file_module_access($file_record["csfile_id"], "add-revision");
@@ -210,7 +209,8 @@ if ($RECORD_ID) {
 										modal: true,
 										buttons: {
 											'Delete': function() {
-												window.location = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-comment&id='+id;
+												var url = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-comment&acomment_id='+id;												
+												window.location = url;
 												return true;
 											},
 											Cancel: function() {
@@ -227,7 +227,7 @@ if ($RECORD_ID) {
 										modal: true,
 										buttons: {
 											'Delete': function() {
-												window.location = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-version&id='+id;
+												window.location = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-version&afversion_id='+id;
 												return true;
 											},
 											Cancel: function() {
@@ -343,9 +343,9 @@ if ($RECORD_ID) {
 																				maximizable:	false,
 																				recenterAuto:	true,
 																				destroyOnClose:	true,
-																				url:			'<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID; ?>&type=file-notify&action=edit&active='+(enabled == 1 ? '0' : '1'),
+																				url:			'<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&assignment_id=".$RECORD_ID; ?>&type=file-notify&action=edit&active='+(enabled == 1 ? '0' : '1'),
 																				onClose:			function () {
-																									new Ajax.Updater('notifications-toggle', '<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID; ?>&type=file-notify&action=view');
+																									new Ajax.Updater('notifications-toggle', '<?php echo ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&assignment_id=".$RECORD_ID; ?>&type=file-notify&action=view');
 																								}
 																			}
 																).showCenter();
@@ -357,7 +357,7 @@ if ($RECORD_ID) {
 
 								</script>
 								<?php
-								$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&id=".$RECORD_ID."&type=file-notify&action=view')";
+								$ONLOAD[] = "new Ajax.Updater('notifications-toggle', '".ENTRADA_URL."/api/notifications.api.php?community_id=".$COMMUNITY_ID."&assignment_id=".$RECORD_ID."&type=file-notify&action=view')";
 							}
 							?>
 							<div>
@@ -389,10 +389,10 @@ if ($RECORD_ID) {
 									echo "</colgroup>\n";
 									echo "<tbody>\n";
 									echo "	<tr>\n";
-									echo "		<td style=\"vertical-align: top\"><a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=latest\"><img src=\"".ENTRADA_URL."/templates/default/images/btn_save.gif\" width=\"32\" height=\"32\" alt=\"Save Latest Version\" title=\"Save Latest Version\" align=\"left\" style=\"margin-right: 15px; border: 0px\" /></a></td>";
+									echo "		<td style=\"vertical-align: top\"><a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;assignment_id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=latest\"><img src=\"".ENTRADA_URL."/templates/default/images/btn_save.gif\" width=\"32\" height=\"32\" alt=\"Save Latest Version\" title=\"Save Latest Version\" align=\"left\" style=\"margin-right: 15px; border: 0px\" /></a></td>";
 									echo "		<td style=\"vertical-align: top\">\n";
 									echo "			<div id=\"file-download-latest\">\n";
-									echo "				<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."file_id=".$file_record["afile_id"]."&amp;download=latest\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "").">".(((int) $file_record["access_method"]) ? " View" : "Download")." Latest (v".$results[0]["file_version"].")</a>\n";
+									echo "				<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;assignment_id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."file_id=".$file_record["afile_id"]."&amp;download=latest\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "").">".(((int) $file_record["access_method"]) ? " View" : "Download")." Latest (v".$results[0]["file_version"].")</a>\n";
 									echo "				<div class=\"content-small\">\n";
 									echo "					Filename: <span id=\"file-version-".$results[0]["csfversion_id"]."-title\">".html_encode($results[0]["file_filename"])." (v".$results[0]["file_version"].")</span> ".readable_size($results[0]["file_filesize"]);
 									if ($total_releases > 1 && $results[0]["proxy_id"] == $ENTRADA_USER->getID()) {
@@ -461,10 +461,10 @@ if ($RECORD_ID) {
 									echo "</colgroup>\n";
 									echo "<tbody>\n";
 									echo "	<tr>\n";
-									echo "		<td style=\"vertical-align: top\"><a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=latest\"><img src=\"".ENTRADA_URL."/templates/default/images/btn_save.gif\" width=\"32\" height=\"32\" alt=\"Save Latest Version\" title=\"Save Latest Version\" align=\"left\" style=\"margin-right: 15px; border: 0px\" /></a></td>";
+									echo "		<td style=\"vertical-align: top\"><a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;assignment_id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=latest\"><img src=\"".ENTRADA_URL."/templates/default/images/btn_save.gif\" width=\"32\" height=\"32\" alt=\"Save Latest Version\" title=\"Save Latest Version\" align=\"left\" style=\"margin-right: 15px; border: 0px\" /></a></td>";
 									echo "		<td style=\"vertical-align: top\">\n";
 									echo "			<div id=\"file-download-latest\">\n";
-									echo "				<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."file_id=".$TEACHER_FILE_RECORD."&amp;download=latest\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "").">".(((int) $file_record["access_method"]) ? " View" : "Download")." Latest (v".$results[0]["file_version"].")</a>\n";
+									echo "				<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;assignment_id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."file_id=".$TEACHER_FILE_RECORD."&amp;download=latest\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "").">".(((int) $file_record["access_method"]) ? " View" : "Download")." Latest (v".$results[0]["file_version"].")</a>\n";
 									echo "				<div class=\"content-small\">\n";
 									echo "					Filename: <span id=\"file-version-".$results[0]["afversion_id"]."-title\">".html_encode($results[0]["file_filename"])." (v".$results[0]["file_version"].")</span> ".readable_size($results[0]["file_filesize"]);
 									if ($results[0]["proxy_id"] == $ENTRADA_USER->getID()) {
@@ -486,7 +486,7 @@ if ($RECORD_ID) {
 										foreach($results as $progress => $result) {
 											if ((int) $progress > 0) { // Because I don't want to display the first file again.
 												echo "		<li>\n";
-												echo "			<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;file_id=".$TEACHER_FILE_RECORD."&amp;id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=".$result["file_version"]."\" style=\"vertical-align: middle\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "")."><span id=\"file-version-".$result["afversion_id"]."-title\">".html_encode($result["file_filename"])." (v".$result["file_version"].")</span></a> <span class=\"content-small\" style=\"vertical-align: middle\">".readable_size($result["file_filesize"])."</span>\n";
+												echo "			<a href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=view&amp;file_id=".$TEACHER_FILE_RECORD."&amp;assignment_id=".$RECORD_ID."&amp;".(isset($iscontact) && $iscontact?"pid=".$USER_ID."&amp;":"")."download=".$result["file_version"]."\" style=\"vertical-align: middle\"".(((int) $file_record["access_method"]) ? " target=\"_blank\"" : "")."><span id=\"file-version-".$result["afversion_id"]."-title\">".html_encode($result["file_filename"])." (v".$result["file_version"].")</span></a> <span class=\"content-small\" style=\"vertical-align: middle\">".readable_size($result["file_filesize"])."</span>\n";
 												if($result["proxy_id"] == $ENTRADA_USER->getID()){
 													echo "			(<a class=\"action delete-version\" id=\"delete_".$result["afversion_id"]."\" href=\"javascript:void(0)\">delete</a>)";
 												}
@@ -510,15 +510,15 @@ if ($RECORD_ID) {
 									<ul class="page-action">
 										<?php if (isset($iscontact) && $iscontact) {
 											if ($teacher_file) {?>
-											<li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=response-revision&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Upload Response Revision</a></li>
+											<li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=response-revision&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Upload Response Revision</a></li>
 										<?php } else {
-											?><li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=submit-response&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Hand Back Response</a></li><?php
+											?><li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=submit-response&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Hand Back Response</a></li><?php
 											}
 										} elseif ($ADD_REVISION) {?>
-										<li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-revision&id=<?php echo $RECORD_ID; ?>">Upload Revised File</a></li>
+										<li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-revision&assignment_id=<?php echo $RECORD_ID; ?>">Upload Revised File</a></li>
 										<?php } ?>
 										<?php if ($ADD_COMMENT) : ?>
-										<li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-comment&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Add File Comment</a></li>
+										<li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-comment&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Add File Comment</a></li>
 										<?php endif; ?>
 									</ul>
 									<?php
@@ -556,7 +556,7 @@ if ($RECORD_ID) {
 												</div>
 												<div style="float: right">
 												<?php
-												echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=".$RECORD_ID."&amp;cid=".$result["acomment_id"]."\">edit</a>)" : "");
+												echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;assignment_id=".$RECORD_ID."&amp;cid=".$result["acomment_id"]."\">edit</a>)" : "");
 												echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class= \"action delete\" id=\"delete_".$result["acomment_id"]."\" href=\"javascript:void(0)\">delete</a>)":"");
 												?>
 												</div>
@@ -588,15 +588,15 @@ if ($RECORD_ID) {
                                         <ul class="page-action" style="margin-top: 15px">
                                             <?php if (isset($iscontact) && $iscontact) {
                                                 if ($teacher_file) {?>
-                                                <li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=response-revision&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Upload Response Revision</a></li>
+                                                <li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=response-revision&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Upload Response Revision</a></li>
                                             <?php } else {
-                                                ?><li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=submit-response&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Hand Back Response</a></li><?php
+                                                ?><li><a href="<?php echo ENTRADA_URL."/admin/gradebook/assignments"; ?>?section=submit-response&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Hand Back Response</a></li><?php
                                                 }
                                             } elseif ($ADD_REVISION) {?>
-                                            <li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-revision&id=<?php echo $RECORD_ID; ?>">Upload Revised File</a></li>
+                                            <li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-revision&assignment_id=<?php echo $RECORD_ID; ?>">Upload Revised File</a></li>
                                             <?php } ?>
                                             <?php if ($ADD_COMMENT) : ?>
-                                            <li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-comment&id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Add File Comment</a></li>
+                                            <li><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments"; ?>?section=add-comment&assignment_id=<?php echo $RECORD_ID; ?>&fid=<?php echo $FILE_ID; ?>">Add File Comment</a></li>
                                             <?php endif; ?>
                                         </ul>
                                         <?php
@@ -618,7 +618,7 @@ if ($RECORD_ID) {
 						}
 					}
 				} else {
-					header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$RECORD_ID);
+					header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=submit&assignment_id=".$RECORD_ID);
 					exit;
 				}
 			}else{

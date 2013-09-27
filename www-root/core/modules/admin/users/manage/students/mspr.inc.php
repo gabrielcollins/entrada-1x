@@ -132,7 +132,9 @@ if (!defined("IN_MANAGE_USER_STUDENTS")) {
 		add_mspr_management_sidebar();
 	
 ?>
- 
+<script type="text/javascript">
+	var submitting = false;
+</script>
 <h1>Medical School Performance Report<?php echo ($mspr->isAttentionRequired()) ? ": Attention Required" : ""; ?></h1> 
 
 <?php 

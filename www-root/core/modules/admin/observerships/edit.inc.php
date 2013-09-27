@@ -43,14 +43,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBSERVERSHIPS_ADMIN"))) {
 		$OBSERVERSHIP_ID = $tmp;
 	} else {
 		echo display_error("Invalid observership ID provided. Returning to your Observerships index.");
-		$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/profile/observerships\\'', 5000)";
+		$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/observerships\\'', 5000)";
 		return;
 	}
 	$OBSERVERSHIP = Observership::get($OBSERVERSHIP_ID);
 	$student_id = $OBSERVERSHIP->getStudentID();
 	if (!$OBSERVERSHIP) {
 		echo display_error("Invalid observership ID provided. Returning to your Observerships index.");
-		$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/profile/observerships\\'', 5000)";
+		$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."/admin/observerships\\'', 5000)";
 		return;
 	}
 	//
@@ -80,7 +80,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_OBSERVERSHIPS_ADMIN"))) {
 			add_error("Invalid data entered. Please confirm everything and try again.");
 		} else {
 			if ($OBSERVERSHIP->update($OBSERVERSHIP_ID)) {
-				$url = ENTRADA_URL."/profile/observerships";
+				$url = ENTRADA_URL."/admin/observerships";
 				echo display_success("Successfully updated Observership. You will be redirected to your Observership index in <strong>5 seconds</strong> or <a href=\"".$url."\">click here</a> to go there now.");
 				$ONLOAD[]	= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 				return;

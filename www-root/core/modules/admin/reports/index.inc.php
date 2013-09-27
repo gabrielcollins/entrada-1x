@@ -131,6 +131,14 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 			Management of the AAMC Curriculum Inventory report that can be sent yearly to the AAMC for use in their Curriculum Inventory Portal.
 		</li>
 	</ol>
+	
+	<h2>MSPR Reporting</h2>
+	<ol class="system-reports">
+		<li>
+			<a href="<?php echo ENTRADA_URL; ?>/admin/reports?section=observership">Observership Report</a><br />
+			A report showing the Observerships taking place within a date range.
+		</li>
+	</ol>
 	<?php
 }
 ?>

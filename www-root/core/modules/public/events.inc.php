@@ -206,6 +206,7 @@ if (!defined("PARENT_INCLUDED")) {
 					$event_quizzes = $event_resources["quizzes"];
 					$event_discussions = $event_resources["discussions"];
 					$event_types = $event_resources["types"];
+                    $event_lti = $event_resources['lti'];
 
 					// Meta information for this page.
 					$PAGE_META["title"]			= $event_info["event_title"]." - ".APPLICATION_NAME;
@@ -330,6 +331,52 @@ if (!defined("PARENT_INCLUDED")) {
 					echo "<h1 id=\"page-top\" class=\"event-title\">".html_encode($event_info["event_title"])."</h1>\n";
 
 					?>
+                    <script type="text/javascript">
+                        var ajax_url = '';
+                        var modalDialog;
+
+                        function submitLTIForm() {
+                            jQuery('#ltiSubmitForm').submit();
+                        }
+
+                        function openLTIDialog(url) {
+                            var width  = jQuery(window).width() * 0.9,
+                                height = jQuery(window).height() * 0.9;
+
+                            if(width < 400) { width = 400; }
+                            if(height < 400) { height = 400; }
+
+                            modalDialog = new Control.Modal($('#false-link'), {
+                                position:		'center',
+                                overlayOpacity:	0.75,
+                                closeOnClick:	'overlay',
+                                className:		'modal',
+                                fade:			true,
+                                fadeDuration:	0.30,
+                                width: width,
+                                height: height,
+                                afterOpen: function(request) {
+                                    eval($('scripts-on-open').innerHTML);
+                                },
+                                beforeClose: function(request) {
+                                    jQuery('#ltiContainer').remove();
+                                }
+                            });
+
+                            new Ajax.Request(url, {
+                                method: 'get',
+                                parameters: 'width=' + width + '&height=' + height,
+                                onComplete: function(transport) {
+                                    modalDialog.container.update(transport.responseText);
+                                    modalDialog.open();
+                                }
+                            });
+                        }
+
+                        function closeLTIDialog() {
+                            modalDialog.close();
+                        }
+                    </script>
                     <div class="row-fluid">
                         <div class="span7">
                             <?php
@@ -341,7 +388,7 @@ if (!defined("PARENT_INCLUDED")) {
 
                             if (clean_input($event_info["event_message"], array("notags", "nows")) != "") {
                                 echo "<div class=\"event-message\">\n";
-                                echo "	<h3>Teacher's Message</h3>\n";
+                                echo "	<h3>Required Preparation</h3>\n";
                                 echo	trim(strip_selected_tags($event_info["event_message"], array("font")));
                                 echo "</div>\n";
                             }
@@ -641,11 +688,77 @@ if (!defined("PARENT_INCLUDED")) {
 									echo	course_objectives_in_list($curriculum_objectives, $top_level_id,$top_level_id, false, false, 1, true)."\n";
 									echo "</div>\n";
 								}
-								echo "</div>\n";
 							}
 						}
-                        
+						$query = "	SELECT a.*, COALESCE(b.`objective_details`,a.`objective_description`) AS `objective_description`, COALESCE(b.`objective_type`,c.`objective_type`) AS `objective_type`,
+								b.`importance`,c.`objective_details`, COALESCE(c.`eobjective_id`,0) AS `mapped`,
+								COALESCE(b.`cobjective_id`,0) AS `mapped_to_course`
+								FROM `global_lu_objectives` a
+								LEFT JOIN `course_objectives` b
+								ON a.`objective_id` = b.`objective_id`
+								AND b.`course_id` = ".$db->qstr($COURSE_ID)."
+								LEFT JOIN `event_objectives` c
+								ON c.`objective_id` = a.`objective_id`
+								AND c.`event_id` = ".$db->qstr($EVENT_ID)."
+								WHERE a.`objective_active` = '1'
+								AND (c.`event_id` = ".$db->qstr($EVENT_ID)." OR b.`course_id` = ".$db->qstr($COURSE_ID).")
+								GROUP BY a.`objective_id`
+								ORDER BY a.`objective_id` ASC";
+						$mapped_objectives = $db->GetAll($query);
 
+						$explicit_event_objectives = false;
+						if ($mapped_objectives) {
+							foreach ($mapped_objectives as $objective) {
+								//if its mapped to the event, but not the course, then it belongs in the event objective list
+								if ($objective["mapped"] && !$objective["mapped_to_course"]) {
+									if (!event_objective_parent_mapped_course($objective["objective_id"],$EVENT_ID)) {
+										$explicit_event_objectives[] = $objective;
+									}
+								}
+							}
+						}
+						?>
+						<div class="section-holder">
+							<div id="mapped_objectives">
+								<div id="event-list-wrapper" <?php echo ($explicit_event_objectives)?'':' style="display:none;"';?>>
+									<a name="event-objective-list"></a>
+									<h2 id="event-toggle"  title="Event Objective List" class="list-heading">Event Specific Objectives</h2>
+									<div id="event-objective-list">
+										<ul class="objective-list mapped-list" id="mapped_event_objectives" data-importance="event">
+											<?php
+											if ($explicit_event_objectives) {
+												foreach ($explicit_event_objectives as $objective) {
+													$title = ($objective["objective_code"] ? $objective["objective_code"] . ': ' . $objective["objective_name"] : $objective["objective_name"]);
+													?>
+													<li class = "mapped-objective"
+														id = "mapped_objective_<?php echo $objective["objective_id"]; ?>"
+														data-id = "<?php echo $objective["objective_id"]; ?>"
+														data-title="<?php echo $title;?>"
+														data-description="<?php echo htmlentities($objective["objective_description"]);?>"
+														data-mapped="<?php echo $objective["mapped_to_course"]?1:0;?>">
+														<strong><?php echo $title; ?></strong>
+														<div class="objective-description">
+															<?php
+															$set = fetch_objective_set_for_objective_id($objective["objective_id"]);
+															if ($set) {
+																echo "From the Objective Set: <strong>".$set["objective_name"]."</strong><br/>";
+															}
+
+															echo $objective["objective_description"];
+															?>
+														</div>
+													</li>
+													<?php
+												}
+											}
+											?>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+						<?php
                         $query = "SELECT a.`topic_id`,a.`topic_name`, e.`topic_coverage`, e.`topic_time`
                                     FROM `events_lu_topics` AS a
                                     LEFT JOIN `topic_organisation` AS b
@@ -663,13 +776,12 @@ if (!defined("PARENT_INCLUDED")) {
                             ?>
                             <table style="width: 100%" cellspacing="0">
                                 <colgroup>
-                                    <col style="width: 70%" />
-                                    <col style="width: 10%" />
+                                    <col style="width: 80%" />
                                     <col style="width: 10%" />
                                     <col style="width: 10%" />
                                 </colgroup>
                                 <tr>
-                                    <td colspan="4">
+                                    <td colspan="3">
                                         <h2>Event Topics</h2>
                                         <div class="content-small" style="padding-bottom: 10px">These topics will be covered in this learning event.</div>
                                     </td>
@@ -678,7 +790,6 @@ if (!defined("PARENT_INCLUDED")) {
                                     <td><span style="font-weight: bold; color: #003366;">Hot Topic</span></td>
                                     <td><span style="font-weight: bold; color: #003366;">Major</span></td>
                                     <td><span style="font-weight: bold; color: #003366;">Minor</span></td>
-                                    <td><span style="font-weight: bold; color: #003366;">Time</span></td>
                                 </tr>
                                 <?php
                                     foreach ($topic_results as $topic_result) {
@@ -686,7 +797,6 @@ if (!defined("PARENT_INCLUDED")) {
                                         echo "	<td>".html_encode($topic_result["topic_name"])."</td>\n";
                                         echo "	<td>".(($topic_result["topic_coverage"] == "major") ? "<img src=\"".ENTRADA_URL."/images/question-correct.gif"."\" />" : "" )."</td>\n";
                                         echo "	<td>".(($topic_result["topic_coverage"] == "minor") ? "<img src=\"".ENTRADA_URL."/images/question-correct.gif"."\" />": "" )."</td>\n";
-                                        echo "	<td>".$topic_result["topic_time"]."</td>\n";
                                         echo "</tr>\n";
                                     }
                                     echo "<tr><td colspan=\"2\">&nbsp;</td></tr>";
@@ -929,6 +1039,79 @@ if (!defined("PARENT_INCLUDED")) {
                             echo "		<tr>\n";
                             echo "			<td colspan=\"3\">\n";
                             echo "				<div class=\"content-small\" style=\"margin-top: 3px; margin-bottom: 5px\">There are no online quizzes currently attached to this learning event.</div>\n";
+                            echo "			</td>\n";
+                            echo "		</tr>\n";
+                        }
+                        echo "		</tbody>\n";
+                        echo "		</table>\n";
+                        echo "	</div>\n";
+
+                        echo "	<div class=\"section-holder\">\n";
+                        echo "		<h3>Attached LTI Providers</h3><a name=\"event-resources-lti\"></a>\n";
+                        echo "		<table class=\"tableList\" cellspacing=\"0\" summary=\"List of LTI Providers\">\n";
+                        echo "		<colgroup>\n";
+                        echo "			<col class=\"modified\" />\n";
+                        echo "			<col class=\"title\" />\n";
+                        echo "			<col class=\"date\" />\n";
+                        echo "		</colgroup>\n";
+                        echo "		<thead>\n";
+                        echo "			<tr>\n";
+                        echo "				<td class=\"modified\">&nbsp;</td>\n";
+                        echo "				<td class=\"title sortedASC\"><div class=\"noLink\">LTI Provider Title</div></td>\n";
+                        echo "				<td class=\"date\">Update date</td>\n";
+                        echo "			</tr>\n";
+                        echo "		</thead>\n";
+                        echo "		<tbody>\n";
+
+                        if ($event_lti) {
+                            foreach ($event_lti as $result) { ?>
+                                <tr style="vertical-align: top;">
+                                    <td class="modified"></td>
+                                    <td class="title" style="vertical-align: top; white-space: normal; overflow: visible">
+                                        <?php
+                                        if (((!(int) $result["valid_from"]) || ($result["valid_from"] <= time())) && ((!(int) $result["valid_until"]) || ($result["valid_until"] >= time()))) { ?>
+                                            <a href="javascript:void(0)"
+                                               onclick="openLTIDialog('<?php echo ENTRADA_URL;?>/api/lti-consumer-runner.api.php?ltiid=<?php echo $result["id"];?>&event=1')"
+                                               title="Click to visit <?php echo $result["lti_title"];?>">
+                                                <strong>
+                                                    <?php echo (($result["lti_title"] != "") ? html_encode($result["lti_title"]) : '');?>
+                                                </strong>
+                                            </a>
+                                        <?php
+                                        } else { ?>
+                                            <span style="color: #666666;">
+                                                <strong>
+                                                    <?php echo (($result["lti_title"] != "") ? html_encode($result["lti_title"]) : '');?>
+                                                </strong>
+                                            </span>
+                                        <?php
+                                        } ?>
+
+                                        <div class="content-small">
+                                            <?php
+                                            if (((int) $result["valid_from"]) && ($result["valid_from"] > time())) { ?>
+                                                This resource will become accessible <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_from"]);?></strong>.<br /><br />
+                                            <?php
+                                            } elseif (((int) $result["valid_until"]) && ($result["valid_until"] < time())) { ?>
+                                                This resource was only accessible until <strong><?php echo date(DEFAULT_DATE_FORMAT, $result["valid_until"]);?></strong>. Please contact the primary teacher for assistance if required.<br /><br />
+                                            <?php
+                                            }
+
+                                            if (clean_input($result["link_notes"], array("notags", "nows")) != "") {
+                                                echo "<div class=\"clearfix\">".trim(strip_selected_tags($result["link_notes"], array("font")))."</div>";
+                                            } ?>
+                                        </div>
+                                    </td>
+                                    <td class="date">
+                                        <?php echo (((int) $result["updated_date"]) ? date(DEFAULT_DATE_FORMAT, $result["updated_date"]) : "Unknown");?>
+                                    </td>
+                                </tr>
+                            <?php
+                            }
+                        } else {
+                            echo "		<tr>\n";
+                            echo "			<td colspan=\"3\">\n";
+                            echo "				<div class=\"content-small\" style=\"margin-top: 3px; margin-bottom: 5px\">There have been no LTI Providers added to this event.</div>\n";
                             echo "			</td>\n";
                             echo "		</tr>\n";
                         }

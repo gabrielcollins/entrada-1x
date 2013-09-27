@@ -54,9 +54,24 @@ if(!defined("PARENT_INCLUDED")) {
 			$ASSESSMENT_ID = 0;
 		}
 		
-		$module_file = $router->getRoute();
-		if ($module_file) {
-			require_once($module_file);
+		$query = "	SELECT `organisation_id`
+					FROM `courses`
+					WHERE `course_id` = " . $db->qstr($COURSE_ID);
+		
+		$organisation_id = $db->getOne($query);
+		
+		if (!$ENTRADA_ACL->amIAllowed(new CourseContentResource($COURSE_ID, $organisation_id), "update")) {
+			$ERROR++;
+			$ERRORSTR[]	= "You do not have the permissions required to access this assessment.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+
+			echo display_error();
+
+			application_log("error", "User: " . $ENTRADA_USER->getActiveId() . ", does not have access to this assessment id [".$ASSESSMENT_ID."]");
+		} else {		
+			$module_file = $router->getRoute();
+			if ($module_file) {
+				require_once($module_file);
+			}
 		}
 
 		/**

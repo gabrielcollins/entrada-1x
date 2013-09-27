@@ -63,7 +63,7 @@ if($COMMUNITY_ID) {
 					$list = new MailingList($COMMUNITY_ID);
 					$list->mode_change("inactive");
 				}
-
+				communities_log_history($COMMUNITY_ID,  0, $COMMUNITY_ID, "community_history_deactivate_page", 1);
 				$SUCCESS++;
 				$SUCCESSSTR[] = "<strong>You have just deactiviated ".html_encode($community_details["community_title"]).".</strong><br /><br />If there has been a mistake please contact the MEdTech unit directly for assistance.<br /><br />You will now be redirected back to the communities section; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 

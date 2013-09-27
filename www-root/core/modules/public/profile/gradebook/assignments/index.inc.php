@@ -80,6 +80,8 @@ switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["assignments"]["sb"]) {
 		$sort_by = "e.`due_date` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["assignments"]["so"]);
 	break;
 }
+	$group_ids = groups_get_enrolled_group_ids($ENTRADA_USER->getId());
+	$group_ids_string = implode(', ',$group_ids);
 
 	$courses = groups_get_enrolled_course_ids($ENTRADA_USER->getID());
 	$query = "SELECT c.`course_code`, e.`assignment_id`, e.`assignment_title`, e.`due_date`, h.`grade_id` AS `grade_id`, h.`value` AS `grade_value`, i.`grade_weighting` AS `submitted_date`
@@ -88,6 +90,7 @@ switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["assignments"]["sb"]) {
 						ON e.`course_id` = c.`course_id`
 						LEFT JOIN `assessments` AS f
 						ON e.`assessment_id` = f.`assessment_id`
+						AND f.`cohort` IN (". $group_ids_string .")
 						LEFT JOIN `assessment_grades` AS h
 						ON h.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 						AND h.`assessment_id` = e.`assessment_id`
@@ -119,10 +122,10 @@ switch ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["assignments"]["sb"]) {
                 foreach ($assignments as $result) {
                     ?>
                     <tr id="gradebook-1">
-                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;id=<?php echo $result["assignment_id"];?>"><?php echo html_encode($result["assignment_title"]);?></a></td>
-                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;id=<?php echo $result["assignment_id"];?>"><?php echo html_encode($result["course_code"]);?></a></td>
-                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;id=<?php echo $result["assignment_id"];?>"><?php echo (isset($result["grade_value"]) ? $result["grade_value"] : "NA"); ?></a></td>
-                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;id=<?php echo $result["assignment_id"];?>"><?php echo ($result["due_date"]==0?'-':date(DEFAULT_DATE_FORMAT,$result["due_date"]));?></a></td>
+                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;assignment_id=<?php echo $result["assignment_id"];?>"><?php echo html_encode($result["assignment_title"]);?></a></td>
+                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;assignment_id=<?php echo $result["assignment_id"];?>"><?php echo html_encode($result["course_code"]);?></a></td>
+                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;assignment_id=<?php echo $result["assignment_id"];?>"><?php echo (isset($result["grade_value"]) ? $result["grade_value"] : "NA"); ?></a></td>
+                        <td><a href="<?php echo ENTRADA_RELATIVE."/".$MODULE;?>/gradebook/assignments?section=view&amp;assignment_id=<?php echo $result["assignment_id"];?>"><?php echo ($result["due_date"]==0?'-':date(DEFAULT_DATE_FORMAT,$result["due_date"]));?></a></td>
                     </tr>
                     <?php
                 }

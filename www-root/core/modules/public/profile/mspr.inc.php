@@ -137,7 +137,9 @@ if (!defined("IN_PROFILE")) {
 		display_status_messages();
 
 ?>
-
+<script type="text/javascript">
+	var submitting = false;
+</script>
 <h1>Medical School Performance Report</h1>
 
 <?php

@@ -8,19 +8,23 @@
 		var new_modal = options.new_modal;
 		
 		function process_entry(form_values) {
-			new Ajax.Updater(data_destination, url,
-				{
-					method:'post',
-					parameters: form_values,
-					evalScripts:true,
-					onComplete: function () {
-						if (messages) {
-							messages.update(data_destination.down('.status_messages'));
+			if (submitting == false) {
+				submitting = true;
+				new Ajax.Updater(data_destination, url,
+					{
+						method:'post',
+						parameters: form_values,
+						evalScripts:true,
+						onComplete: function () {
+							if (messages) {
+								messages.update(data_destination.down('.status_messages'));
+							}
+							document.fire(section+':onAfterUpdate');
+							submitting = false;
 						}
-						document.fire(section+':onAfterUpdate');
-					}
-				});
-			document.fire(section+':onBeforeUpdate');
+					});
+				document.fire(section+':onBeforeUpdate');
+			}
 		}
 		
 		function new_entry_process_ajax(event) {

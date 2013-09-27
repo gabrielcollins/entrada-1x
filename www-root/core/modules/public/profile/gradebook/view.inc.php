@@ -141,7 +141,7 @@ if ($COURSE_ID) {
                                 AND (b.`release_date` = '0' OR b.`release_date` <= ".$db->qstr(time()).")
                                 AND (b.`release_until` = '0' OR b.`release_until` >= ".$db->qstr(time()).")
                                 AND b.`assessment_id` = ".$db->qstr($result["assessment_id"])."
-                                ORDER BY `order` ASC";
+                                ORDER BY c.`value` ASC";
                     $all_grades = $db->GetAll($query);
                     if ($all_grades) {
                         $n = count($all_grades);

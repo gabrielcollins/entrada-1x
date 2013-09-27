@@ -72,8 +72,8 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 	if($COMMENT_TABLE){
 	
 		if (!$db->AutoExecute($COMMENT_TABLE,$PROCESSED,"INSERT")) {
-			application_log("error", "Error occurred while submitting comment.");
-			echo htmlspecialchars(json_encode(array('error'=>'Error occurred while submitting comment.')), ENT_NOQUOTES);
+			application_log("error", "Error occurred while submitting comment.  DB said [".$db->ErrorMsg()."]");
+			echo htmlspecialchars(json_encode(array('error'=>'Error occurred while submitting comment.  Please try again.')), ENT_NOQUOTES);
 			exit;						
 		} else {
 			$COMMENT_ID = $db->Insert_Id();
@@ -101,7 +101,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 						<td colspan="2" class="content" style="border-bottom: 3px solid #EBEBEB;">
 						<a name="comment-<?php echo (int) $result["cscomment_id"]; ?>"></a>
 						<?php
-							echo ((trim($PROCESSED["comment_title"])) ? "<div style=\"font-weight: bold\">".html_encode(trim($PROCESSED["comment_title"]))."</div>" : "");
+							echo ((trim($PROCESSED["comment_title"])) ? "<strong>".html_encode(trim($PROCESSED["comment_title"]))."</strong><br />" : "");
 							echo $PROCESSED["comment_description"];
 
 						?>

@@ -100,14 +100,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	 */
 	switch($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["sb"]) {
 		case "type" :
-			$sort_by = "c.`curriculum_type_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+			$sort_by = "x.`curriculum_type_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
 		break;
 		case "code" :
-			$sort_by = "a.`course_code` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+			$sort_by = "x.`course_code` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
 		break;
 		case "name" :
 		default :
-			$sort_by = "a.`course_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
+			$sort_by = "x.`course_name` ".strtoupper($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["so"]);
 		break;
 	}
 
@@ -145,8 +145,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					AND a.`course_active` = '1'";
 	}
 	$result = $db->GetRow($query);
+	
+	//Check for any assignement dropbox contacts for this user.
+	$query = "	SELECT count(*) AS `total_rows`
+				FROM `assignement_contacts` a
+				WHERE a.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId());
+	$dropbox_result = $db->getRow($query);
+	
 	if ($result) {
-		$total_rows	= $result["total_rows"];
+		$total_rows	= $result["total_rows"] + $dropbox_result["total_rows"];
 
 		if ($total_rows <= $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]) {
 			$total_pages = 1;
@@ -220,7 +227,9 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	$limit_parameter = (int) (($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"] * $page_current) - $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 
 	if ($ENTRADA_ACL->amIAllowed("course", "update", false)) {
-		$query	= "	SELECT a.`course_id`, a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
+		$query	= "	SELECT * 
+					FROM (
+					SELECT a.`course_id`, a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
 					FROM `courses` AS a
 					LEFT JOIN `course_contacts` AS b
 					ON b.`course_id` = a.`course_id`
@@ -232,9 +241,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					ON d.`id` = b.`proxy_id`
 					WHERE a.`course_active` = '1'
 					AND a.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
+					) x
 					ORDER BY %s LIMIT %s, %s";
 	} else {
-		$query	= "	SELECT DISTINCT(a.`course_id`), a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
+		$query	= "	SELECT * 
+					FROM (
+					SELECT DISTINCT(a.`course_id`), a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
 					FROM `courses` AS a
 					LEFT JOIN `course_contacts` AS b
 					ON b.`course_id` = a.`course_id`
@@ -249,6 +261,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					LEFT JOIN `community_members` AS f
 					ON f.`community_id` = e.`community_id`
 					AND f.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
+					LEFT JOIN `assignments` g
+					ON g.`course_id` = a.`course_id`
+					LEFT JOIN `assignment_contacts` h
+					ON g.`assignment_id` = h.`assignment_id`
 					WHERE
 					(
 						a.`pcoord_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
@@ -257,11 +273,27 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					)
 					AND a.`course_active` = '1'
 					AND a.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
+					AND h.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "					
+					UNION
+					SELECT a.`course_id`, a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
+					FROM `assignment_contacts` b
+					JOIN `assignments` bb
+					ON b.`assignment_id` = bb.`assignment_id`
+					JOIN `courses` a
+					ON a.`course_id` = bb.`course_id`
+					JOIN `curriculum_lu_types` AS c
+					ON a.`curriculum_type_id` = c.`curriculum_type_id`
+					JOIN `".AUTH_DATABASE."`.`user_data` AS d
+					ON d.`id` = b.`proxy_id`
+					WHERE b.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
+					AND bb.`assignment_active` = 1
+					) x
 					ORDER BY %s LIMIT %s, %s";
-	}
-
-	$query		= sprintf($query, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
+	} 
+	
+	$query		= sprintf($query, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);	
 	$results	= $db->GetAll($query);
+	
 	if ($results) {
 	?>
 		<table class="tableList" cellspacing="0" summary="List of Gradebooks">
@@ -278,16 +310,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 			</tr>
 		</thead>
 		<tbody>
-		<?php
+		<?php				
 		if ((@count($results) == 1) && !($ENTRADA_ACL->amIAllowed(new CourseResource($results[0]["course_id"], $results[0]["organisation_id"]), "update"))) {
-			header("Location: ".ENTRADA_URL."/admin/".$MODULE."?section=view&id=".$results[0]["course_id"]);
-			exit;
+				header("Location: ".ENTRADA_URL."/admin/".$MODULE."?section=view&id=".$results[0]["course_id"]);
+				exit;
 		}
+		
 
 		foreach ($results as $result) {
 			$url			= "";
-			$administrator	= false;
-
+			$administrator	= false;			
+			
 			if ($ENTRADA_ACL->amIAllowed(new GradebookResource($result["course_id"], $result["organisation_id"]), "update")) {
 				$allowed_ids	= array($ENTRADA_USER->getActiveId());
 				$administrator	= true;
@@ -307,7 +340,17 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 	} else {
 		?>
 		<div class="display-notice">
-			<h3>No Available Courses</h3>
+			<?php 
+			if ($ENTRADA_USER->getActiveGroup() == "faculty" && $ENTRADA_USER->getActiveRole() == "director") { 
+			?>
+				<h3>No Available Gradebooks</h3>
+			<?php
+			} else {
+			?>
+				<h3>You have not been selected to mark any assignments.</h3>
+			<?php
+			}
+			?>
 		</div>
 		<?php
 	}

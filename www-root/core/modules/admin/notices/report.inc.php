@@ -61,7 +61,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_NOTICES"))) {
 		if ($audience_members) {
 			foreach ($audience_members as $member) {
 				switch ($member["audience_type"]) {
-					case "cohorts" :
+					case "cohort" :
 					case "course_list" :
 						$query = "SELECT a.*, CONCAT_WS(', ',b.`lastname`,b.`firstname`) as `fullname` FROM `group_members` AS a JOIN `".AUTH_DATABASE."`.`user_data` AS b ON a.`proxy_id` = b.`id` WHERE `group_id` = ".$db->qstr($member["audience_value"]);
 						$group_mmbrs = $db->GetAll($query);

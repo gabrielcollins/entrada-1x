@@ -255,9 +255,50 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								}
 							}
 						break;
-						default :
-							continue;
-						break;
+                        case "lti":
+                            $LTI_IDS = array();
+
+                            if((!isset($_POST["delete"])) || (!is_array($_POST["delete"])) || (!@count($_POST["delete"]))) {
+                                $ERROR++;
+                                $ERRORSTR[] = "You must select at least 1 LTI Provider to delete by checking the checkbox to the left the LTI Provider.";
+
+                                application_log("notice", "User pressed the Delete LTI Provider button without selecting any files to delete.");
+                            } else {
+                                foreach($_POST["delete"] as $lti_id) {
+                                    $lti_id = (int) trim($lti_id);
+                                    if($lti_id) {
+                                        $LTI_IDS[] = (int) trim($lti_id);
+                                    }
+                                }
+
+                                if(!@count($LTI_IDS)) {
+                                    $ERROR++;
+                                    $ERRORSTR[] = "There were no valid LTI Provider identifiers provided to delete.";
+                                } else {
+                                    foreach($LTI_IDS as $lti_id) {
+                                        $query	= "SELECT * FROM `course_lti_consumers` WHERE `id`=".$db->qstr($lti_id)." AND `course_id`=".$db->qstr($COURSE_ID);
+                                        $sresult	= $db->GetRow($query);
+                                        if($sresult) {
+                                            $query = "DELETE FROM `course_lti_consumers` WHERE `id`=".$db->qstr($lti_id)." AND `course_id`=".$db->qstr($COURSE_ID);
+                                            if($db->Execute($query)) {
+                                                if($db->Affected_Rows()) {
+                                                    application_log("success", "Deleted course ".$sresult["lti_title"]." [ID: ".$lti_id."] from database.");
+                                                } else {
+                                                    application_log("error", "Trying to delete course ".$sresult["lti_title"]." [ID: ".$lti_id."] from database, but there were no rows affected. Database said: ".$db->ErrorMsg());
+                                                }
+                                            } else {
+                                                $ERROR++;
+                                                $ERRORSTR[] = "We are unable to delete ".$sresult["lti_title"]." from the course at this time. The system administrator has been informed of the error, please try again later.";
+
+                                                application_log("error", "Trying to delete course ".$sresult["lti_title"]." [ID: ".$link_id."] from database, but the execute statement returned false. Database said: ".$db->ErrorMsg());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                            default :
+                            continue;
 					}
 				}
 
@@ -335,6 +376,16 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						return false;
 					}
 				}
+
+                function confirmLTIDelete() {
+                    ask_user = confirm("Press OK to confirm that you would like to delete the selected LTI Provider or LTI Providers from this course, otherwise press Cancel.");
+
+                    if (ask_user == true) {
+                        $('lti-listing').submit();
+                    } else {
+                        return false;
+                    }
+                }
 
 				var text = new Array();
 
@@ -633,7 +684,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								<tfoot>
 									<tr class="space-above">
 										<td>&nbsp;</td>
-										<td colspan="5">
+										<td colspan="5" style="padding-top: 10px">
 										<?php
 										echo (($results) ? "<input type=\"button\" class=\"btn btn-danger\" value=\"Delete Selected\" onclick=\"confirmFileDelete()\" />" : "&nbsp;");
 										?>
@@ -745,7 +796,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								<tfoot>
 									<tr>
 										<td>&nbsp;</td>
-										<td colspan="4">
+										<td colspan="4" style="padding-top: 10px">
 											<?php
 											echo (($results) ? "<input type=\"button\" class=\"btn btn-danger\" value=\"Delete Selected\" onclick=\"confirmLinkDelete()\" />" : "&nbsp;")."\n";
 											?>
@@ -807,6 +858,99 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 							</table>
 						</form>
 					</div>
+                    <div class="space-bottom medium">
+                        <div class="clearfix">
+                            <div class="pull-left space-below">
+                                <h3>Attached LTI Providers</h3>
+                            </div>
+                            <div class="pull-right space-below">
+                                <a 	href="#page-top"
+                                      onclick="openDialog('<?php echo ENTRADA_URL; ?>/api/lti-wizard-course.api.php?action=add&id=<?php echo $COURSE_ID; ?>')"
+                                      class="btn btn-primary">
+                                    Add LTI Provider
+                                </a>
+                            </div>
+                        </div>
+                        <?php
+                        $query		= "SELECT * FROM `course_lti_consumers` WHERE `course_id`=".$db->qstr($COURSE_ID)." ORDER BY `lti_title` ASC";
+                        $results	= ((USE_CACHE) ? $db->CacheGetAll(CACHE_TIMEOUT, $query) : $db->GetAll($query));
+                        ?>
+                        <form id="lti-listing" action="<?php echo ENTRADA_URL."/admin/".$MODULE."?".replace_query();?>" method="post">
+                            <input type="hidden" name="type" value="lti" />
+                            <table class="tableList" cellspacing="0" summary="List of LTI Providers">
+                                <colgroup>
+                                    <col class="modified wide"/>
+                                    <col class="title" />
+                                    <col class="title" />
+                                    <col class="date" />
+                                    <col class="date" />
+                                </colgroup>
+                                <thead>
+                                <tr>
+                                    <td class="modified">&nbsp;</td>
+                                    <td class="title sortedASC"><div class="noLink">LTI Provider Title</div></td>
+                                    <td class="title">Launch URL</td>
+                                    <td class="date-small">Accessible Start</td>
+                                    <td class="date-small">Accessible Finish</td>
+                                </tr>
+                                </thead>
+                                <tfoot>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td colspan="4" style="padding-top: 10px">
+                                        <?php
+                                        echo (($results) ? "<input type=\"button\" class=\"btn btn-danger\" value=\"Delete Selected\" onclick=\"confirmLTIDelete()\" />" : "&nbsp;")."\n";
+                                        ?>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                                <tbody>
+                                <?php
+                                if($results) {
+                                    foreach($results as $result) { ?>
+                                        <tr>
+                                            <td class="modified wide">
+                                                <input type="checkbox" name="delete[]" value="<?php echo $result["id"];?>"/>
+                                            </td>
+                                            <td class="title">
+                                                <a 	href="#"
+                                                      onclick="openDialog('<?php echo ENTRADA_URL;?>/api/lti-wizard-course.api.php?action=edit&id=<?php echo $COURSE_ID."&ltiid=".$result["id"];?>')"
+                                                      title="Click to edit <?php echo html_encode($result["lti_title"]);?>">
+                                                    <strong>
+                                                        <?php echo (($result["lti_title"] != "") ? html_encode($result["lti_title"]) : $result["lti_title"]);?>
+                                                    </strong>
+                                                </a>
+                                            </td>
+                                            <td class="title">
+                                                <?php echo (($result["launch_url"] != "") ? html_encode($result["launch_url"]) : $result["launch_url"]);?>
+                                            </td>
+                                            <td class="date-small">
+											<span class="content-date">
+												<?php echo (((int) $result["valid_from"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_from"]) : "No Restrictions");?>
+											</span>
+                                            </td>
+                                            <td class="date-small">
+											<span class="content-date">
+												<?php echo (((int) $result["valid_until"]) ? date(DEFAULT_DATE_FORMAT, $result["valid_until"]) : "No Restrictions");?>
+											</span>
+                                            </td>
+                                        </tr>
+                                    <?php
+                                    }
+                                } else { ?>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="well well-small content-small">
+                                                There have been no LTI Providers added to this <?php echo strtolower($module_singular_name);?>. To <strong>add a new LTI Provider</strong>, simply click the Add LTI Provider button.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php
+                                } ?>
+                                </tbody>
+                            </table>
+                        </form>
+                    </div>
 				</div>
 				<?php
 				/**

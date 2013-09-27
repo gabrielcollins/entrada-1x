@@ -88,11 +88,16 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 				case 2 :
 					$query = "DELETE FROM `assessments` WHERE `assessment_id` IN (".implode(", ", $ASSESSMENT_IDS).")";
 					if($db->Execute($query)) {
-						$db->AutoExecute ("assignments",array("assessment_id"=>0),"UPDATE","`assessment_id` IN (".implode(", ", $ASSESSMENT_IDS).")");
+						$total_removed_assessments = $db->Affected_Rows();						
 						$ONLOAD[]	= "setTimeout('window.location=\\'".$INDEX_URL."\\'', 5000)";
 
-						if($total_removed = $db->Affected_Rows()) {
-							$query = "DELETE FROM `assessment_grades` WHERE `assessment_id` IN (".implode(", ", $ASSESSMENT_IDS).")";
+						if($total_removed_assessments == count($ASSESSMENT_IDS)) {
+							
+							if (!$db->AutoExecute ("assignments",array("assessment_id"=>0),"UPDATE","`assessment_id` IN (".implode(", ", $ASSESSMENT_IDS).")")) {
+								application_log("error", "Successfully removed assessment ids: ".implode(", ", $ASSESSMENT_IDS), "but was unable to remove the assignments pertaining to them.");
+							}							
+							
+							$query = "DELETE FROM `assessment_grades` WHERE `assessment_id` IN (".implode(", ", $ASSESSMENT_IDS).")";							
 							if($db->Execute($query)) {							
 								application_log("success", "Successfully removed assessment ids: ".implode(", ", $ASSESSMENT_IDS));
 							} else {
@@ -100,12 +105,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							}
 							
 							$SUCCESS++;
-							$SUCCESSSTR[]  = "You have successfully removed ".$total_removed." assessment".(($total_removed != 1) ? "s" : "")." from the system.<br /><br />You will be automatically redirected to the event index in 5 seconds, or you can <strong><a href=\"".$INDEX_URL."\">click here</a></strong> to go there now.";
+							$SUCCESSSTR[]  = "You have successfully removed ".$total_removed_assessments." assessment".(($total_removed_assessments != 1) ? "s" : "")." from the system.<br /><br />You will be automatically redirected to the Assessment index in 5 seconds, or you can <strong><a href=\"".$INDEX_URL."\">click here</a></strong> to go there now.";
 
 							echo display_success();
 							
 							
-					} else {
+						} else {
 							$ERROR++;
 							$ERRORSTR[] = "We were unable to remove the requested assessments from the system. The MEdTech Unit has been informed of this issue and will address it shortly; please try again later.";
 
@@ -184,10 +189,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					<?php
 					} else {
 						// No assessments in this course.
+						$ONLOAD[]	= "setTimeout('window.location=\\'".$INDEX_URL."\\'', 5000)";
 						?>
 						<div class="display-notice">
 							<h3>No Assessments to delete for <?php echo $course_details["course_name"]; ?></h3>
-							You must select some assessments to delete for this course
+							You must select some assessments to delete for this course.<br /><br />
+							You will be automatically redirected to the Assessment index in 5 seconds, or you can <strong><a href="<?php echo $INDEX_URL ?>">click here</a></strong> to go there now.
 						</div>
 						<?php
 					}

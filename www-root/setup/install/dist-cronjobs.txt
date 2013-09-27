@@ -2,7 +2,7 @@
 03,13,23,33,43,53 * * * * /usr/bin/php -f ENTRADA_URL/cron/community-notifications.php > /dev/null 2>&1
 15 * * * * /usr/bin/curl -s ENTRADA_URL/cron/community-activities.php > /dev/null 2>&1
 30 * * * * /usr/bin/curl -s ENTRADA_URL/cron/weather.php > /dev/null 2>&1
-30 * * * * /usr/bin/curl -s ENTRADA_URL/cron/calendars.php > /dev/null 2>&1
+30 * * * * /usr/bin/curl -s ENTRADA_URL/cron/calendars.php?org=1 > /dev/null 2>&1
 05 5 * * * /usr/bin/curl -s ENTRADA_URL/cron/cache-cleanup.php > /dev/null 2>&1
 35 3 * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/notifications.php > /dev/null 2>&1
 55 * * * * /usr/bin/php -f ENTRADA_ABSOLUTE/cron/syllabus_gen.php > /dev/null 2>&1

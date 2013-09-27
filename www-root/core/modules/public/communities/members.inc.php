@@ -196,6 +196,7 @@ if ($COMMUNITY_ID) {
 									//User needs access
 										$GUEST_NEW_ACCESS = true;
 										$PROCESSED_ACCESS["app_id"]				= AUTH_APP_ID;
+										$PROCESSED_ACCESS["organisation_id"]    = $ENTRADA_USER->getActiveOrganisation();
 										$PROCESSED_ACCESS["acount_active"]		= "true";
 										$PROCESSED_ACCESS["access_starts"]		= time();
 										$PROCESSED_ACCESS["access_expires"]		= 0;

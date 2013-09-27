@@ -63,25 +63,33 @@ jQuery(document).ready(function($){
 			width: 700,
 			minHeight: 550,
 			maxHeight: 700,
-			buttons: {
-				Cancel : function() {
-					$(this).dialog( "close" );
-				},
-				Export : function() {
-					var my_export_options = {};
-					$("#selected_export_options > li").each(function(index) {
-						my_export_options[$(this).attr("data-field")] = $(this).text();
-					});
-					$('input[name=my_export_options]').val(JSON.stringify(my_export_options));
-
-					if ($('#display-error-box').length > 0) {
-						$('#display-error-box').remove();
+			buttons: [
+				{
+					text: "Cancel",
+					"class": 'btn pull-left',
+					click: function() {
+						$(this).dialog( "close" );
 					}
-					var url = modal_container.find("#my_export_options_form").attr("action") + "?" + modal_container.find("#my_export_options_form").serialize();
-					window.location=url;
-					$(this).dialog( "close" );
+				},
+				{
+					text: "Export",
+					"class": 'btn btn-primary pull-right',
+					click: function() {
+						var my_export_options = {};
+						$("#selected_export_options > li").each(function(index) {
+							my_export_options[$(this).attr("data-field")] = $(this).text();
+						});
+						$('input[name=my_export_options]').val(JSON.stringify(my_export_options));
+
+						if ($('#display-error-box').length > 0) {
+							$('#display-error-box').remove();
+						}
+						var url = modal_container.find("#my_export_options_form").attr("action") + "?" + modal_container.find("#my_export_options_form").serialize();
+						window.location=url;
+						$(this).dialog( "close" );
+					}				
 				}
-			},
+			],
 			close: function(event, ui){
 				modal_container.dialog("destroy");
 			}

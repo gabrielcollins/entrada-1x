@@ -45,6 +45,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                         WHERE `assessment_id` = ".$db->qstr($tmp_ass);
             $assessment = $db->GetRow($query);
             if ($assessment) {
+				$PROCESSED["name"] = $assessment["name"];
+				
                 $query = "SELECT * FROM `assignments`
                             WHERE `assessment_id` = ".$db->qstr($tmp_ass)."
                             AND `assignment_active` = 1";
@@ -211,11 +213,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                     ON `".AUTH_DATABASE."`.`user_access`.`user_id` = `".AUTH_DATABASE."`.`user_data`.`id`
                                     LEFT JOIN `".AUTH_DATABASE."`.`organisations`
                                     ON `".AUTH_DATABASE."`.`user_data`.`organisation_id` = `".AUTH_DATABASE."`.`organisations`.`organisation_id`
-                                    WHERE `".AUTH_DATABASE."`.`user_access`.`group` = 'faculty'
-                                    AND (`".AUTH_DATABASE."`.`user_access`.`role` = 'director' OR `".AUTH_DATABASE."`.`user_access`.`role` = 'admin')
+                                    WHERE (`".AUTH_DATABASE."`.`user_access`.`group` = 'faculty' OR
+									`".AUTH_DATABASE."`.`user_access`.`group` = 'staff' OR
+									(`".AUTH_DATABASE."`.`user_access`.`group` = 'resident' AND `".AUTH_DATABASE."`.`user_access`.`role` = 'lecturer'
+									OR `".AUTH_DATABASE."`.`user_access`.`group` = 'medtech')
                                     AND `".AUTH_DATABASE."`.`user_access`.`app_id` = '".AUTH_APP_ID."'
                                     AND `".AUTH_DATABASE."`.`user_access`.`account_active` = 'true'
-                                    ORDER BY `fullname` ASC";
+									AND `".AUTH_DATABASE."`.`user_access`.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
+                                    ORDER BY `fullname` ASC";					
                         $results = ((USE_CACHE) ? $db->CacheGetAll(AUTH_CACHE_TIMEOUT, $query) : $db->GetAll($query));
                         if ($results) {
                             foreach ($results as $result) {
@@ -353,10 +358,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                     $ONLOAD[] = "Sortable.create('director_list', {onUpdate : function() {updateOrder('director')}})";
                                     $ONLOAD[] = "$('associated_director').value = Sortable.sequence('director_list')";
                                     ?>
-                                    <div class="autocomplete" id="director_name_auto_complete"></div><script type="text/javascript">new Ajax.Autocompleter('director_name', 'director_name_auto_complete', '<?php echo ENTRADA_RELATIVE; ?>/api/personnel.api.php?type=director', {frequency: 0.2, minChars: 2, afterUpdateElement: function (text, li) {selectItem(li.id, 'director'); copyItem('director');}});</script>
+                                    <div class="autocomplete" id="director_name_auto_complete"></div><script type="text/javascript">new Ajax.Autocompleter('director_name', 'director_name_auto_complete', '<?php echo ENTRADA_RELATIVE; ?>/api/personnel.api.php?type=facultyorstaff', {frequency: 0.2, minChars: 2, afterUpdateElement: function (text, li) {selectItem(li.id, 'director'); copyItem('director');}});</script>
                                     <input type="hidden" id="associated_director" name="associated_director" />
                                     <input type="button" class="btn" onclick="addItem('director');" value="Add" style="vertical-align: middle" />
                                     <span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
+                                    <span class="content-small"><br><strong>Tip:</strong> You will automatically be added as a contact</span>
                                     <ul id="director_list" class="menu" style="margin-top: 15px">
                                         <?php
                                         if (is_array($chosen_course_directors) && count($chosen_course_directors)) {

@@ -40,7 +40,7 @@ if (!defined("PARENT_INCLUDED")) {
 	define("IN_PROFILE", true);
 	
 	$VALID_MIME_TYPES			= array("image/pjpeg" => "jpg", "image/jpeg" => "jpg", "image/jpg" => "jpg", "image/gif" => "gif", "image/png" => "png");
-	$VALID_MAX_FILESIZE			= 2097512; // 2MB
+	$VALID_MAX_FILESIZE			= MAX_UPLOAD_FILESIZE;
 	$VALID_MAX_DIMENSIONS		= array("photo-width" => 216, "photo-height" => 300, "thumb-width" => 75, "thumb-height" => 104);
 	$RENDER						= false;
 	

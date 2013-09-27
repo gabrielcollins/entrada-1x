@@ -185,7 +185,6 @@ require_once (ENTRADA_ABSOLUTE."/templates/".$ENTRADA_TEMPLATE->activeTemplate()
  * Add the Feedback Sidebar Window.
  */
 if (isset($_SESSION["isAuthorized"]) && (bool) $_SESSION["isAuthorized"]) {
-	add_task_sidebar();
 	add_feedback_sidebar($ENTRADA_USER->getActiveGroup());
 	add_organisation_sidebar();
 }

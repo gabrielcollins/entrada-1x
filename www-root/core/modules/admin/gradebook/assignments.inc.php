@@ -35,7 +35,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
-	define("IN_ASSESSMENTS", true);
+	define("IN_ASSIGNMENTS", true);
 
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/gradebook?section=view&id=".$COURSE_ID, "title" => "Assessments");
 
@@ -51,17 +51,25 @@ if(!defined("PARENT_INCLUDED")) {
 		if ((isset($_GET["assignment_id"])) && ($tmp_input = clean_input($_GET["assignment_id"], array("nows", "int")))) {
 			$ASSIGNMENT_ID = $tmp_input;
 		} else {
-			$ASSIGNNMENT_ID = 0;
+			$ASSIGNMENT_ID = 0;
 		}
-		
-		$module_file = $router->getRoute();
-		if ($module_file) {
-			require_once($module_file);
-		}
+		if (!$ENTRADA_ACL->amIAllowed(new AssignmentResource($ASSIGNMENT_ID), "update")) {
+			$ERROR++;
+			$ERRORSTR[]	= "You do not have the permissions required to access this assignment.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
 
-		/**
-		 * Check if preferences need to be updated on the server at this point.
-		 */
-		preferences_update($MODULE, $PREFERENCES);
+			echo display_error();
+
+			application_log("error", "User: " . $ENTRADA_USER->getActiveId() . ", does not have access to this assignment id [".$ASSIGNMENT_ID."]");
+		} else {
+			$module_file = $router->getRoute();
+			if ($module_file) {
+				require_once($module_file);
+			}
+
+			/**
+			* Check if preferences need to be updated on the server at this point.
+			*/
+			preferences_update($MODULE, $PREFERENCES);
+		}
 	}
 }

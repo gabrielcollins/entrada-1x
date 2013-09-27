@@ -297,7 +297,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								}
 							}
 						}
-
 					}
 
 					if (isset($_POST["syllabus_id"]) && $tmp_input = clean_input($_POST["syllabus_id"], array("int"))) {
@@ -313,6 +312,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 					if ($PROCESSED["syllabus"]["syllabus_enabled"] == 1) {
 						if (isset($_POST["syllabus_template"]) && $tmp_input = clean_input($_POST["syllabus_template"], array("trim", "striptags"))) {
 							$PROCESSED["syllabus"]["syllabus_template"] = $tmp_input;
+						}
+					}
+
+					if (isset($_POST["course_report_ids"])) {						
+						$PROCESSED["course_report_ids"] = array();
+						foreach ($_POST["course_report_ids"] as $index => $tmp_input) {
+							if ($course_report_id = clean_input($tmp_input, "int")) {								
+								$PROCESSED["course_report_ids"][] = $course_report_id;
+							}
 						}
 					}
 
@@ -476,8 +484,31 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 								}
 							}
 
+							if (isset($PROCESSED["course_report_ids"]) && count($PROCESSED["course_report_ids"]) > 0) {
+								//remove existing course_reports for this course before adding the new set of course reports.
+								$query = "DELETE FROM `course_reports` WHERE `course_id` = ".$db->qstr($COURSE_ID);
+								if (!$db->Execute($query)) {
+									add_error("An error occurred while editing course reports.  The system administrator was informed of this error; please try again later.");
+									application_log("error", "Error inserting course reports for course id: " . $COURSE_ID);
+								}
+								if (!has_error()) {
+									foreach ($PROCESSED["course_report_ids"] as $index => $course_report_id) {									
+										$PROCESSED["course_report_id"] = $course_report_id;		
+										$PROCESSED["course_id"] = $COURSE_ID;								
 
-
+										if ($db->AutoExecute("course_reports", $PROCESSED, "INSERT")) {											
+											add_statistic("Course Edit", "edit", "course_reports.course_report_id", $PROCESSED["course_report_id"], $ENTRADA_USER->getID());
+										} else {
+											add_error("An error occurred while editing course reports.  The system administrator was informed of this error; please try again later.");
+											application_log("error", "Error inserting course reports for course id: " . $COURSE_ID);
+										}								
+									}
+								}
+							} else {
+								//No course reports for this course.
+								$query = "DELETE FROM `course_reports` WHERE `course_id` = ".$db->qstr($COURSE_ID);
+								$db->Execute($query);
+							}								
 
 							$query = "	DELETE FROM `course_audience` WHERE `course_id` = ".$db->qstr($COURSE_ID).(isset($period_list)?" AND `cperiod_id` NOT IN (".implode(",",$period_list).")":"");
 							$db->Execute($query);
@@ -603,6 +634,19 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 				break;
 				case 1 :
 				default :
+					$query = "	SELECT * 
+								FROM `course_reports`
+								WHERE `course_id` = ".$db->qstr($COURSE_ID);
+					$results = $db->GetAll($query);
+
+					if (!isset($PROCESSED["course_report_ids"])) {
+						$PROCESSED["course_report_ids"] = array();
+						if ($results) {						
+							foreach ($results as $result) {
+								$PROCESSED["course_report_ids"][] = $result["course_report_id"];
+							}
+						}
+					}
 					?>
 					<script type="text/javascript">
 					<?php
@@ -1376,6 +1420,46 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 						<div style="clear:both;"></div>
 					</div>
 					<?php 	} 	?>
+					<h2 title="Course Reports Section"><?php echo $module_singular_name; ?> Reports</h2>
+					<div id="course-reports-section">
+						<div class="control-group">
+							<label for="course_report_ids" class="control-label form-nrequired">Report Types:</label>
+							<div class="controls">
+								<?php
+                                $query = "	SELECT *
+											FROM `course_report_organisations` a
+											JOIN `course_lu_reports` b
+											ON a.`course_report_id` = b.`course_report_id`
+											WHERE a.`organisation_id` = " . $db->qstr($course_details["organisation_id"]);
+                                $results = $db->GetAll($query);
+                                if ($results) {
+                                    ?>
+                                    <select id="course_report_ids" name="course_report_ids[]" multiple data-placeholder="Choose reports..." class="chosen-select">
+                                        <?php
+                                        foreach($results as $result) {
+											$selected = false;
+											if (isset($PROCESSED["course_report_ids"]) && $PROCESSED["course_report_ids"] && in_array($result["course_report_id"], $PROCESSED["course_report_ids"])) {
+												$selected = true;
+											}
+                                            echo build_option($result["course_report_id"], $result["course_report_title"], $selected);
+                                        }
+                                    ?>
+                                    </select>
+                                    <?php
+                                } 
+                                ?>                               
+                                <?php
+                                if (is_array($PROCESSED["course_reports"])) {
+                                    foreach ($PROCESSED["course_reports"] as $course_report) {
+                                        echo "<li id=\"type_".$course_report[0]."\" class=\"\">".$course_report[2]."
+                                                <a href=\"#\" onclick=\"$(this).up().remove(); cleanupList(); return false;\" class=\"remove\"><img src=\"".ENTRADA_URL."/images/action-delete.gif\"></a>                                                
+                                                </li>";
+                                    }
+                                }
+                                ?>                               
+							</div>
+						</div>
+					</div>
 
 					<!-- Course Audience-->
 					<h2 title="Course Enrolment Section"><?php echo $module_singular_name; ?> Enrolment</h2>
@@ -1506,6 +1590,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSES"))) {
 									$("#syllabus-settings").hide();
 								}
 							});
+							$('.chosen-select').chosen({no_results_text: 'No Reports Available.'});	
 						});
 					</script>
 					<h2 title="Course Syllabus Section">Course Syllabus</h2>

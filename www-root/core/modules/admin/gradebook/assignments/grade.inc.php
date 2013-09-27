@@ -163,7 +163,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						break;
 				}				
 
-				$query = "	SELECT a.id AS `proxy_id`, CONCAT_WS(', ',a.`lastname`,a.`firstname`) AS `fullname`, c.`assessment_id`, b.`updated_date` AS `submitted_date`, b.`afile_id`, d.`grade_id`, d.`value` AS `grade_value`, f.`handler`, g.`grade_weighting`
+				$query = "	SELECT a.id AS `proxy_id`, CONCAT_WS(', ',a.`lastname`,a.`firstname`) AS `fullname`, a.`number` as `student_number`, c.`assessment_id`, b.`updated_date` AS `submitted_date`, b.`afile_id`, d.`grade_id`, d.`value` AS `grade_value`, f.`handler`, g.`grade_weighting`
 							FROM `".AUTH_DATABASE."`.`user_data` AS a
 							JOIN `assignment_files` AS b
 							ON a.`id` = b.`proxy_id`
@@ -187,18 +187,29 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 				$query = "	SELECT * FROM `assessments` AS a
 							JOIN `assessment_marking_schemes` AS b
 							ON a.`marking_scheme_id` = b.`id`
-							WHERE a.`assessment_id` = ".$db->qstr($assignment["assessment_id"]);
-				$assessment = $db->GetRow($query);
+							WHERE a.`assessment_id` = ".$db->qstr($assignment["assessment_id"]);				
+				$assessment = $db->GetRow($query);				
 				?>
-				<div style="float: right; text-align: right; width:400px;">
-					<ul class="page-action">
-						<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE . "/assignments/?" . replace_query(array("section" => "edit","assignment_id"=>$assignment["assignment_id"], "step" => false)); ?>" class="strong-green">Edit Assignment</a></li>
-						<?php if($assignment["assessment_id"]){ ?>
-						<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE . "/assessments/?" . replace_query(array("section" => "edit","assessment_id"=>$assignment["assessment_id"], "step" => false)); ?>" class="strong-green">Edit Assessment</a></li>
-						<?php } ?>
-						<?php if (isset($assessment) && $assessment){ ?><li><a href="#" id="advanced-options" class="strong-green">Show Options</a></li><?php } ?>
-					</ul>
-				</div>
+					<div style="float: right; text-align: right; width:400px;">
+						<ul class="page-action">
+						<?php 
+						if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "update")) { 
+						?>
+							<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE . "/assignments/?" . replace_query(array("section" => "edit","assignment_id"=>$assignment["assignment_id"], "step" => false)); ?>" class="strong-green">Edit Assignment</a></li>
+							<?php 
+							if($assignment["assessment_id"]) { ?>
+								<li><a href="<?php echo ENTRADA_URL; ?>/admin/<?php echo $MODULE . "/assessments/?" . replace_query(array("section" => "edit","assessment_id"=>$assignment["assessment_id"], "step" => false)); ?>" class="strong-green">Edit Assessment</a></li>
+							<?php
+							} 
+						}
+						if (isset($assessment) && $assessment) { 
+						?>
+								<li><a href="#" id="advanced-options" class="strong-green">Show Options</a></li>
+						<?php 						
+						} 
+						?>
+						</ul>
+					</div>				
 				<div style="clear: both;"></div>
 				<?php				
 				$editable = $ENTRADA_ACL->amIAllowed(new GradebookResource($course_details["course_id"], $course_details["organisation_id"]), "update") ? "gradebook_editable" : "gradebook_not_editable";
@@ -206,33 +217,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					<span id="assessment_name" style="display: none;"><?php echo $assignment["assignment_title"]; ?></span>
                     <div class="row-fluid">
                         <span id="assignment_submissions" class="span12">
-                            <h2>Submissions <?php if(extension_loaded('zip')) { ?><a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=download-submissions&id=<?php echo $assignment["assignment_id"];?>"><span style="float:right;"><img src="<?php echo ENTRADA_URL;?>/templates/default/images/btn_save.gif" title="Download File" alt="Download File" width="15"/> Download All Submissions</span></a><?php } ?></h2>
+                            <h2>Submissions <?php if(extension_loaded('zip')) { ?><a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=download-submissions&assignment_id=<?php echo $assignment["assignment_id"];?>"><span style="float:right;"><i class="icon-download-alt"></i>&nbsp;Download All Submissions</span></a><?php } ?></h2>
                             <div style="margin-bottom: 5px;">							
                                 <span class="content-small"><strong>Tip: </strong><?php echo $assignment["marking_scheme_description"]; ?></span>
-                            </div>				
-                            <table style="width: 100%;" class="tableList assignment <?php echo $editable; ?>">
-                                <colgroup>
-                                    <col class="modified" style="width: 5%;">
-                                    <col class="title" style="width: 45%;">
-                                    <col class="grade" style="width: 20%;">								
-                                    <col class="date" style="width: 30%;">
-                                </colgroup>
-                                <thead>
-                                    <tr style="background-color:#ccc;">
-                                        <td class="modified">&nbsp;</td>
-                                        <td class="title<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["sb"] == "student") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["so"]) : ""); ?>">
-                                            <a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=grade&amp;id=<?php echo $COURSE_ID;?>&amp;assignment_id=<?php echo $ASSIGNMENT_ID;?>&amp;sb=student&amp;so=<?php echo $orders['student'];?>" title="Order by Student, Sort Decending">Student</a>										
-                                        </td>
-                                        <td class="grade<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["sb"] == "grade") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["so"]) : ""); ?>">
-                                            <a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=grade&amp;id=<?php echo $COURSE_ID;?>&amp;assignment_id=<?php echo $ASSIGNMENT_ID;?>&amp;sb=grade&amp;so=<?php echo $orders['grade'];?>" title="Order by Grade, Sort Decending">Grade</a>										
-                                        </td>
-                                        <td class="date<?php echo (($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["sb"] == "submitted") ? " sorted".strtoupper($_SESSION[APPLICATION_IDENTIFIER]["assignments"]["so"]) : ""); ?>">
-                                            <a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=grade&amp;id=<?php echo $COURSE_ID;?>&amp;assignment_id=<?php echo $ASSIGNMENT_ID;?>&amp;sb=submitted&amp;so=<?php echo $orders['submitted'];?>" title="Order by Submitted, Sort Decending">Submitted</a>										
-                                        </td>
-                                    </tr>
-                                </thead>
+                            </div>	
+                            <table class="gradebook assignment <?php echo $editable; ?>">                                
                                 <tbody>
                                     <?php								
+									$comment_colspan = 5;
                                     foreach ($students as $key => $student) {
                                         if (isset($student["grade_id"])) {
                                             $grade_id = $student["grade_id"];
@@ -252,99 +244,124 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                                         }
                                         ?>
                                         <tr id="grades<?php echo $student["proxy_id"]; ?>">
-                                            <td><a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=download-submission&id=<?php echo $ASSIGNMENT_ID;?>&sid=<?php echo $student["proxy_id"]; ?>"><img src="<?php echo ENTRADA_URL;?>/templates/default/images/btn_save.gif" title="Download File" alt="Download File" width="15"/></a></td>
-                                            <td><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$ASSIGNMENT_ID."&pid=".$student["proxy_id"];?>"><?php echo $student["fullname"]; ?></a></td>
+											<td><div class="text-center"><a href="<?php echo ENTRADA_URL;?>/admin/gradebook/assignments?section=download-submission&id=<?php echo $COURSE_ID; ?>&assignment_id=<?php echo $ASSIGNMENT_ID;?>&sid=<?php echo $student["proxy_id"]; ?>"><i class="icon-download-alt"></i></a></div></td>
+											<td><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=view&id=" .$COURSE_ID . "&assignment_id=".$ASSIGNMENT_ID."&pid=".$student["proxy_id"];?>"><?php echo $student["fullname"]; ?></a></td>
+                                            <td><a href="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=view&id=" .$COURSE_ID . "&assignment_id=".$ASSIGNMENT_ID."&pid=".$student["proxy_id"];?>"><?php echo $student["student_number"]; ?></a></td>
                                             <td>
                                                 <?php if (isset($assessment) && $assessment) { ?>
                                                 <span class="grade" id="grade_<?php echo $assignment["assessment_id"]; ?>_<?php echo $student["proxy_id"] ?>"
                                                     data-grade-id="<?php echo $grade_id; ?>"
                                                     data-assessment-id="<?php echo $assignment["assessment_id"]; ?>"
                                                     data-proxy-id="<?php echo $student["proxy_id"] ?>"
+													style="float:left;"
                                                 ><?php echo $grade_value; ?></span>
-                                                <span class="gradesuffix" <?php echo (($grade_value === "-") ? "style=\"display: none;\"" : "") ?>>
+                                                <span class="gradesuffix" <?php echo (($grade_value === "-") ? "style=\"display: none;\"" : "") ?> style="float:left;">
                                                     <?php echo assessment_suffix($assessment); ?>
                                                 </span>
                                                 <span class="gradesuffix" style="float:right;">
-                                                    <img src="<?php echo ENTRADA_URL;?>/images/action-edit.gif" class="edit_grade" id ="edit_grade_<?php echo $assignment["assessment_id"]; ?>_<?php echo $student["proxy_id"] ?>" style="cursor:pointer;"/>
+													<i class="icon-edit edit_grade" id="edit_grade_<?php echo $assignment["assessment_id"] . "_" . $student["proxy_id"] ?>"></i>
                                                 </span>
                                                 <?php } else { ?>
                                                 No Assessment
                                                 <?php } ?>
                                             </td>
-                                            <td><?php echo date(DEFAULT_DATE_FORMAT,$student["submitted_date"]); ?></td>
+                                            <td><?php	echo date(DEFAULT_DATE_FORMAT,$student["submitted_date"]); ?></td>
                                             <?php
                                             if ($assessment["marking_scheme_id"] == 3) {
-                                                ?>
-                                            <td id="percentage_<?php echo $assignment["assessment_id"]; ?>_<?php echo $student["proxy_id"] ?>"><?php echo round($student["grade_value"],2);?>%</td>
+												$comment_colspan = 6;
+                                            ?>
+												<td id="percentage_<?php echo $assignment["assessment_id"]; ?>_<?php echo $student["proxy_id"] ?>"><?php echo round($student["grade_value"],2);?>%</td>
                                             <?php
-                                            }
+                                            } 
                                             ?>
                                         </tr>
                                         <tr class="comment-row">
-                                            <td colspan="4" style="text-align:right;">
-                                                <a href="javascript:void(0);" class="view_comments" id="view_comments_<?php echo $student["proxy_id"] ?>">View Comments</a> &nbsp; <span class="leave_comment" id="leave_comment_<?php echo $student["proxy_id"] ?>">Leave Comment</span>
-                                                <ul class="comments" id="comments_<?php echo $student["proxy_id"] ?>">
-                                                    <?php 
-                                                    $query = "	SELECT a.*, CONCAT_WS(' ', c.`firstname`, c.`lastname`) AS `commenter_fullname`, c.`username` AS `commenter_username` 
-                                                                FROM `assignment_comments` AS a 
-                                                                JOIN `assignment_files` AS b 
-                                                                ON a.`afile_id` = b.`afile_id` 
-                                                                LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
-                                                                ON a.`proxy_id` = c.`id` 
-                                                                WHERE b.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." 
-                                                                AND b.`proxy_id` = ".$db->qstr($student["proxy_id"])."
-                                                                AND a.`comment_active` = '1'";
-                                                    $comment_results = $db->GetAll($query);
-                                                    if($comment_results){
-                                                    ?>
+                                            <td colspan="<?php echo $comment_colspan; ?>" style="text-align:right;">												
+												<a href="javascript:void(0);" class="view_comments" id="view_comments_<?php echo $student["proxy_id"] ?>">View Comments</a>&nbsp; <span class="leave_comment" id="leave_comment_<?php echo $student["proxy_id"] ?>">Leave Comment</span>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="<?php echo $comment_colspan; ?>"> 
+												<div style="width: 650px;">
+													<ul class="comments" id="comments_<?php echo $student["proxy_id"] ?>">
+														<?php 
+														$query = "	SELECT a.*, CONCAT_WS(' ', c.`firstname`, c.`lastname`) AS `commenter_fullname`, c.`username` AS `commenter_username` 
+																	FROM `assignment_comments` AS a 
+																	JOIN `assignment_files` AS b 
+																	ON a.`afile_id` = b.`afile_id` 
+																	LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
+																	ON a.`proxy_id` = c.`id` 
+																	WHERE b.`assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." 
+																	AND b.`proxy_id` = ".$db->qstr($student["proxy_id"])."
+																	AND a.`comment_active` = '1'
+																	ORDER BY a.`updated_date`";
+														$comment_results = $db->GetAll($query);
+														if($comment_results) {
+															foreach($comment_results as $result) {
+																$comments++;
+																?>
+																<li>
+																	<table style="width:100%;" class="discussions posts">
+																		<tr>
+																			<td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["commenter_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["commenter_fullname"]); ?></a></td>
+																			<td style="border-bottom: none">
+																				<div style="float: left">
+																					<span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["release_date"]); ?></span>
+																				</div>
+																				<div style="float: right">
+																					<?php
+																					echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=" .$COURSE_ID . "&amp;assignment_id=".$assignment["assignment_id"]."&amp;cid=".$result["acomment_id"]."\">edit</a>)" : "");
+																					echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class= \"action delete\" id=\"delete_".$result["acomment_id"]."\" href=\"#delete_".$result["acomment_id"]."\">delete</a>)":"");// href=\"javascript:commentDelete('".$result["acomment_id"]."')\">delete</a>)" : "");
+																					?>
+																				</div>
+																			</td>
+																		</tr>
+																		<tr>
+																			<td colspan="2" class="content" style="border-bottom: 3px solid #EBEBEB;">
+																			<a name="comment-<?php echo (int) $result["cscomment_id"]; ?>"></a>
+																			<?php
+																				echo ((trim($result["comment_title"])) ? "<strong>".html_encode(trim($result["comment_title"])) . "</strong><br />" : "");
+																				echo $result["comment_description"];
 
-                                                    <?php
-                                                    foreach($comment_results as $result) {
-                                                        $comments++;
-                                                        ?>
-                                                        <li><table style="width:100%;" class="discussions posts"><tr>
-                                                            <td style="border-bottom: none; border-right: none"><span class="content-small">By:</span> <a href="<?php echo ENTRADA_URL."/people?profile=".html_encode($result["commenter_username"]); ?>" style="font-size: 10px"><?php echo html_encode($result["commenter_fullname"]); ?></a></td>
-                                                            <td style="border-bottom: none">
-                                                                <div style="float: left">
-                                                                    <span class="content-small"><strong>Commented:</strong> <?php echo date(DEFAULT_DATE_FORMAT, $result["updated_date"]); ?></span>
-                                                                </div>
-                                                                <div style="float: right">
-                                                                <?php
-                                                                echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=".$assignment["assignment_id"]."&amp;cid=".$result["acomment_id"]."\">edit</a>)" : "");
-                                                                echo (($result["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class= \"action delete\" id=\"delete_".$result["acomment_id"]."\" href=\"#delete_".$result["acomment_id"]."\">delete</a>)":"");// href=\"javascript:commentDelete('".$result["acomment_id"]."')\">delete</a>)" : "");
-                                                                ?>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td colspan="2" class="content" style="border-bottom: 3px solid #EBEBEB;">
-                                                            <a name="comment-<?php echo (int) $result["cscomment_id"]; ?>"></a>
-                                                            <?php
-                                                                echo ((trim($result["comment_title"])) ? "<div style=\"font-weight: bold\">".html_encode(trim($result["comment_title"]))."</div>" : "");
-                                                                echo $result["comment_description"];
-
-                                                                if ($result["release_date"] != $result["updated_date"]) {
-                                                                    echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
-                                                                    echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
-                                                                    echo "</div>\n";
-                                                                }
-                                                            ?>
-                                                            </td>
-                                                        </tr></table></li>
-                                                        <?php
-                                                    }
-                                                    ?>
-                                                    <li style="text-align:right;" class="list-action"><span class="leave_comment" id="leave_comment_<?php echo $student["proxy_id"] ?>">Leave Comment</span></li>
-                                                    <?php } ?>													
-                                                </ul>
-                                                <div class="new_comment" id="new_comment_<?php echo $student["proxy_id"] ?>">
-                                                    <table class="comment_form" style="width:100%;">
-                                                        <tr><td style="width:100%;"><label for="new_comment_title_<?php echo $student["proxy_id"] ?>">Comment Title:</label></td></tr>
-                                                        <tr><td style="width:100%;"><input type="text" id="new_comment_title_<?php echo $student["proxy_id"] ?>" class="new_comment_text"/></td></tr>
-                                                        <tr><td><label for="new_comment_desc_<?php echo $student["proxy_id"] ?>"  class="form-required">Comment Description:</label></td></tr><tr><td><textarea id="new_comment_desc_<?php echo $student["proxy_id"] ?>" class="expandable new_comment_text"></textarea></td></tr>
-                                                    </table>
-                                                <input type="button" value="Cancel" id="cancel_comment_<?php echo $student["proxy_id"] ?>" class="cancel_comment btn" style="margin-right:5px;"/><input type="button" class="add_comment btn btn-primary" value="Add Comment" id="add_comment_<?php echo $student["proxy_id"] ?>" style="float:right;"/>
-                                                </div>
+																				if ($result["release_date"] != $result["updated_date"]) {
+																					echo "<div class=\"content-small\" style=\"margin-top: 15px\">\n";
+																					echo "	<strong>Last updated:</strong> ".date(DEFAULT_DATE_FORMAT, $result["updated_date"])." by ".(($result["proxy_id"] == $result["updated_by"]) ? html_encode($result["commenter_fullname"]) : html_encode(get_account_data("firstlast", $result["updated_by"]))).".";
+																					echo "</div>\n";
+																				}
+																			?>
+																			</td>
+																		</tr>
+																	</table>
+																</li>
+																<?php
+															}
+															
+														} ?>													
+														<li style="text-align:right;" class="list-action"><span class="leave_comment" id="leave_comment_<?php echo $student["proxy_id"] ?>">Leave Comment</span></li>
+													</ul>													
+													<div class="new_comment" id="new_comment_<?php echo $student["proxy_id"] ?>">
+														<table class="comment_form" style="width:100%;">
+															<tr>
+																<td>
+																	<label for="new_comment_title_<?php echo $student["proxy_id"] ?>">Comment Title:</label>
+																</td>
+															</tr>
+															<tr>
+																<td>
+																	<input type="text" id="new_comment_title_<?php echo $student["proxy_id"] ?>" class="new_comment_text"/>
+																</td>
+															</tr>
+															<tr>
+																<td>
+																	<label for="new_comment_desc_<?php echo $student["proxy_id"] ?>"  class="form-required">Comment Description:</label></td></tr>
+															<tr><td>
+																	<textarea id="new_comment_desc_<?php echo $student["proxy_id"] ?>" class="new_comment_text" rows="3"></textarea>
+																</td>
+															</tr>
+														</table>
+														<input type="button" value="Cancel" id="cancel_comment_<?php echo $student["proxy_id"] ?>" class="cancel_comment btn" style="margin-right:5px;"/><input type="button" class="add_comment btn btn-primary" value="Add Comment" id="add_comment_<?php echo $student["proxy_id"] ?>" style="float:right;"/>
+													</div>
+												</div>
                                             </td>
                                         </tr>
                                         <?php
@@ -354,18 +371,29 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                             </table>					
                         </span>
                         <script type="text/javascript">
-                            jQuery(document).ready(function(){
-
-                                jQuery('.edit_grade').click(function(e){
+                            jQuery(document).ready(function($){
+                                $('.edit_grade').click(function(e){
                                     var id = e.target.id.substring(5);
-                                    jQuery('#'+id).trigger('click');
-                                });
+                                    $('#'+id).trigger('click');
+                                });								
+								$(".comments").each(function() {
+									var c_id = $(this).attr("id").split("comments_")[1];									
+									if ($(this).children().length <= 1) {		
+										var no_comment = document.createElement("span");
+										$(no_comment).attr("id", "no_comments_" + c_id);
+										$(no_comment).text("No Comments");
+										$('#view_comments_'+c_id).replaceWith(no_comment);																			
+									} 
+								});
                             });
 
                         </script>
                         <span id="gradebook_stats" class="span5" style="margin-top:14px;">
                             <h2>Statistics</h2>
                             <div id="graph"></div>
+							<script type="text/javascript">
+								var marking_scheme_id = "<?php echo $assessment["marking_scheme_id"]; ?>";
+							</script>
                             <?php 
                             switch($assessment["marking_scheme_id"]) {
                                 case 1:
@@ -606,27 +634,32 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							jQuery.ajax({
 								type: "POST",
 								url: "<?php echo ENTRADA_URL;?>/api/ajax-comment.api.php",
-								data: "comment_description="+comment_desc+"&comment_title="+comment_title+"&uid="+id+"&assignment_id=<?php echo $ASSIGNMENT_ID;?>&comment_type=assignment",
-								success: function(data){
-									try {
-										var result = jQuery.parseJSON(data);
-										if (result.error) {
-											alert(result.error);
-										} else {
-											jQuery('#new_comment_desc_'+id).val('');
-											jQuery('#new_comment_title_'+id).val('');											
-											jQuery('#new_comment_'+id).hide();
-											alert('Successfully sent message');
-										}
-									} catch(e) {
-											jQuery('#new_comment_desc_'+id).val('');
-											jQuery('#new_comment_title_'+id).val('');											
-											jQuery('#new_comment_'+id).hide();
-											jQuery(data).insertBefore(jQuery('#comments_'+id+' > .list-action'));
-											
+								data: "comment_description="+comment_desc+"&comment_title="+comment_title+"&uid="+id+"&assignment_id=<?php echo $ASSIGNMENT_ID;?>&comment_type=assignment"
+							})
+							.done(function(data, textStatus, jqXHR) {
+								try {
+									var result = jQuery.parseJSON(data);
+									if (result.error) {
+										alert(result.error);
+									} else {
+										jQuery('#new_comment_desc_'+id).val('');
+										jQuery('#new_comment_title_'+id).val('');											
+										jQuery('#new_comment_'+id).hide();
+										alert('Successfully added comment.  Please refresh your page to view it.');
 									}
+								} catch(e) {									
+									jQuery("#comments_" + id + " li:last").before(data);
+									jQuery('#comments_'+id).show();
+									jQuery('#view_comments_'+id).text('Hide Comments');
+									jQuery('#view_comments_'+id).attr('class','hide_comments');
+									jQuery('#new_comment_'+id).hide();
+									jQuery('#new_comment_desc_'+id).val('');									
+									jQuery('#new_comment_title_'+id).val('');										
+									if (jQuery('#no_comments_' + id).length > 0) {											
+										jQuery('#no_comments_' + id).replaceWith("<a href=\"javascript:void(0);\" class=\"hide_comments\" id=\"view_comments_" + id + "\">Hide Comments</a>");
+									} 
 								}
-							  });
+							});
 						});
 						
 						jQuery('.delete').live('click',function(){

@@ -118,7 +118,21 @@ if (!defined("IN_EVALUATIONS")) {
 				echo "	<td class=\"date\"><a href=\"".$url."\" alt=\"".$result["evaluation_start"]."\">".date(DEFAULT_DATE_FORMAT, $result["evaluation_start"])."</a></td>\n";
 				echo "	<td class=\"date\"><a href=\"".$url."\" alt=\"".$result["evaluation_finish"]."\">".date(DEFAULT_DATE_FORMAT, $result["evaluation_finish"])."</a></td>\n";
 				echo "	<td class=\"date-smallest\"><a href=\"".$url."\">".html_encode($result["evaluation_type"])."</a></td>\n";
-				echo "	<td class=\"attachment\"><a href=\"".ENTRADA_URL."/admin/evaluations?section=edit&id=".$result["evaluation_id"]."\"><img src=\"".ENTRADA_URL."/images/action-edit.gif\" width=\"16\" height=\"16\" alt=\"Manage Evaluation Detail\" title=\"Manage Evaluation Detail\" border=\"0\" /></a></td>\n";
+				echo "	<td class=\"attachment\">\n";
+                if ($ENTRADA_ACL->amIAllowed(new EvaluationResource($result["evaluation_id"], true), 'update')) {
+                echo "  <div class=\"btn-group\">\n";
+                echo "      <button class=\"btn btn-mini dropdown-toggle\" data-toggle=\"dropdown\">\n";
+                echo "          <i class=\"icon-cog\"></i>\n";
+                echo "      </button>";
+                echo "      <ul class=\"dropdown-menu toggle-left\">\n";
+                echo "          <li><a href=\"".ENTRADA_RELATIVE . "/admin/evaluations?section=edit&id=".$result["evaluation_id"]."\">Edit Evaluation</a></li>";
+                echo "          <li><a href=\"".ENTRADA_RELATIVE . "/evaluations?section=review&id=".$result["evaluation_id"]."\">View Evaluation Report</a></li>";
+                echo "      </ul>\n";
+                echo "  </div>\n";
+                } else {
+                    echo "&nbsp;";
+                }
+                echo "  </td>\n";
 				echo "</tr>\n";
 			}
 			?>

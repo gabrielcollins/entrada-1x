@@ -47,7 +47,6 @@ if(!defined("PARENT_INCLUDED")) {
 	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/flexigrid.js\"></script>\n";
 	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/jquery/jquery.editable.js\"></script>\n";
 	//$JQUERY[] = "<script type=\"text/javascript\">jQuery.noConflict(); var ENTRADA_URL = '".ENTRADA_URL."';</script>";
-	$JQUERY[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/gradebook.js\"></script>\n";
 	
 	$ASSESSMENT_TYPES = array("Formative", "Summative", "Narrative");
 	
@@ -55,7 +54,7 @@ if(!defined("PARENT_INCLUDED")) {
 
 	if (($router) && ($router->initRoute())) {
 		$PREFERENCES = preferences_load($MODULE);
-		if (isset($_GET["id"]) && ($tmp_input = clean_input($_GET["id"], array("nows", "int")))) {
+		if (isset($_GET["assignment_id"]) && ($tmp_input = clean_input($_GET["assignment_id"], array("nows", "int")))) {
 			$RECORD_ID = $tmp_input;
 		} else {
 			$RECORD_ID = 0;

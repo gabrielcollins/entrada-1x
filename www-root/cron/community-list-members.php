@@ -105,6 +105,7 @@ if (isset($MAILING_LISTS) && is_array($MAILING_LISTS) && $MAILING_LISTS["active"
 							echo "Activate: ".$member["email"]." -> ".$community_id."<br/>";
 							if (!in_array($member["email"], $current_users)) {
 								try {
+									$member["email"] = mb_convert_encoding($member["email"], "UTF-8");
 									$list->add($member["email"], ((int)$member["list_administrator"]));
 									$list->base_edit_member($member["proxy_id"], ((int)$member["list_administrator"]), "1");
 								} catch (Exception $e) {

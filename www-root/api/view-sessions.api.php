@@ -209,14 +209,14 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				$PROCESSED["include_parent_description"] = 0;
 			}
 			/**
-			 * Teacher's Message
+			 * Required Preparation
 			 */
 			if ((isset($_POST["session_message"])) && (clean_input($_POST["session_message"], array("notags", "nows")))) {
 				$PROCESSED["event_message"] = clean_input($_POST["session_message"], array("allowedtags"));
 			}
 			
 			/**
-			 * Include Parent Event's Teacher's Message
+			 * Include Parent Event's Required Preparation
 			 */
 			if ((isset($_POST["include_parent_message"])) && (clean_input($_POST["include_parent_message"], array("nows", "lower"))) == "true") {
 				$PROCESSED["include_parent_message"] = 1;
@@ -601,7 +601,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				<tr>
 					<td></td>
 					<td style="vertical-align: top">
-						Teacher's Message
+						Required Preparation
 						<div class="content-small" style="margin-top: 10px">
 							<strong>Note:</strong> You can use this to provide your learners with instructions or information they need for this class.
 						</div>
@@ -616,7 +616,7 @@ if ((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				<tr>
 					<td><input type="checkbox" value="1" id="include_parent_message" name="include_parent_message"<?php echo (!isset($PROCESSED["include_parent_message"]) || $PROCESSED["include_parent_message"] ? " checked=\"checked\"" : "" ); ?> /></td>
 					<td colspan="2">
-						<label for="include_parent_message" class="form-nrequired">Include <strong>Teacher's Message</strong> from parent event</label>
+						<label for="include_parent_message" class="form-nrequired">Include <strong>Required Preparation</strong> from parent event</label>
 					</td>
 				</tr>
 				<?php

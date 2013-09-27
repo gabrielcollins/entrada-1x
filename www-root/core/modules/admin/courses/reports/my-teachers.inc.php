@@ -59,13 +59,13 @@ if (!defined("IN_COURSE_REPORTS")) {
 		$PROCESSED["start_date"] = (int) $original_preferences["teacher_report_start"];
 		$PROCESSED["finish_date"] = (int) $original_preferences["teacher_report_finish"];
 		
-		$query = "  SELECT a.`event_start`, a.`event_finish`, b.`proxy_id`, c.`firstname`, c.`lastname`, c.`email` FROM `events` AS a
+		$query = "  SELECT DISTINCT b.`proxy_id`, c.`firstname`, c.`lastname`, c.`email` FROM `events` AS a
 					LEFT JOIN `event_contacts` AS b ON a.`event_id` = b.`event_id`
 					LEFT JOIN " . AUTH_DATABASE . ".`user_data` AS c ON b.`proxy_id` = c.`id`
 					WHERE a.`course_id` = ?
 					AND a.`event_start` >= ?
 					AND a.`event_finish` <= ?";
-
+        
 		$teachers = $db->getAll($query, array($COURSE_ID, $PROCESSED["start_date"], $PROCESSED["finish_date"]));
 		if (!$teachers) {
 			add_notice("No Teachers found between " . date("Y-m-d", $PROCESSED["start_date"]) . " and " . date("Y-m-d", $PROCESSED["finish_date"])."");
@@ -90,7 +90,7 @@ if (!defined("IN_COURSE_REPORTS")) {
 			}
 			
 			if (!$ERROR) {
-				$query = "  SELECT a.`event_start`, a.`event_finish`, b.`proxy_id`, c.`firstname`, c.`lastname`, c.`email` FROM `events` AS a
+				$query = "  SELECT DISTINCT b.`proxy_id`, c.`firstname`, c.`lastname`, c.`email` FROM `events` AS a
 							LEFT JOIN `event_contacts` AS b ON a.`event_id` = b.`event_id`
 							LEFT JOIN " . AUTH_DATABASE . ".`user_data` AS c ON b.`proxy_id` = c.`id`
 							WHERE a.`course_id` = ?

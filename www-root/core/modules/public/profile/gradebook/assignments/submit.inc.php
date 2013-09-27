@@ -25,7 +25,7 @@ echo "<h1>Submit Assignment</h1>\n";
 if ($RECORD_ID) {
 	$query			= "SELECT * FROM `assignment_files` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID())." AND `file_active` = '1'";
 	if ($submission	= $db->GetRow($query)) {
-		header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$RECORD_ID);
+		header("Location: ".ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$RECORD_ID);
 	}
 	$query			= "SELECT * FROM `assignments` WHERE `assignment_id` = ".$db->qstr($RECORD_ID)." AND `assignment_active` = '1' AND (`due_date` = 0 OR `due_date` > UNIX_TIMESTAMP())";
 	$folder_record	= $db->GetRow($query);
@@ -46,7 +46,7 @@ if ($RECORD_ID) {
 			}
 			if ($permitted) {
 				$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$folder_record["cshare_id"], "title" => limit_chars($folder_record["folder_title"], 32));
-				$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-file&id=".$RECORD_ID, "title" => "Upload File");
+				$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-file&assignment_id=".$RECORD_ID, "title" => "Upload File");
 
 				$file_uploads = array();
 				// Error Checking
@@ -135,7 +135,7 @@ if ($RECORD_ID) {
 
 											if (assignments_process_file($_FILES["uploaded_file"]["tmp_name"], $VERSION_ID)) {										
 
-												$url = ENTRADA_URL."/profile/gradebook/assignments?section=view&id=".$RECORD_ID;
+												$url = ENTRADA_URL."/profile/gradebook/assignments?section=view&assignment_id=".$RECORD_ID;
 												$ONLOAD[]		= "setTimeout('window.location=\\'".$url."\\'', 5000)";
 
 												$SUCCESS++;
@@ -214,7 +214,7 @@ if ($RECORD_ID) {
 						?>
 
 
-						<form id="upload-file-form" action="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=submit&id=".$RECORD_ID."&step=2"; ?>" method="post" enctype="multipart/form-data">
+						<form id="upload-file-form" action="<?php echo ENTRADA_URL."/profile/gradebook/assignments?section=submit&assignment_id=".$RECORD_ID."&step=2"; ?>" method="post" enctype="multipart/form-data">
 						<input type="hidden" name="MAX_UPLOAD_FILESIZE" value="<?php echo $VALID_MAX_FILESIZE; ?>" />
 						<table style="width: 420px;" cellspacing="0" cellpadding="2" border="0" summary="Upload File">
 						<colgroup>

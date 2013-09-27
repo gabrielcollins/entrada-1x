@@ -68,11 +68,14 @@ if (!defined("IN_REGIONALED")) {
 
 			$apartment_ids = array();
 			
-			$query = "	SELECT `apartment_id`
-						FROM `".CLERKSHIP_DATABASE."`.`apartments`
-						WHERE `region_id` = ".$db->qstr($event_info["region_id"])."
-						AND (`available_start` = '0' OR `available_start` <= ".$db->qstr(time()).")
-						AND (`available_finish` = '0' OR `available_finish` > ".$db->qstr(time()).")";
+			$query = "	SELECT a.`apartment_id`
+						FROM `".CLERKSHIP_DATABASE."`.`apartments` a						
+						JOIN `".CLERKSHIP_DATABASE."`.`apartment_contacts` b
+						ON b.`apartment_id` = a.`apartment_id`
+						WHERE a.`region_id` = ".$db->qstr($event_info["region_id"])."
+						AND (a.`available_start` = '0' OR a.`available_start` <= ".$db->qstr(time()).")
+						AND (a.`available_finish` = '0' OR a.`available_finish` > ".$db->qstr(time()).")
+						AND b.`proxy_id` = " . $db->qstr($ENTRADA_USER->getId());
 			$apartments = $db->GetAll($query);
 			if ($apartments) {
 				foreach ($apartments as $apartment) {

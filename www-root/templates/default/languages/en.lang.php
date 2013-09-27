@@ -33,41 +33,14 @@ return array (
 			),
 			"courses" => array ("title" => "Courses"),
 			"events" => array ("title" => "Learning Events"),
+			"logbook" => array ("title" => "Logbook", "resource" => "encounter_tracking", "permission" => "read"),
 			"clerkship" => array ("title" => "Clerkship", "resource" => "clerkship", "permission" => "read"),
 			"people" => array ("title" => "People Search"),
-			"tasks" => array ("title" => "My Tasks", "resource" => "tasktab", "permission" => "read"),
-			"annualreport" => array ("title" => "My Annual Report", "resource" => "annualreport", "permission" => "read"),
-			"help" => array ("title" => "Help")
+			"annualreport" => array ("title" => "My Annual Report", "resource" => "annualreport", "permission" => "read")
 		),
-		"admin" => array(
+		"admin" => array (
 			"observerships" => array ("title" => "Manage Observerships")
 		)
-/*		@todo This is not currently used, unfortunately this exists in core/includes/settings.php in the $MODULES array.
-		We need to fix this in order to allow it to work from here. The use of the $MODULES array is silly,
-		and I believe this is something that should be handled by the ACL or is just plain unnecessary.
-
-		"admin" => array (
-			"awards" => array ("title" => "Manage Awards", "resource" => "awards", "permission" => "update"),
-			"clerkship" => array ("title" => "Manage Clerkship", "resource" => "clerkship", "permission" => "update"),
-			"courses" => array ("title" => "Manage Courses", "resource"=> "coursecontent", "permission" => "update"),
-			"evaluations" => array ("title" => "Manage Evaluations", "resource" => "evaluation", "permission" => "update"),
-			"communities" => array ("title" => "Manage Communities", "resource" => "community", "permission" => "update"),
-			"groups" => array ("title" => "Manage Groups", "resource" => "group", "permission" => "update"),
-			"events" => array ("title" => "Manage Events", "resource" => "eventcontent", "permission" => "update"),
-			"gradebook" => array ("title" => "Manage Gradebook", "resource" => "gradebook", "permission" => "update"),
-			"tasks" => array ("title" => "Manage Tasks", "resource" => "task", "permission" => "create"),
-			"notices" => array ("title" => "Manage Notices", "resource" => "notice", "permission" => "update"),
-			"configuration" => array ("title" => "Manage Configuration", "resource" => "configuration", "permission" => "update"),
-			"objectives" => array ("title" => "Manage Objectives", "resource" => "objective", "permission" => "update"),
-			"observerships" => array ("title" => "Manage Observerships", "resource" => "observerships", "permission" => "update"),
-			"polls" => array ("title" => "Manage Polls", "resource" => "poll", "permission" => "update"),
-			"quizzes" => array ("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update"),
-			"users" => array ("title" => "Manage Users", "resource" => "user", "permission" => "update"),
-			"regionaled" => array ("title" => "Regional Education", "resource" => "regionaled", "permission" => "update"),
-			"reports" => array ("title" => "System Reports", "resource" => "reportindex", "permission" => "read"),
-			"annualreport" => array ("title" => "Annual Reports", "resource" => "annualreportadmin", "permission" => "read")
-		)
-*/
 	),
 
 	/**
@@ -145,7 +118,7 @@ return array (
     "public_dashboard_feeds" => array (
 		"global" => array (
 			array ("title" => "Entrada Project", "url" => "http://www.entrada-project.org/feed/", "removable" => false),
-			array ("title" => "Zend DevZone", "url" => "http://feeds.feedburner.com/PHPDevZone", "removable" => true),
+			array ("title" => "Zend Developer Zone", "url" => "http://feeds.feedburner.com/PHPDevZone", "removable" => true),
 			array ("title" => "Insider Medicine", "url" => "http://insidermedicine.ca/xml/Patient/insidermedicine_English.xml", "removable" => true),
 			array ("title" => "Google News Top Stories", "url" => "https://news.google.ca/news/feeds?pz=1&cf=all&ned=ca&hl=en&output=rss", "removable" => true)
 		),
@@ -171,9 +144,9 @@ return array (
     "public_dashboard_links" => array (
 		"global" => array (
 			array ("title" => "Entrada Project", "url" => "http://www.entrada-project.org", "target" => "_blank"),
-			array ("title" => "Public Calendar", "url" => ENTRADA_URL."/calendar", "target" => "_blank"),
 			array ("title" => "School Library", "url" => ENTRADA_URL."/library", "target" => "_blank"),
-			array ("title" => "HealthLibrary.ca", "url" => "http://www.healthlibrary.ca", "target" => "_blank")
+			array ("title" => "Insider Medicine", "url" => "http://insidermedicine.ca", "target" => "_blank"),
+			array ("title" => "Zend Developer Zone", "url" => "http://devzone.zend.com", "target" => "_blank"),
 		),
 		"medtech" => array (
 			// array ("title" => "Additional Admin Link", "url" => "http://admin.yourschool.ca")
@@ -270,76 +243,6 @@ return array (
 	"mspr_observership_invalid_dates" => "A valid start date is required.",
 	"mspr_too_many_critical_enquiry" => "Cannot have more than one Critical Enquiry on MSPR. Please edit the existing project or remove it before adding a new one.",
 	"mspr_too_many_community_based_project" => "Cannot have more than one Community-Based Project on MSPR. Please edit the existing project or remove it before adding a new one.",
-
-	/**
-     * Tasks Module
-     */
-	"task_heading_create" => "Create Task",
-	"task_heading_edit" => "Edit Task",
-	"task_heading_recipients" => "Task Recipients",
-	"task_heading_completion_options" => "Task Completion Options",
-	"task_heading_verification_options" => "Task Verification Options",
-	"task_heading_time_release_options" => "Time Release Options",
-	"task_heading_description" => "Task Description",
-	"task_field_title" => "Task Title",
-	"task_field_deadline" => "Deadline",
-	"task_field_time_required" => "Estimated Time Required",
-	"task_field_course" => "Course",
-	"task_field_associated_faculty" => "Associated Faculty",
-	"task_field_description" => "Task Description",
-	"task_field_recipients_class" => "Entire Class Task",
-	"task_field_cohort" => "Cohort",
-	"task_field_recipients_students" => "Individual Student Task",
-	"task_field_associated_students" => "Associated Students",
-	"task_field_recipients_organisation" => "Entire Organisation Task",
-	"task_field_organisation" => "Organisation",
-	"task_field_completion_comments" => "Completion Comments",
-	"task_field_rejection_comments" => "Rejection Comments",
-	"task_field_faculty_selection" => "Faculty Selection",
-	"task_field_verification_none" => "No Verification",
-	"task_field_verification_faculty" => "Selected Faculty Verification",
-	"task_field_verification_other" => "Other Specified Individual Verification",
-	"task_field_verification_other_names" => "Designated Verifier",
-	"task_field_notification_types" => "Notification Types",
-	"task_field_verification_notification_dashboard" => "Dashboard Notification [disabled]",
-	"task_field_verification_notificaiton_email" => "Email Notification",
-	"task_field_after_saving_options" => "After Saving:",
-	"task_button_add" => "Add",
-	"task_button_save" => "Save",
-	"task_button_cancel" => "Cancel",
-	"task_instructions_recipients_class" => "This task is intended for an entire class",
-	"task_instructions_recipients_students" => "This task is intended for a specific student or students",
-	"task_instructions_recipients_organisation" => "This task is intended for every member of an organisation",
-	"task_instructions_faculty_name" => "(<strong>Example:</strong> %MY_FULLNAME%)",
-	"task_instructions_associated_students" => "(<strong>Example:</strong> %MY_FULLNAME%)",
-	"task_instructions_verification_other_names" => "(<strong>Example:</strong> %MY_FULLNAME%)",
-	"task_instructions_verification_none" => "No external verification required. Task recipients assertion of completion functions as self-verification.",
-	"task_instructions_verification_other" => "The individual specified will receive all verification requests (if applicable) and will be granted verification authority where they might not otherwise have it.",
-	"task_instructions_verification_faculty" => "The selected associated faculty will receive verification requests (if applicable)",
-	"task_option_complete_allow_comments" => "Allow comments",
-	"task_option_complete_no_comments" => "Disable comments",
-	"task_option_complete_require_comments" => "Require comments",
-	"task_option_course_none" => "None",
-	"task_option_faculty_selection_off" => "Off",
-	"task_option_faculty_selection_allow" => "Allowed",
-	"task_option_faculty_selection_require" => "Required",
-	"task_misc_minutes" => "minutes",
-	"task_title_too_short" => "The <strong>Task Title</strong> field is required.",
-	"task_course_invalid" => "The <strong>Course</strong> you selected does not exist.",
-	"task_course_permission_fail" => "You do not have permission to add a task for the course you selected. <br />Please re-select the course you would like to associate with this task.",
-	"task_recipient_type_invalid" => "Unable to proceed because the <strong>Task Recipients</strong> type is unrecognized.",
-	"task_verification_type_invalid" => "Unable to proceed because the <strong>Task Verification</strong> type is unrecognized.",
-	"task_time_required_invalid" => "Invalid <strong>Time Required</strong> entered. Time Required must be empty or a non-negative number of minutes.",
-	"task_time_required_too_long" => "Invalid <strong>Time Required</strong> entered. Time Required cannot be greater than %MAX_TIME_REQUIRED% minutes.",
-	"task_recipient_individual_empty" => "You have chosen <strong>Individual Task</strong> as <strong>Task Recipients</strong> type, but have not selected any individuals.",
-	"task_recipient_cohort_missing" => "You have chosen <strong>Entire Clss Task</strong> as <strong Task Recipients</strong> type, but have not selected a valid <strong>Graduating Year</strong>.",
-	"task_no_faculty_and_faculty_verification" => "You have chosen <strong>Selected Faculty Verification</strong>, but have not designated any faculty in <strong>Associated Faculty</strong>.",
-	"task_organisation_permission_fail" => "You do not have permission to add a task for the selected organisation, please select a different one.",
-	"task_organisation_invalid" => "The <strong>Organisation</strong> you selected does not exist.",
-	"task_verification_no_verifier" => "You have chosen <strong>Other Specified Individual Verifiction</strong>, but have not selected an individual as <strong>Designated Verifier</strong>.",
-	"task_completion_comment_policy_invalid" => "Invalid completion comment policy provided. Please select one of the options from the list.",
-	"task_rejection_comment_policy_invalid" => "Invalid rejection comment policy provided. Please select one of the options from the list.",
-	"task_title_too_long" => "The <strong>Task Title</strong> field has a maximum length of %MAX_LENGTH% characters. The title was truncated to accomodate this.", //note, the field has the same restriction, so the user is unlikely to receive this message
 
 	/**
      * Courses Module

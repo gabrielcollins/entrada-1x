@@ -55,8 +55,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 			"audience_cohorts" => "Audience (Cohorts)",
 			"audience_groups" => "Audience (Groups)",
 			"audience_students" => "Audience (Students)",
-			"staff_numbers" => "Teacher Numbers",
-			"staff_names" => "Teacher Names",
+			"teacher_numbers" => "Teacher Numbers",
+			"teacher_names" => "Teacher Names",			
 			"objectives_release_date" => "Objectives Release Date"
 	);
 
@@ -65,20 +65,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
 		$default_csv_headings = $_SESSION["my_export_options"];
 	}
 
+	$objective_name = $translate->_("events_filter_controls");
+	$curriculum_objectives_name = $objective_name["co"]["global_lu_objectives_name"];
+	$clinical_presentations_name = $objective_name["cp"]["global_lu_objectives_name"];
+	
 	$additional_csv_headings = array(
 		"student_names" => "Student Names",
 		"release_date" => "Release Date",
 		"release_until" => "Release Until",
 		"event_children" => "Child Events",
-		"event_message" => "Teachers Message",
+		"event_message" => "Required Preparation",
 		"free_text_objectives" => "Free-Text Objectives",
-		"queens_objectives" => "Queen's Objectives",
-		"mcc_presentations" => "MCC Presentations",
+		"curriculum_objectives" => $curriculum_objectives_name,
+		"clinical_presentations" => $clinical_presentations_name,
 		"hot_topics" => "Hot Topics",
 		"attached_files" => "Attached Files",
 		"attached_links" => "Attached Links",
 		"attached_quizzes" => "Attached Quizzes",
-		"attendance" => "Attendance"
+		"attendance" => "Attendance",
+		"auditor_numbers" => "Auditor Numbers",
+		"auditor_names" => "Auditor Names",
+		"teachers_assistant_numbers" => "Teacher's Assistant Numbers",
+		"teachers_assistant_names" => "Teacher's Assistant Names",
+		"tutor_numbers" => "Tutor Numbers",
+		"tutor_names" => "Tutor Names",
 	);
 
 	if (isset($diff) && $diff && is_array($diff)) {
@@ -260,6 +270,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVENTS"))) {
                     echo "          <li><a href=\"".ENTRADA_RELATIVE . "/admin/events?section=attendance&amp;id=".$result["event_id"]."\">Event Attendance</a></li>";
                     echo "          <li><a href=\"".ENTRADA_RELATIVE . "/admin/events?section=history&amp;id=".$result["event_id"]."\">Event History</a></li>";
                     echo "      </ul>\n";
+                    echo "  </div>\n";
                 } else {
                     echo "&nbsp;";
                 }

@@ -98,6 +98,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
                                 $period_entry["curriculum_type_id"] = $PROCESSED["curriculum_type_id"];
                                 $period_entry["start_date"] = strtotime(clean_input($date, array("trim", "notags")));
                                 $period_entry["finish_date"] = strtotime(clean_input($_POST["curriculum_finish_date"][$key], array("trim", "notags")));
+								$period_entry["curriculum_period_title"] = clean_input($_POST["curriculum_period_title"][$key],array("trim","notags"));
                                 $period_entry["active"] = 1;
 
                                 switch ($period_action) {
@@ -140,7 +141,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 
 					$url = ENTRADA_URL . "/admin/settings/manage/curriculumtypes?org=".$ORGANISATION_ID;
 					$SUCCESS++;
-					$SUCCESSSTR[] = "You have successfully updated <strong>".html_encode($PROCESSED["curriculum_type_title"])."</strong> to the system.<br /><br />You will now be redirected to the Curriculum Types index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+					$SUCCESSSTR[] = "You have successfully updated <strong>".html_encode($PROCESSED["curriculum_type_name"])."</strong> to the system.<br /><br />You will now be redirected to the Curriculum Types index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 					$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
 					application_log("success", "New Hot Topic [".$TOPIC_ID."] added to the system.");
 
@@ -177,6 +178,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 					$PROCESSED["periods"]["edit-".$row["cperiod_id"]]["start_date"] = $row["start_date"];
 					$PROCESSED["periods"]["edit-".$row["cperiod_id"]]["finish_date"] = $row["finish_date"];
 					$PROCESSED["periods"]["edit-".$row["cperiod_id"]]["active"] = $row["active"];
+					$PROCESSED["periods"]["edit-".$row["cperiod_id"]]["curriculum_period_title"] = $row["curriculum_period_title"];
 				}
 			}
 
@@ -217,8 +219,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 			<form action="<?php echo ENTRADA_URL."/admin/settings/manage/curriculumtypes"."?".replace_query(array("action" => "add", "step" => 2))."&org=".$ORGANISATION_ID; ?>" id ="curriculum_form" method="post">
 			<table style="width: 100%" cellspacing="0" cellpadding="2" border="0" summary="Adding Page">
 			<colgroup>
-				<col style="width: 30%" />
-				<col style="width: 70%" />
+				<col style="width: 20%" />
+				<col style="width: 80%" />
 			</colgroup>
 			<thead>
 				<tr>
@@ -227,9 +229,13 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 			</thead>
 			<tfoot>
 				<tr>
-					<td colspan="2" style="padding-top: 15px; text-align: right">
-						<input type="button" class="btn" value="Cancel" onclick="window.location='<?php echo ENTRADA_URL; ?>/admin/settings/manage/curriculumtypes?org=<?php echo $ORGANISATION_ID;?>'" />
-                        <input type="submit" class="btn btn-primary" value="<?php echo $translate->_("global_button_save"); ?>" />
+					<td></td>
+					<td style="padding-top: 15px;">
+						<input type="button" class="btn btn-danger pull-left" id="delete_selected" value="Remove Selected" />
+						<div class="pull-right">
+							<input type="button" class="btn" value="Cancel" onclick="window.location='<?php echo ENTRADA_URL; ?>/admin/settings/manage/curriculumtypes?org=<?php echo $ORGANISATION_ID;?>'" />
+							<input type="submit" class="btn btn-primary" value="<?php echo $translate->_("global_button_save"); ?>" />
+						</div>
 					</td>
 				</tr>
 			</tfoot>
@@ -245,7 +251,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 					</td>
 				</tr>
 				<tr>
-					<td style="vertical-align: top;"><label for="curriculum_level" class="form-nrequired">Curriculum Level: </label></td>
+					<td style="vertical-align: top;"><label for="curriculum_level" class="form-required">Curriculum Level: </label></td>
 					<td>
 						<select id="curriculum_level_id" name="curriculum_level_id" style="width: 250px">
 						<?php
@@ -288,26 +294,45 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 						<div id="curriculum_periods_table">
 							<table class="tableList" cellspacing="0" cellpadding="1" border="0" summary="List of Curriculum Periods">
 								<colgroup>
-									<col class="modified" />
-									<col class="date" />
-									<col class="date" />
+									<col class="modified" style="width: 5%" />
+									<col class="start" style="width: 25%" />
+									<col class="end" style="width: 25%" />
+									<col style="width: 25%" />
+									<col class="active" style="width: 20%" />
 								</colgroup>
-								<tfoot>
-									<tr id="delete_btn_row">
-										<td colspan="3" style="padding-top: 15px; text-align: left">
-											<input type="button" class="btn btn-danger" id="delete_selected" value="Remove Selected" />
-										</td>
+								<thead>
+									<tr>
+										<td class="modified">&nbsp;</td>
+										<td class="start">Start Date</td>
+										<td class="end">Finish Date</td>
+										<td>Title</td>
+										<td class="active">Active</td></tr>
 									</tr>
-								</tfoot>
+								</thead>
 								<tbody id="curriculum_periods">
 									<?php
 										if ($PROCESSED["periods"]) {
 											foreach ($PROCESSED["periods"] as $currentIdx => $period){
                                                 ?>
                                                 <tr id="period_<?php echo $currentIdx;?>" class="curriculum_period">
-                                                    <td class="modified"><input type="checkbox" class="remove_checkboxes" id="remove_<?php echo $currentIdx;?>" value="<?php echo $currentIdx;?>"/></td>
-                                                    <td class="date"><input type="text" name="curriculum_start_date[<?php echo $currentIdx;?>]" id="start_<?php echo $currentIdx;?>" class="start_date" disabled = "disabled" value="<?php echo date("Y-m-d",$period["start_date"]);?>" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select Start Date" class="calendar" id="start_calendar_<?php echo $currentIdx;?>" style="float:right;cursor:pointer;"/></td>
-                                                    <td class="date"><input type="text" name="curriculum_finish_date[<?php echo $currentIdx;?>]" id="finish_<?php echo $currentIdx;?>" class="end_date" disabled = "disabled" value="<?php echo date("Y-m-d",$period["finish_date"]);?>" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select End Date" class="calendar" id="finish_calendar_<?php echo $currentIdx;?>" style="float:right;cursor:pointer;"/></td>
+                                                    <td class="modified">
+														<input type="checkbox" class="remove_checkboxes" id="remove_<?php echo $currentIdx;?>" value="<?php echo $currentIdx;?>"/>
+													</td>
+                                                    <td class="date">
+														<input type="text" name="curriculum_start_date[<?php echo $currentIdx;?>]" id="start_<?php echo $currentIdx;?>" class="start_date" disabled = "disabled" value="<?php echo date("Y-m-d",$period["start_date"]);?>" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select Start Date" class="calendar" id="start_calendar_<?php echo $currentIdx;?>" style="float:right;cursor:pointer;"/>
+													</td>
+                                                    <td class="date">
+														<input type="text" name="curriculum_finish_date[<?php echo $currentIdx;?>]" id="finish_<?php echo $currentIdx;?>" class="end_date" disabled = "disabled" value="<?php echo date("Y-m-d",$period["finish_date"]);?>" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select End Date" class="calendar" id="finish_calendar_<?php echo $currentIdx;?>" style="float:right;cursor:pointer;"/>
+													</td>
+													<td>
+														<input type="text" name="curriculum_period_title[<?php echo $currentIdx;?>]" id="curriculum_period_title_<?php echo $currentIdx;?>" value="<?php echo $period["curriculum_period_title"];?>" />
+													</td>
+													<td>
+														<select id="curriculum_active_<?php echo $currentIdx;?>" name="curriculum_active[]">
+															<option value="1" selected="selected">Active</option>
+															<option value="0" <?php echo (($period["active"] == 0)?"selected=\"selected\"":"");?>>Inactive</option>
+														</select>
+													</td>
                                                 </tr>
                                                 <?php
 											}
@@ -322,11 +347,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 									echo display_notice();
 						?>
 						</div>
+						<style type="text/css">
+							[id^="curriculum_active"]	 {
+								width: 100px; margin-bottom: 10px;
+							}
+							[id^="curriculum_period_title"] {
+								width: 110px;
+							}
+							input[id^="start_"] {
+								width: 80px;
+							}
+							input[id^="finish_"] {
+								width: 80px;
+							}
+						</style>
+
 						<script type="text/javascript">
 						var rowTemplate = '<tr id="period_:id" class="curriculum_period">\n\
 												<td class="modified"><input type="checkbox" class="remove_checkboxes" id="remove_:id" value=":id"/></td>\n\
 												<td class="date"><input type="text" name="curriculum_start_date[:id]" id="start_:id" class="start_date" disabled = "disabled" value=":date" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select Start Date" class="calendar" id="start_calendar_:id" style="float:right;cursor:pointer;"/></td>\n\
 												<td class="date"><input type="text" name="curriculum_finish_date[:id]" id="finish_:id" class="end_date" disabled = "disabled" value=":date" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select End Date" class="calendar" id="finish_calendar_:id" style="float:right;cursor:pointer;"/></td>\n\
+												<td><input type="text" name="curriculum_period_title[:id]" id="curriculum_period_title_:id" /></td>\n\
+												<td><select id="curriculum_active_:id" name="curriculum_active[:id]"><option value="1">Active</option><option value="0">Inactive</option></select></td>\n\
 											</tr>';
 
 						var currentIdx = 1;

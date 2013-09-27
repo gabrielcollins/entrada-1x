@@ -88,6 +88,8 @@ if (!defined("IN_EVENTS")) {
 				unset($PROCESSED["related_event_ids"][array_search($PROCESSED["remove_id"], $PROCESSED["related_event_ids"])]);
 			}
 		}
+	} else {
+		$PROCESSED["event_id"] = $EVENT_ID;
 	}
 	if (isset($PROCESSED["event_id"]) && $PROCESSED["event_id"]) {
 		$query = "SELECT * FROM `events` WHERE `event_id` = ".$db->qstr($PROCESSED["event_id"]);

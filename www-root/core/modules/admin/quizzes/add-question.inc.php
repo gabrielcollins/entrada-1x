@@ -49,7 +49,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 		}
 	}
 	
-
 	if ($question_types && isset($_GET["type"]) && in_array($_GET["type"], $question_type_ids)) {
 		$set_type = true;
 		$type = clean_input($_GET["type"], "numeric");
@@ -77,6 +76,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_QUIZZES"))) {
 				if ($type == "3") {
 					$STEP = 2;
 					$_POST["question_text"] = "Page Break";
+					$_POST["questiontype_id"] = $type;
+					$_POST["post_action"] = "content";
 				}
 
 				// Error Checking

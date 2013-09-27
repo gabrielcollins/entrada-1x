@@ -326,3 +326,16 @@ input.numeric {
 	left:-8px;
 	top:14px;
 }
+
+.icon-link {
+	background-image:url("../img/icon-link.png")!important;
+	background-position:0px;
+	background-size:12px;
+	width:14px;
+	height:14px;
+}
+
+.ui-dialog.fixed {
+	position:fixed;
+	top:50px!important;
+}

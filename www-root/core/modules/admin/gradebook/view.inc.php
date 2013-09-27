@@ -180,6 +180,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 			} elseif ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["cohort"]) {
                 $selected_cohort = $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["cohort"];
             }
+			
+			if (isset($_GET["course_list"]) && ((int)$_GET["course_list"])) {
+				$selected_classlist = (int) $_GET["course_list"];
+			} elseif ($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_list"]) {
+                $selected_classlist = $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_list"];
+            }
 
 			if ($total_pages > 1) {
 				$pagination = new Pagination($page_current, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"], $total_rows, ENTRADA_URL."/admin/".$MODULE, replace_query());
@@ -200,19 +206,73 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
             echo "  <br />\n";
 
             echo "<div class=\"row-fluid\">\n";
-			$query =  "SELECT a.`course_id`, b.`group_name`, b.`group_id` 
-                        FROM `assessments` AS a
-                        JOIN `groups` AS b
-                        ON a.`cohort` = b.`group_id`
-                        JOIN `group_organisations` AS c
-                        ON b.`group_id` = c.`group_id`
-                        WHERE a.`course_id` =". $db->qstr($COURSE_ID)."
-                        AND c.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
-                        GROUP BY b.`group_id`
-                        ORDER BY b.`group_name`";
-			$cohorts = $db->GetAll($query);
-            
-            if ($cohorts) {
+			
+			$query = "	SELECT * 
+						FROM `groups` 
+						WHERE `group_type` = 'course_list' 
+						AND `group_value` = ".$db->qstr($COURSE_ID)." 
+						AND `group_active` = '1'
+						ORDER BY `group_name`";
+			$course_lists = $db->GetAll($query);			
+			if ($course_lists) { 		
+				$cohorts = $course_lists;
+				if (count($course_lists) == 1) {										
+					$output_cohort = $course_lists[0];
+					?>
+					<h2 class="pull-left"><?php echo $course_list["group_name"];?></h2>				
+		<?php
+				} else {
+					$output_cohort = false;
+					$classlist_found = false;
+					foreach ($course_lists as $key => $course_list) {
+						if (!$classlist_found) {
+							$output_cohort = $course_list;
+							if (isset($selected_classlist) && $selected_classlist && $selected_classlist == $course_list["group_id"]) {
+								$_SESSION[APPLICATION_IDENTIFIER][$MODULE]["course_list"] = $selected_classlist;
+								$classlist_found = true;
+							}
+							if ($key == (count($course_lists) - 1) && !$classlist_found) {
+								$selected_classlist = $course_list["group_id"];
+							}
+						}
+					} 
+		?>
+					<div class="span12 clearfix">
+						<h2 class="pull-left"><?php echo $output_cohort["group_name"];?></h2>
+						<form class="pull-right form-horizontal" style="margin-bottom:0;">
+							<div class="control-group">
+								<label for="course_list-quick-select" class="control-label content-small">
+									Target Audience:
+								</label>
+								<div class="controls">
+									<select id="course_list-quick-select" name="course_list-quick-select" onchange="window.location='<?php echo ENTRADA_URL;?>/admin/gradebook?section=view&id=<?php echo $COURSE_ID;?>&course_list='+this.options[this.selectedIndex].value">
+										<?php
+										foreach ($course_lists as $key => $course_list) { ?>
+											<option value="<?php echo $course_list["group_id"];?>" <?php echo (($course_list["group_id"] == $selected_classlist) ? "selected=\"selected\"" : "");?>>
+												<?php echo $course_list["group_name"];?>
+											</option>
+										<?php
+										} ?>
+									</select>
+								</div>
+							</div>
+						</form>
+					</div>
+		<?php
+				}
+			} else {
+				$query =  "SELECT a.`course_id`, b.`group_name`, b.`group_id` 
+							FROM `assessments` AS a
+							JOIN `groups` AS b
+							ON a.`cohort` = b.`group_id`
+							JOIN `group_organisations` AS c
+							ON b.`group_id` = c.`group_id`
+							WHERE a.`course_id` =". $db->qstr($COURSE_ID)."
+							AND c.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
+							GROUP BY b.`group_id`
+							ORDER BY b.`group_name`";
+				$cohorts = $db->GetAll($query);
+				
                 $output_cohort = false;
                 $cohort_found = false;
                 foreach ($cohorts as $key => $cohort) {
@@ -233,7 +293,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
             		<form class="pull-right form-horizontal" style="margin-bottom:0;">
 						<div class="control-group">
                 			<label for="cohort-quick-select" class="control-label content-small">
-                				Cohort Quick Select:
+                				Target Audience:
                 			</label>
                 			<div class="controls">
 								<select id="cohort-quick-select" name="cohort-quick-select" onchange="window.location='<?php echo ENTRADA_URL;?>/admin/gradebook?section=view&id=<?php echo $COURSE_ID;?>&cohort='+this.options[this.selectedIndex].value">
@@ -394,7 +454,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
                         if ($output_cohort) {
 							echo "<tr>";
 							echo "<td style=\"width: 20px;\"></td>";
-							echo "<td style=\"width: 350px;\"><h3 style=\"border-bottom: 0;\">Assessment</h3></td>";
+							echo "<td style=\"width: 300px;\"><h3 style=\"border-bottom: 0;\">Assessment</h3></td>";
 							echo "<td><h3 style=\"border-bottom: 0;\">Grade Weighting</h3></td>";
 							echo "<td><h3 style=\"border-bottom: 0;\">Assignment</h3></td>";
 							echo "</tr>";
@@ -408,44 +468,80 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							$results = $db->GetAll($query);
 							if ($results) {
 								$total_grade_weight = 0;
-
+								$count = 0;
 								foreach ($results as $result) {
-                                    
-									$total_grade_weight += $result["grade_weighting"];
+									if ($ENTRADA_ACL->amIAllowed(new AssessmentResource($result["assessment_id"]), "update")) {
+										$count ++;
+										$total_grade_weight += $result["grade_weighting"];
 
-									$url = ENTRADA_URL."/admin/gradebook/assessments?section=grade&amp;id=".$COURSE_ID."&amp;assessment_id=".$result["assessment_id"];
-									echo "<tr id=\"assessment-".$result["assessment_id"]."\" class=\"assessment\">";
-									if ($ENTRADA_ACL->amIAllowed("gradebook", "delete", false)) {
-										echo "	<td class=\"modified\"><input type=\"hidden\" name=\"order[".$result['assessment_id']."][]\" value=\"".$result["order"]."\" class=\"order\" /><input class=\"delete\" type=\"checkbox\" name=\"delete[]\" value=\"".$result["assessment_id"]."\" /></td>\n";
-									} else {
-										echo "	<td class=\"modified\" width=\"20\"><input type=\"hidden\" name=\"order[".$result["assessment_id"]."][]\" value=\"sortorder\" class=\"order\" /><img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"19\" height=\"19\" alt=\"\" title=\"\" /></td>";
+										$url = ENTRADA_URL."/admin/gradebook/assessments?section=grade&amp;id=".$COURSE_ID."&amp;assessment_id=".$result["assessment_id"];
+										echo "<tr id=\"assessment-".$result["assessment_id"]."\" class=\"assessment\">";
+										if ($ENTRADA_ACL->amIAllowed("gradebook", "delete", false)) {
+											echo "	<td class=\"modified\"><input type=\"hidden\" name=\"order[".$result['assessment_id']."][]\" value=\"".$result["order"]."\" class=\"order\" /><input class=\"delete\" type=\"checkbox\" name=\"delete[]\" value=\"".$result["assessment_id"]."\" /></td>\n";
+										} else {
+											echo "	<td class=\"modified\" width=\"20\"><input type=\"hidden\" name=\"order[".$result["assessment_id"]."][]\" value=\"sortorder\" class=\"order\" /><img src=\"".ENTRADA_URL."/images/pixel.gif\" width=\"19\" height=\"19\" alt=\"\" title=\"\" /></td>";
+										}
+										if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
+											echo "<td><a href=\"$url\">".$result["name"]."</a></td>";
+											echo "<td><a href=\"$url\">".$result["grade_weighting"]. "%</a></td>";
+										} else {
+											echo "<td>".$result["name"]."</td>";
+											echo "<td>".$result["grade_weighting"]. "%</td>";
+										}
+										$query =  "	SELECT a.`course_id`, a.`assignment_id`, a.`assignment_title` 
+													FROM `assignments` a
+													WHERE a.`assessment_id` = ".$db->qstr($result["assessment_id"])."
+													AND a.`assignment_active` = 1";
+
+										$assignment = $db->GetRow($query);																		
+
+										if ($assignment && $ENTRADA_ACL->amIAllowed(new AssignmentResource($assignment["assignment_id"]), "update")) {
+											$url = ENTRADA_URL."/admin/gradebook/assignments?section=grade&amp;id=".$COURSE_ID."&amp;assignment_id=".$assignment["assignment_id"];
+											echo "<td id=\"assignment-".$assignment["assignment_id"]."\">";
+											echo "<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=download-submissions&assignment_id=".$assignment["assignment_id"]."\"><i class=\"icon-download-alt\"></i></a>";
+											if ($ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
+												echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=delete&id=".$COURSE_ID."&delete=".$assignment["assignment_id"]."\"><i class=\"icon-minus-sign\"></i></a>";
+											}
+											echo "&nbsp;<a href=\"".$url."\">".$assignment["assignment_title"]."</a>";																						
+											echo "</td>";
+										} else {
+											echo "<td>\n";
+											echo "<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=add&id=".$COURSE_ID."&assessment_id=".$result["assessment_id"]."\"><i class=\"icon-plus-sign\"></i> Add New Assignment</a>";
+											echo "</td>\n";
+										}
+										echo "</tr>";
 									}
-									echo "<td><a href=\"$url\" width=\"367\">".$result["name"]."</a></td>";
-									echo "<td><a href=\"$url\">".$result["grade_weighting"]. "%</a></td>";
-                                    $query =  "SELECT `course_id`, `assignment_id`, `assignment_title` FROM `assignments`
-                                                WHERE `assessment_id` = ".$db->qstr($result["assessment_id"])."
-                                                AND `assignment_active` = 1";
-
-                                    $assignment = $db->GetRow($query);
-                                    if ($assignment) {
-                                        $url = ENTRADA_URL."/admin/gradebook/assignments?section=grade&amp;id=".$COURSE_ID."&amp;assignment_id=".$assignment["assignment_id"];
-                                        echo "<td id=\"assignment-".$assignment["assignment_id"]."\">";
-                                        echo "<a href=\"".$url."\">".$assignment["assignment_title"]."</a>";
-                                        echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=download-submissions&id=".$assignment["assignment_id"]."\"><img src=\"".ENTRADA_URL."/images/btn_save.gif\" title=\"Download All Submissions\" alt=\"Download All Submissions\" width=\"15\"/></a>";
-                                        echo "&nbsp;<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=delete&id=".$COURSE_ID."&delete=".$assignment["assignment_id"]."\"><img src=\"".ENTRADA_URL."/images/btn-delete.gif\" title=\"Delete Assignment\" alt=\"Delete Assignment\" width=\"15\"/></a>";
-                                        echo "</td>";
-                                    } else {
-                                        echo "<td>\n";
-                                        echo "<a href=\"".ENTRADA_URL."/admin/gradebook/assignments?section=add&id=".$COURSE_ID."&assessment_id=".$result["assessment_id"]."\"><img src=\"".ENTRADA_URL."/images/add.png\" title=\"Add Assignment\" alt=\"Add Assignment\" width=\"15\"/> Add New Assignment</a>";
-                                        echo "</td>\n";
-                                    }
-									echo "</tr>";
+								}
+								if ($count == 0) {
+									?>
+									<tr>
+										<td colspan="4">
+											There are currently no assessments entered for this course. <br />You can create new ones by clicking the <strong>Add New Assessment</strong> link above.
+										</td>
+									</tr>
+									<?php
 								}
 								echo "<tr>";
 								echo "	<td style=\"border-bottom: 0\" colspan=\"2\">&nbsp;</td>";
 								echo "	<td style=\"".(($total_grade_weight < "100") ? "color: #ff2431; " : "")."border-bottom: 0\">". $total_grade_weight."%</td>";
 								echo "</tr>";
+							} else {
+								?>
+								<tr>
+									<td colspan="4">
+										There are currently no assessments entered for this course. <br />You can create new ones by clicking the <strong>Add New Assessment</strong> link above.
+									</td>
+								</tr>
+								<?php
 							}
+						} else {
+							?>
+							<tr>
+								<td colspan="4">
+									There are currently no assessments entered for this course. <br />You can create new ones by clicking the <strong>Add New Assessment</strong> link above.
+								</td>
+							</tr>
+							<?php
 						}
 					}
 					?>

@@ -3288,7 +3288,7 @@ class Models_Evaluation {
 				case "preceptor" :
 				case "rotation_core" :
 				case "rotation_elective" :
-					$evaluation_targets = Models_Evaluation::getTargetsArray($evaluation["evaluation_id"], $evaluator["eevaluator_id"], $evaluator_user["id"], true, true);
+					$evaluation_targets = Models_Evaluation::getTargetsArray($evaluation["evaluation_id"], $evaluator["eevaluator_id"], $evaluator_user["id"], true, true, false, false, true);
 				break;
 			}
 			if (isset($evaluation_targets) && $evaluation_targets) {
