@@ -63,11 +63,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 			switch ($method) {
 				case "media-entry" :
 				case "create-entry" :
+					if(isset(${$request_var}["pentry_id"]) && $tmp_input = clean_input(${$request_var}["pentry_id"], "int")) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					}
 					
-					if(${$request_var}["pfartifact_id"] && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					} else {
-						add_error("Invalid portfolio entry artifact id.");
+						add_error("Invalid portfolio entry artifact id: " . $_GET["pfartifact_id"] . " " . $method);
 					}
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim"))) {
@@ -80,8 +83,16 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["title"] = $tmp_input;
 					}
 					
+					if(isset(${$request_var}["url"]) && $tmp_input = clean_input(${$request_var}["url"], array("url"))) {
+						$PROCESSED["url"] = $tmp_input;
+					}
+					
 					if (${$request_var}["type"] && $tmp_input = clean_input(${$request_var}["type"], array("trim", "striptags"))) {
 						$PROCESSED["type"] = $tmp_input;
+					}
+					
+					if (isset(${$request_var}["filename"]) && $tmp_input = clean_input(${$request_var}["filename"], "trim")) {
+						$PROCESSED["filename"] = $tmp_input;
 					}
 					
 					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
@@ -120,39 +131,53 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$_edata = array();
 						$_edata["description"] = $PROCESSED["description"];
 						$_edata["title"] = $PROCESSED["title"];
+						
+						if (isset($PROCESSED["url"])) {
+							$_edata["url"] = $PROCESSED["url"];
+						}
+						
 						if ($PROCESSED["filename"]) {
 							$_edata["filename"] = $PROCESSED["filename"];
 						}
 						$PROCESSED["_edata"] = serialize($_edata);
 						
-						$pentry = new Models_Eportfolio_Entry();
-						
-						if ($pentry->fromArray($PROCESSED)->insert()) {
-							if ($PROCESSED["filename"]) {
-								if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
-									if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-										header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
-									} else {
-										echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
-									}
-								} else {
-									if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-										header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
-									} else {
-										echo json_encode(array("status" => "error", "data" => "Failed to save file"));
-									}
-								}
-							} else {
+						if (isset($PROCESSED["pentry_id"])) {
+							$pentry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+							if ($pentry->fromArray($PROCESSED)->update()) {
+								$PROCESSED["_edata"] = unserialize($PROCESSED["_edata"]);
 								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+							} else {
+								echo json_encode(array("status" => "error", "data" => "fail"));
 							}
 						} else {
-							if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
-								header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+							$pentry = new Models_Eportfolio_Entry();
+							if ($pentry->fromArray($PROCESSED)->insert()) {
+								if ($PROCESSED["filename"]) {
+									if ($pentry->saveFile($_FILES["file"]["tmp_name"])) {
+										if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+											header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+										} else {
+											echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "type" => $pentry->getType(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+										}
+									} else {
+										if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+											header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+										} else {
+											echo json_encode(array("status" => "error", "data" => "Failed to save file"));
+										}
+									}
+								} else {
+									echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "type" => $pentry->getType(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+								}
 							} else {
-								echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
+									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
+								} else {
+									echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+								}
 							}
-						}
-						
+							
+						}	
 					} else {
 						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
 					}
@@ -162,6 +187,10 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["pfolder_id"] = $tmp_input;
 					} else {
 						add_error("Invalid portolio folder ID provided.");
+					}
+					
+					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
 					}
 					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
@@ -195,12 +224,20 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 						$PROCESSED["order"] = 0;
 						
-						$pentry = new Models_Eportfolio_Folder_Artifact();
-						
-						if ($pentry->fromArray($PROCESSED)->insert()) {
-							echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
+						if (isset($PROCESSED["pfartifact_id"])) {
+							$pentry = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
+							if ($pentry->fromArray($PROCESSED)->update()) { 
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
+							} else {
+								echo json_encode(array("error" => "error", "data" => "Unable to create folder artifact. DB said:"));
+							}
 						} else {
-							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry., DB said: ".$db->ErrorMsg()));
+							$pentry = new Models_Eportfolio_Folder_Artifact();
+							if ($pentry->fromArray($PROCESSED)->insert()) {
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
+							} else {
+								echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+							}
 						}
 						
 					} else {

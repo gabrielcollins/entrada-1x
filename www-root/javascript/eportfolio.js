@@ -41,11 +41,12 @@ jQuery(function($) {
 			var xhr = new XMLHttpRequest();
 			var fd = new FormData();
 			var file = $("#media-entry-upload").prop("files");
+			var pfartifact_id = jQuery("#save-button").data("artifact");
 
 			fd.append("method", "create-entry");
 			fd.append("title", jQuery("#media-entry-title").val());
 			fd.append("description", jQuery("#entry-description").val());
-			fd.append("pfartifact_id", jQuery("#pfartifact_id").val());
+			fd.append("pfartifact_id", pfartifact_id);
 			fd.append("type", "file");
 			fd.append("file", file[0]);
 
@@ -56,32 +57,42 @@ jQuery(function($) {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					var jsonResponse = JSON.parse(xhr.responseText);
 					if (jsonResponse.status == "success") {
-						
 						var entry_row = document.createElement("tr");
-						
 						var entry_delete_cell = document.createElement("td");
 						var entry_delete_button = document.createElement("button");
-						$(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
-						$(entry_delete_cell).append(entry_delete_button);
-						
+						jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+						jQuery(entry_delete_cell).append(entry_delete_button);
+
+						var entry_title_cell = document.createElement("td");
+						var entry_title_a = document.createElement("a");
+						jQuery(entry_title_a).html(jsonResponse.data.edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_title_cell).append(entry_title_a).addClass("entry-title");
+
 						var entry_date_cell = document.createElement("td");
+						var entry_date_a = document.createElement("a");
 						var date = new Date(jsonResponse.data.submitted_date * 1000);
-						$(entry_date_cell).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate());
-						
+						jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_date_cell).append(entry_date_a).addClass("entry-date");
+
 						var entry_content_cell = document.createElement("td");
+						var entry_content_a = document.createElement("a");
 						var content = "";
 						if (typeof jsonResponse.data.edata.filename != "undefined") {
-							content = "<a href=\"" + ENTRADA_URL + "/serve-eportfolio-entry.php?entry_id=" + jsonResponse.data.pentry_id + "\">" + jsonResponse.data.edata.filename + "</a>";
+							content = jsonResponse.data.edata.filename;
 						} else {
 							content = jsonResponse.data.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
 						}
-						$(entry_content_cell).append(content);
-						
-						$(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell);
-						
-						$("#artifact-"+$("#pfartifact_id").val()).append(entry_row);
-						
-						$('#portfolio-modal').modal('hide');
+						jQuery(entry_content_a).append(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_content_cell).append(entry_content_a).addClass("entry-content");
+
+						jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_content_cell).append(entry_date_cell).attr({"data-id": jsonResponse.data.pentry_id, "data-artifact": pfartifact_id});
+
+						jQuery("#artifact-"+ pfartifact_id).append(entry_row);
+
+						jQuery('#portfolio-modal').modal('hide');
+						if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
+							jQuery(".no-entries").remove();
+						}
 						
 					} else {
 						// Some kind of failure notification.
@@ -106,7 +117,7 @@ jQuery(function($) {
 	$("#save-button").on("click", function(e) {
 		var button = $(this);
 		var type = $(this).attr("data-type");
-		var pfartifact_id = jQuery(this).attr("data-artifact");
+		var pfartifact_id =  jQuery("#save-button").attr("data-artifact");
 
 		switch (type) {
 			case "file" :
@@ -118,14 +129,39 @@ jQuery(function($) {
 				$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
 			break;
 			case "artifact" :
+			case "artifact-edit" :
 			case "reflection" :
-				var method = (type == "reflection" || type == "file" ? "create-entry&pfartifact_id=" + pfartifact_id : "create-artifact&pfolder_id=" + pfolder_id);
+			case "file-edit" :
+			case "url" :
+				var method = (type == "reflection" || type == "file-edit" ? "create-entry&pfartifact_id=" + pfartifact_id : "");
+				if (jQuery("#save-button").attr("data-entry")) {
+					var pentry_id = jQuery("#save-button").attr("data-entry");
+					method =  method + "&pentry_id=" + pentry_id;
+				}
+				
+				if (type == "file-edit") {
+					type = "file";
+					method = method + "&filename=" + jQuery("#media-entry-upload").html();
+				}
+				
+				if (type == "artifact") {
+					method = "create-artifact&pfolder_id=" + pfolder_id;
+				}
+				
+				if (type == "artifact-edit") {
+					method = "create-artifact&pfolder_id=" + pfolder_id + "&pfartifact_id=" + pfartifact_id;
+				}
+				
+				if (type == "url") {
+					method = "create-entry&pfartifact_id=" + pfartifact_id;
+				}
+				
 				$.ajax({
 					url : ENTRADA_URL + "/api/eportfolio.api.php",
 					type : "POST",
 					data : "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
 					success: function(data) {
-						console.log(data);
+							
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
 							appendContent(type, jsonResponse.data, pfartifact_id);
@@ -154,6 +190,62 @@ jQuery(function($) {
 		if ($("#display-error-box-modal")) {
 			$("#modal-msg").empty();
 		}
+	});
+	
+	jQuery(".artifact-container").on("click", ".edit-entry", function (e) {
+		e.preventDefault();
+		var pfartifact_id = jQuery(this).parent().parent().data("artifact");
+		var pentry_id = jQuery(this).parent().parent().data("id");
+		jQuery("#method").attr("value", jQuery(this).data("type"));
+		jQuery("#save-button").attr("data-action", "edit");
+		jQuery("#save-button").attr("data-entry", pentry_id);
+		jQuery("#save-button").attr("data-artifact", pfartifact_id);
+		switch (jQuery(this).data("type")) {
+			case "reflection-entry":
+				jQuery("#save-button").attr("data-type", "reflection");
+			break;
+			case "file-entry":
+				jQuery("#save-button").attr("data-type", "file-edit");
+			break;
+		}
+		populateEntryForm(pfartifact_id, pentry_id);
+	});
+	
+	jQuery(".artifact-container").on("click", ".entry", function (e) {
+		e.preventDefault();
+		var pfartifact_id = jQuery(this).parent().parent().data("artifact");
+		
+		if (jQuery("#save-button").attr("data-action") || jQuery("#save-button").attr("data-entry")) {
+			jQuery("#save-button").removeAttr("data-action");
+			jQuery("#save-button").removeAttr("data-entry");
+		}
+
+		jQuery(".modal-header h3").html("Add Entry");
+		
+		if (jQuery(this).data("type") == "reflection") {
+			jQuery("#save-button").html("Save Entry").attr("data-type", "reflection");
+			jQuery("#method").attr("value", "reflection-entry");
+		}
+		
+		if (jQuery(this).data("type") == "file") {
+			jQuery("#save-button").html("Save Entry").attr("data-type", "file");
+			jQuery("#method").attr("value", "file-entry");
+		}
+		
+		if (jQuery(this).data("type") == "url") {
+			jQuery("#save-button").html("Save Entry").attr("data-type", "url");
+			jQuery("#method").attr("value", "url-entry");
+		}
+		
+		jQuery("#save-button").attr("data-artifact", pfartifact_id);
+		entryForm(pfartifact_id);
+	});
+	
+	jQuery(".artifact-container").on("click", ".edit-artifact", function () {
+		jQuery("#save-button").attr("data-type", "artifact-edit");
+		var pfartifact_id = jQuery(this).data("artifact");
+		jQuery("#save-button").attr("data-artifact", pfartifact_id);
+		populateArtifactForm(pfartifact_id);
 	});
 });
 
@@ -215,14 +307,21 @@ function getEntries (pfartifact_id) {
 					// Create row and cells for each entry
 					var entry_row = document.createElement("tr");
 					var delete_td = document.createElement("td");
-					var entry_date_td = document.createElement("td");
+					var entry_title_td = document.createElement("td");
 					var entry_content_td = document.createElement("td");
-					var entry_date_a = document.createElement("a");
+					var entry_date_td = document.createElement("td");
+					
+					var entry_title_a = document.createElement("a");
 					var entry_content_a = document.createElement("a");
-
+					var entry_date_a = document.createElement("a");
+					
+					// Append the title to the title cell
+					jQuery(entry_title_a).html(entry._edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+					jQuery(entry_title_td).append(entry_title_a).addClass("entry-title");
+					
 					// Append the date to the date cell
 					jQuery(entry_date_a).html(format_date(entry.submitted_date, "yyyy-mm-dd")).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
-					jQuery(entry_date_td).append(entry_date_a);
+					jQuery(entry_date_td).append(entry_date_a).addClass("entry-date");
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
 					if (entry._edata.hasOwnProperty("description")) {
@@ -232,7 +331,7 @@ function getEntries (pfartifact_id) {
 							description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
 						}
 						jQuery(entry_content_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
-						jQuery(entry_content_td).append(entry_content_a);
+						jQuery(entry_content_td).append(entry_content_a).addClass("entry-content");
 					} 
 
 					if (entry._edata.hasOwnProperty("filename")) {
@@ -252,24 +351,16 @@ function getEntries (pfartifact_id) {
 					jQuery(delete_td).append(delete_button);
 
 					// Append cells to the enrty row
-					jQuery(entry_row).append(delete_td).append(entry_date_td).append(entry_content_td).attr("data-id", entry.pentry_id);
+					jQuery(entry_row).append(delete_td).append(entry_title_td).append(entry_content_td).append(entry_date_td).attr({"data-id": entry.pentry_id, "data-artifact": entry.pfartifact_id});
 
 					// Append entry row to appropriate artifact
 					jQuery("#artifact-" + entry.pfartifact_id).append(entry_row);
-				});
-				
-				jQuery("#artifact-" + pfartifact_id).on("click", ".edit-entry", function (e) {
-					e.preventDefault();
-					var pentry_id = jQuery(this).parent().parent().data("id");
-					jQuery("#method").attr("value", jQuery(this).data("type"));
-					jQuery("#save-button").attr("data-type", "edit-" + jQuery(this).data("type"));
-					populateEntryForm(pfartifact_id, pentry_id);
 				});
 			} else {
 				// Create error row and cell
 				var error_row = document.createElement("tr");
 				var error_cell = document.createElement("td");
-				jQuery(error_cell).append(jsonResponse.data).attr("colspan", "3");
+				jQuery(error_cell).append(jsonResponse.data).attr("colspan", "4");
 				jQuery(error_row).append(error_cell).addClass("no-entries");
 				jQuery("#artifact-" + pfartifact_id).append(error_row);
 			}
@@ -310,8 +401,8 @@ function artifactForm () {
 }
 
 function entryForm (pfartifact_id) {
-	var pfartifact_id_input = document.createElement("input");
-	jQuery(pfartifact_id_input).attr({value: pfartifact_id, name: "pfartifact_id", id: "pfartifact_id", type: "hidden"});
+	//var pfartifact_id_input = document.createElement("input");
+	//jQuery(pfartifact_id_input).attr({value: pfartifact_id, name: "pfartifact_id", id: "pfartifact_id", type: "hidden"});
 
 	// Create the divs that will hold the form controls for the create artifact form
 	var title_control_group = document.createElement("div");
@@ -355,10 +446,10 @@ function entryForm (pfartifact_id) {
 			jQuery(description_label).html("Description:").attr("for", "entry-description").addClass("control-label");
 			jQuery(description_controls).append(description_textarea);
 			jQuery(description_control_group).append(description_label).append(description_controls);
-			if (jQuery("#save-button").attr("data-type") == "edit-file-entry") {
+			if (jQuery("#save-button").attr("data-action") == "edit") {
 				jQuery(entry_label).html("File Name:").attr("for", "media-entry-upload");
 				var entry_input = document.createElement("label");
-				jQuery(entry_input).attr({id: "media-entry-upload", name: "file"}).addClass("control-label");
+				jQuery(entry_input).attr({id: "media-entry-upload", name: "file"}).addClass("control-label").css("text-align", "left");
 			} else {
 				jQuery(entry_label).html("Attach File:").attr("for", "media-entry-upload");
 				var entry_input = document.createElement("input");
@@ -371,10 +462,22 @@ function entryForm (pfartifact_id) {
 			var entry_input = document.createElement("textarea");
 			jQuery(entry_input).attr({id: "entry-description", name: "description", "class": "reflection"});
 		break;
+		case "url-entry":
+			var description_control_group = document.createElement("div");
+			jQuery(description_control_group).addClass("control-group");
+			var description_controls = document.createElement("div");
+			jQuery(description_controls).addClass("controls");
+			var description_input = document.createElement("input");
+			jQuery(description_input).attr({name: "description", id: "entry-description", type: "text"}).addClass("span9");
+			var description_label = document.createElement("label");
+			jQuery(description_label).html("URL:").attr("for", "entry-description").addClass("control-label");
+			jQuery(description_controls).append(description_input);
+			jQuery(description_control_group).append(description_label).append(description_controls);
+		break;
 	}
 	jQuery(entry_controls).append(entry_input);
 	jQuery(entry_control_group).append(entry_label).append(entry_controls);
-	jQuery("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group).append(pfartifact_id_input);
+	jQuery("#portfolio-form").append(title_control_group).append(description_control_group).append(entry_control_group);
 	if (jQuery("#entry-description").hasClass("reflection")) {
 		jQuery("#entry-description").ckeditor();
 	}
@@ -383,13 +486,21 @@ function entryForm (pfartifact_id) {
 function appendArtifact (pfartifact_id, artifact_title) {
 	var folder_artifact = document.createElement("div");
 	var artifact_heading = document.createElement("h3");
-	jQuery(artifact_heading).html(artifact_title);
+	var artifact_heading_span = document.createElement("span");
+	jQuery(artifact_heading_span).html(artifact_title).attr("data-artifact", pfartifact_id);
+	jQuery(artifact_heading).append(artifact_heading_span);
 
 	// Create the artifact meta data paragraph
+	
 	/*
 	var artifact_meta = document.createElement("p");
 	jQuery(artifact_meta).html((artifact.start_date > 0 ? "Created on: <strong>" + format_date(artifact.start_date) + "</strong>, " : "") + (artifact.finish_date > 0 ? "Due on: <strong>" + format_date(artifact.finish_date) + "</strong>" : "" )).addClass("muted");
 	*/
+   
+	// Create artifact edit button
+	var artifact_edit_a = document.createElement("a");
+	jQuery(artifact_edit_a).html("<i class=\"icon-pencil\"></i>").addClass("btn btn-mini space-right edit-artifact").css("margin-top", "-3px").attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": "artifact", "data-artifact": pfartifact_id});
+	jQuery(artifact_heading).prepend(artifact_edit_a);
 
 	// Create the button group for artifact Content 
 	var artifact_content = document.createElement("div");
@@ -405,44 +516,32 @@ function appendArtifact (pfartifact_id, artifact_title) {
 
 	// Create the options list for the artifact content button group
 	var artifact_options = document.createElement("ul");
-	jQuery(artifact_options).addClass("dropdown-menu");
+	jQuery(artifact_options).addClass("dropdown-menu").attr("data-artifact", pfartifact_id);
 
 	// Create list items and links
 	var artifact_option_reflection = document.createElement("li");
 	var artifact_option_media = document.createElement("li");
+	var artifact_option_link = document.createElement("li");
+	
 	var artifact_option_reflection_a = document.createElement("a");
 	jQuery(artifact_option_reflection_a).html("Reflection");
-	jQuery(artifact_option_reflection_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("reflection-content");
+	jQuery(artifact_option_reflection_a).attr({"href": "#", "data-toggle": "modal", "data-type": "reflection", "data-target": "#portfolio-modal"}).addClass("entry");
 	var artifact_option_media_a = document.createElement("a");
 	jQuery(artifact_option_media_a).html("Media");
-	jQuery(artifact_option_media_a).attr("data-toggle", "modal").attr("data-target", "#portfolio-modal").addClass("media-content");
-
-	// Attach click event to reflection and media links to update the contents of the portfolio-modal
-	jQuery(artifact_option_reflection_a).on("click", function (e) {
-		e.preventDefault();
-		jQuery("#method").attr("value", "reflection-entry");
-		jQuery(".modal-header h3").html("Add Reflection");
-		jQuery("#save-button").html("Save Reflection").attr("data-type", "reflection");
-		jQuery("#save-button").attr("data-artifact", pfartifact_id);
-		entryForm(pfartifact_id);
-	});
-
-	jQuery(artifact_option_media_a).on("click", function (e) {
-		e.preventDefault();
-		jQuery("#method").attr("value", "file-entry");
-		jQuery(".modal-header h3").html("Add Media");
-		jQuery("#save-button").html("Save Media").attr("data-type", "file");
-		jQuery("#save-button").attr("data-artifact", pfartifact_id);
-		entryForm(pfartifact_id);
-	});
+	jQuery(artifact_option_media_a).attr({"href": "#", "data-toggle": "modal", "data-type": "file", "data-target": "#portfolio-modal"}).attr("data-target", "#portfolio-modal").addClass("entry");
+	var artifact_option_link_a = document.createElement("a");
+	jQuery(artifact_option_link_a).html("Link");
+	jQuery(artifact_option_link_a).attr({"href": "#", "data-toggle": "modal", "data-type": "url", "data-target": "#portfolio-modal"}).attr("data-target", "#portfolio-modal").addClass("entry");
 
 	// Append anchors to list items 
 	jQuery(artifact_option_reflection).append(artifact_option_reflection_a);
 	jQuery(artifact_option_media).append(artifact_option_media_a);
+	jQuery(artifact_option_link).append(artifact_option_link_a);
 
 	// Append list items to artifact options ul
 	jQuery(artifact_options).append(artifact_option_media);
 	jQuery(artifact_options).append(artifact_option_reflection);
+	jQuery(artifact_options).append(artifact_option_link);
 
 	// Append the artifact options ul to the button group
 	jQuery(artifact_content).append(artifact_options);
@@ -463,18 +562,23 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	var entries_thead_row = document.createElement("tr");
 	jQuery(entries_thead).append(entries_thead_row);
 
+	var entries_delete_th =  document.createElement("th");
+	jQuery(entries_delete_th).width("5%");
+	jQuery(entries_thead_row).append(entries_delete_th);
+	
 	var entries_title_th =  document.createElement("th");
-	jQuery(entries_title_th).width("5%");
+	jQuery(entries_title_th).width("30%");
+	jQuery(entries_title_th).html("Title");
 	jQuery(entries_thead_row).append(entries_title_th);
-
+	
+	var entries_content_th =  document.createElement("th");
+	jQuery(entries_content_th).html("Content");
+	jQuery(entries_thead_row).append(entries_content_th);
+	
 	var entries_date_th =  document.createElement("th");
 	jQuery(entries_date_th).width("25%");
 	jQuery(entries_date_th).html("Submitted Date");
 	jQuery(entries_thead_row).append(entries_date_th);
-
-	var entries_content_th =  document.createElement("th");
-	jQuery(entries_content_th).html("Content");
-	jQuery(entries_thead_row).append(entries_content_th);
 
 	jQuery(artifact_entries).append(entries_table);
 	jQuery(artifact_row).append(artifact_entries);
@@ -486,45 +590,65 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 	if (jQuery("#display-notice-box-modal").length) {
 		jQuery("#msgs").empty();
 	}
+	
 	switch (type) {
 		case "artifact" :
 			var artifact_title = jQuery("#artifact-title").val();
-			appendArtifact(pfartifact_id, jsonResponse.title);
+			appendArtifact(jsonResponse.pentry_id, jsonResponse.title);
 			var entry_row = document.createElement("tr");
 			var entry_cell = document.createElement("td");
-			jQuery(entry_cell).append("No entries attached to this artifact.").attr("colspan", "3");
-			jQuery(entry_row).append(entry_cell);
-			jQuery("#artifact-" + pfartifact_id).append(entry_row);
+			jQuery(entry_cell).append("No entries attached to this artifact.").attr("colspan", "4");
+			jQuery(entry_row).append(entry_cell).addClass("no-entries");
+			jQuery("#artifact-" + jsonResponse.pentry_id).append(entry_row);	
+		break;
+		case "artifact-edit" :
+			jQuery("span[data-artifact="+ jsonResponse.pentry_id + "]").html(jsonResponse.title);
 		break;
 		case "reflection" :
-			var entry_row = document.createElement("tr");			
-			var entry_delete_cell = document.createElement("td");
-			var entry_delete_button = document.createElement("button");
-			var entry_date_a =  document.createElement("a");
-			var entry_content_a =  document.createElement("a");
-			jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
-			jQuery(entry_delete_cell).append(entry_delete_button);
-
-			var entry_date_cell = document.createElement("td");
-			var date = new Date(jsonResponse.submitted_date * 1000);
-			jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
-			jQuery(entry_date_cell).append(entry_date_a);
-
-			var entry_content_cell = document.createElement("td");
-			if (jsonResponse.edata.description.length > 80) {
-				content = jsonResponse.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+			if (jQuery("[data-id="+ jsonResponse.pentry_id + "]").length) {
+				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-title").children("a").html(jQuery("#media-entry-title").val());
+				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-content").children("a").html(jQuery("#entry-description").val());
 			} else {
-				content = jsonResponse.edata.description;
+				var entry_row = document.createElement("tr");			
+				var entry_delete_cell = document.createElement("td");
+				var entry_delete_button = document.createElement("button");
+				var entry_date_a =  document.createElement("a");
+				var entry_content_a =  document.createElement("a");
+				jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+				jQuery(entry_delete_cell).append(entry_delete_button);
+				
+				var entry_title_cell = document.createElement("td");
+				var entry_title_a = document.createElement("a");
+				jQuery(entry_title_a).html(jsonResponse.edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+				jQuery(entry_title_cell).append(entry_title_a).addClass("entry-title");
+
+				var entry_date_cell = document.createElement("td");
+				var date = new Date(jsonResponse.submitted_date * 1000);
+				jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+				jQuery(entry_date_cell).append(entry_date_a).addClass("entry-date");
+
+				var entry_content_cell = document.createElement("td");
+				if (jsonResponse.edata.description.length > 80) {
+					content = jsonResponse.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+				} else {
+					content = jsonResponse.edata.description;
+				}
+				
+				jQuery(entry_content_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+				jQuery(entry_content_cell).append(entry_content_a).addClass("entry-content");
+				jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_content_cell).append(entry_date_cell).attr("data-id", jsonResponse.pentry_id);
+				jQuery("#artifact-" + pfartifact_id).append(entry_row);
 			}
-			jQuery(entry_content_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
-			jQuery(entry_content_cell).append(entry_content_a);
-			jQuery(entry_row).append(entry_delete_cell).append(entry_date_cell).append(entry_content_cell).attr("data-id", jsonResponse.pentry_id);
-			jQuery("#artifact-" + pfartifact_id).append(entry_row);
+			
 			if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
 				jQuery(".no-entries").remove();
 			}
+			
 		break;
-		case "media" :
+		case "file" :
+			if (jQuery("[data-id="+ jsonResponse.pentry_id + "]").length) {
+				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-title").children("a").html(jQuery("#media-entry-title").val());
+			}
 		break;
 	}
 }
@@ -548,6 +672,7 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 					case "file" :
 						jQuery(".modal-header h3").html("Edit Media");
 						jQuery("#media-entry-upload").html(jsonResponse.data._edata.filename);
+						
 						var control_group = document.createElement("div");
 						jQuery(control_group).addClass("control-group");
 						var controls = document.createElement("div");
@@ -560,9 +685,27 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 						jQuery(control_group).append(download_label).append(controls);
 						jQuery("#portfolio-form").append(control_group);
 					break;
+					case "url" :
+					break
 				}
 			}
 		}	
 	});
-	
+}
+
+function populateArtifactForm (pfartifact_id) {
+	artifactForm();
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-folder-artifact&pfartifact_id=" + pfartifact_id,
+		type: 'GET',
+		async: false,
+		success:function (data) {
+			var jsonResponse = JSON.parse(data);
+			if (jsonResponse.status == "success") {
+				jQuery("#artifact-title").val(jsonResponse.data.title);
+				jQuery("#artifact-description").val(jsonResponse.data.description);
+			}
+		}
+	});	
 }

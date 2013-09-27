@@ -46,6 +46,17 @@ class Models_Eportfolio_Entry {
 		}
 	}
 	
+	private function _toArray() {
+		$arr = array();
+		$class_vars = get_class_vars(get_called_class());
+		if (isset($class_vars)) {
+			foreach ($class_vars as $class_var => $value) {
+				$arr[$class_var] = $this->$class_var;
+			}
+		}
+		return $arr;
+	}
+	
 	public function toArray() {
 		$arr = false;
 		$class_vars = get_class_vars(get_called_class());
@@ -73,6 +84,7 @@ class Models_Eportfolio_Entry {
 		
 		$query = "SELECT * FROM `portfolio_entries` WHERE `pentry_id` = ? AND `active` = ?";
 		$result = $db->GetRow($query, array($pentry_id, $active));
+		
 		if ($result) {
 			$folder = new self($result);
 			return $folder;
@@ -88,6 +100,7 @@ class Models_Eportfolio_Entry {
 					(!is_null($pfartifact_id) ? "`pfartifact_id` = " . $db->qstr($pfartifact_id) . " AND " : ""). 
 					(!is_null($proxy_id) ? "`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")."
 					`active` = ?";
+		
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();
@@ -121,16 +134,7 @@ class Models_Eportfolio_Entry {
 	
 	public function update() {
 		global $db;
-		
-		$arr = array();
-		$class_vars = get_class_vars(get_called_class());
-		if (isset($class_vars)) {
-			foreach ($class_vars as $class_var => $value) {
-				$arr[$class_var] = $this->$class_var;
-			}
-		}
-		
-		if ($db->AutoExecute("`portfolio_entries`", $arr, "UPDATE", "`pentry_id` = ".$db->qstr($this->getID()))) {
+		if ($db->AutoExecute("`portfolio_entries`", $this->_toArray(), "UPDATE", "`pentry_id` = ".$db->qstr($this->getID()))) {
 			return true;
 		} else {
 			return false;
