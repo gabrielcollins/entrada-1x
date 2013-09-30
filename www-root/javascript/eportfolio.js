@@ -46,7 +46,19 @@ jQuery(function($) {
 
 						var entry_title_cell = document.createElement("td");
 						var entry_title_a = document.createElement("a");
-						jQuery(entry_title_a).html(jsonResponse.data.edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
+						
+						var content = "";
+						if (typeof jsonResponse.data.edata.title != "undefined") {
+							content = jsonResponse.data.edata.title;
+						} else if (typeof jsonResponse.data.edata.filename != "undefined") {
+							content = jsonResponse.data.edata.filename;
+						} else if (typeof jsonResponse.data.edata.description != "undefined") {
+							content = jsonResponse.data.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						} else {
+							content = "N/A"
+						}
+						
+						jQuery(entry_title_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
 						jQuery(entry_title_cell).append(entry_title_a).addClass("entry-title");
 
 						var entry_date_cell = document.createElement("td");
@@ -55,18 +67,13 @@ jQuery(function($) {
 						jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
 						jQuery(entry_date_cell).append(entry_date_a).addClass("entry-date");
 
-						var entry_content_cell = document.createElement("td");
-						var entry_content_a = document.createElement("a");
-						var content = "";
-						if (typeof jsonResponse.data.edata.filename != "undefined") {
-							content = jsonResponse.data.edata.filename;
-						} else {
-							content = jsonResponse.data.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
-						}
-						jQuery(entry_content_a).append(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
-						jQuery(entry_content_cell).append(entry_content_a).addClass("entry-content");
+						var entry_type_cell = document.createElement("td");
+						var entry_type_a = document.createElement("a");
 
-						jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_content_cell).append(entry_date_cell).attr({"data-id": jsonResponse.data.pentry_id, "data-artifact": pfartifact_id});
+						jQuery(entry_type_a).append(jsonResponse.data.type).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": jsonResponse.data.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_type_cell).append(entry_type_a).addClass("entry-content");
+
+						jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_type_cell).append(entry_date_cell).attr({"data-id": jsonResponse.data.pentry_id, "data-artifact": pfartifact_id});
 
 						jQuery("#artifact-"+ pfartifact_id).append(entry_row);
 
@@ -78,18 +85,14 @@ jQuery(function($) {
 					} else {
 						display_error(jsonResponse.data, "#msgs", "append");
 					}
-				} else {
-					display_error(["The AJAX request did not properly complete."], "#msgs", "append");
 				}
 			}
-			e.preventDefault();
 		}
 
 		e.preventDefault();
 	});
 
 	$(".folder-item").on("click", function (e) {
-		
 		$(".artifact-container").empty().addClass("loading");
 		
 		pfolder_id = $(this).data("id");
@@ -104,13 +107,12 @@ jQuery(function($) {
 		var type = $(this).attr("data-type");
 		var pfartifact_id =  jQuery("#save-button").attr("data-artifact");
 		var method;
-		
 		switch (type) {
 			case "file" :
+				method = "media-entry";
 				if (!window.FileReader) {
 					$("#portfolio-form").append("<input type=\"hidden\" name=\"isie\" value=\"isie\" class=\"isie\" />");
 				}
-				$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
 			break;
 			case "reflection" :
 				method = "create-entry&pfartifact_id=" + pfartifact_id;
@@ -135,24 +137,28 @@ jQuery(function($) {
 			method =  method + "&pentry_id=" + pentry_id;
 		}
 
-		$.ajax({
-			url: ENTRADA_URL + "/api/eportfolio.api.php",
-			type: "POST",
-			data: "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
-			success: function (data) {
-				var jsonResponse = JSON.parse(data);
-				if (jsonResponse.status == "success") {
-					appendContent(type, jsonResponse.data, pfartifact_id);
-					$("#portfolio-modal").modal("hide");
-				} else {
-					var msgs = new Array();
-					display_error(jsonResponse.data, "#modal-msg");
+		if (method != "media-entry") {
+			$.ajax({
+				url: ENTRADA_URL + "/api/eportfolio.api.php",
+				type: "POST",
+				data: "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
+				success: function (data) {
+					var jsonResponse = JSON.parse(data);
+					if (jsonResponse.status == "success") {
+						appendContent(type, jsonResponse.data, pfartifact_id);
+						$("#portfolio-modal").modal("hide");
+					} else {
+						var msgs = new Array();
+						display_error(jsonResponse.data, "#modal-msg");
+					}
+				},
+				error: function (data) {
+					display_error(["An error occurred while attempting save this entry. Please try again."], "#modal-msg");
 				}
-			},
-			error: function (data) {
-				display_error(["An error occurred while attempting save this entry. Please try again."], "#modal-msg");
-			}
-		});
+			});
+		} else {
+			$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
+		}
 
 		e.preventDefault();
 	});
@@ -180,7 +186,6 @@ jQuery(function($) {
 	});
 	
 	jQuery(".artifact-container").on("click", ".edit-entry", function (e) {
-		e.preventDefault();
 		var pfartifact_id = jQuery(this).parent().parent().data("artifact");
 		var pentry_id = jQuery(this).parent().parent().data("id");
 		jQuery("#method").attr("value", jQuery(this).data("type"));
@@ -199,10 +204,10 @@ jQuery(function($) {
 			break;
 		}
 		populateEntryForm(pfartifact_id, pentry_id);
+		e.preventDefault();
 	});
 	
 	jQuery(".artifact-container").on("click", ".entry", function (e) {
-		e.preventDefault();
 		var pfartifact_id = jQuery(this).parent().parent().data("artifact");
 		
 		if (jQuery("#save-button").attr("data-action") || jQuery("#save-button").attr("data-entry")) {
@@ -229,6 +234,7 @@ jQuery(function($) {
 		
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);
 		entryForm(pfartifact_id);
+		e.preventDefault();
 	});
 	
 	jQuery(".artifact-container").on("click", ".edit-artifact", function () {
@@ -306,22 +312,34 @@ function getEntries (pfartifact_id) {
 		type: 'GET',
 		success: function (data) {
 			var jsonResponse = JSON.parse(data);
-			
 			if (jsonResponse.status == "success") {
 				jQuery.each(jsonResponse.data, function(key, entry) {
 					// Create row and cells for each entry["entry"]
 					var entry_row = document.createElement("tr");
 					var delete_td = document.createElement("td");
 					var entry_title_td = document.createElement("td");
-					var entry_content_td = document.createElement("td");
+					var entry_type_td = document.createElement("td");
 					var entry_date_td = document.createElement("td");
 					
 					var entry_title_a = document.createElement("a");
-					var entry_content_a = document.createElement("a");
+					var entry_type_a = document.createElement("a");
 					var entry_date_a = document.createElement("a");
 					
 					// Append the title to the title cell
-					jQuery(entry_title_a).html(entry["entry"]._edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
+					
+					var content = "";
+					if (typeof entry.entry._edata.title != "undefined") {
+						content = entry.entry._edata.title;
+					} else if (typeof entry.entry._edata.filename != "undefined") {
+						content = entry.entry._edata.filename;
+					} else if (typeof entry.entry._edata.description != "undefined") {
+						content = entry.entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+					} else {
+						content = "N/A"
+					}
+
+					
+					jQuery(entry_title_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
 					jQuery(entry_title_td).append(entry_title_a).addClass("entry-title");
 					
 					// Append the date to the date cell
@@ -330,18 +348,15 @@ function getEntries (pfartifact_id) {
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
 					if (entry["entry"]._edata.hasOwnProperty("description")) {
-						
 						var description = "";
-						if (entry["entry"]._edata.description != null) {
-							description = entry["entry"]._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
-						}
-						jQuery(entry_content_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
-						jQuery(entry_content_td).append(entry_content_a).addClass("entry-content");
+						description = entry.entry.type;
+						jQuery(entry_type_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_type_td).append(entry_type_a).addClass("entry-content");
 					} 
 
 					if (entry["entry"]._edata.hasOwnProperty("filename")) {
-						jQuery(entry_content_a).html(entry["entry"]._edata.filename);
-						jQuery(entry_content_td).append(entry_content_a);
+						jQuery(entry_type_a).html(entry.entry.type);
+						jQuery(entry_type_td).append(entry_type_a);
 					}
 
 					// Create delete button and icon
@@ -356,7 +371,7 @@ function getEntries (pfartifact_id) {
 					jQuery(delete_td).append(delete_button);
 
 					// Append cells to the enrty row
-					jQuery(entry_row).append(delete_td).append(entry_title_td).append(entry_content_td).append(entry_date_td).attr({"data-id": entry["entry"].pentry_id, "data-artifact": entry["entry"].pfartifact_id});
+					jQuery(entry_row).append(delete_td).append(entry_title_td).append(entry_type_td).append(entry_date_td).attr({"data-id": entry["entry"].pentry_id, "data-artifact": entry["entry"].pfartifact_id});
 
 					// Append entry["entry"] row to appropriate artifact
 					jQuery("#artifact-" + entry["entry"].pfartifact_id).append(entry_row);
@@ -582,17 +597,15 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	jQuery(entries_thead_row).append(entries_delete_th);
 	
 	var entries_title_th =  document.createElement("th");
-	jQuery(entries_title_th).width("30%");
 	jQuery(entries_title_th).html("Title");
 	jQuery(entries_thead_row).append(entries_title_th);
 	
-	var entries_content_th =  document.createElement("th");
-	jQuery(entries_content_th).html("Content");
-	jQuery(entries_thead_row).append(entries_content_th);
+	var entries_type_th =  document.createElement("th");
+	jQuery(entries_type_th).width("11%").html("Type");
+	jQuery(entries_thead_row).append(entries_type_th);
 	
 	var entries_date_th =  document.createElement("th");
-	jQuery(entries_date_th).width("25%");
-	jQuery(entries_date_th).html("Submitted Date");
+	jQuery(entries_date_th).width("12%").html("Submitted");
 	jQuery(entries_thead_row).append(entries_date_th);
 
 	jQuery(artifact_entries).append(entries_table);
@@ -629,13 +642,25 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 				var entry_delete_cell = document.createElement("td");
 				var entry_delete_button = document.createElement("a");
 				var entry_date_a =  document.createElement("a");
-				var entry_content_a =  document.createElement("a");
+				var entry_type_a =  document.createElement("a");
 				jQuery(entry_delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
 				jQuery(entry_delete_cell).append(entry_delete_button);
 				
 				var entry_title_cell = document.createElement("td");
 				var entry_title_a = document.createElement("a");
-				jQuery(entry_title_a).html(jsonResponse.edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+				
+				var content = "";
+				if (typeof jsonResponse.edata.title != "undefined") {
+					content = jsonResponse.edata.title;
+				} else if (typeof jsonResponse.edata.filename != "undefined") {
+					content = jsonResponse.edata.filename;
+				} else if (typeof jsonResponse.edata.description != "undefined") {
+					content = jsonResponse.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+				} else {
+					content = "N/A"
+				}
+				
+				jQuery(entry_title_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
 				jQuery(entry_title_cell).append(entry_title_a).addClass("entry-title");
 
 				var entry_date_cell = document.createElement("td");
@@ -643,16 +668,10 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 				jQuery(entry_date_a).html(date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate()).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
 				jQuery(entry_date_cell).append(entry_date_a).addClass("entry-date");
 
-				var entry_content_cell = document.createElement("td");
-				if (jsonResponse.edata.description.length > 80) {
-					content = jsonResponse.edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
-				} else {
-					content = jsonResponse.edata.description;
-				}
-				
-				jQuery(entry_content_a).html(content).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
-				jQuery(entry_content_cell).append(entry_content_a).addClass("entry-content");
-				jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_content_cell).append(entry_date_cell).attr("data-id", jsonResponse.pentry_id);
+				var entry_type_cell = document.createElement("td");
+				jQuery(entry_type_a).html(type).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
+				jQuery(entry_type_cell).append(entry_type_a).addClass("entry-content");
+				jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_type_cell).append(entry_date_cell).attr("data-id", jsonResponse.pentry_id);
 				jQuery("#artifact-" + pfartifact_id).append(entry_row);
 			}
 			
