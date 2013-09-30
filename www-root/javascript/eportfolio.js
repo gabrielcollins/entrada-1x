@@ -8,25 +8,6 @@ jQuery(function($) {
 	
 	getFolder(pfolder_id);
 	
-	$(".add-entry").on("click", function(e) {
-		var link = $(this);
-		var entry_data = {
-			pfartifact_id : link.attr("data-pfartifact-id"),
-			description : "sadasd"
-		}
-
-		$.ajax({
-			url : ENTRADA_URL + "/api/eportfolio.api.php",
-			type : "POST",
-			data : "method=create-entry&" + $.param(entry_data),
-			success: function(data) {
-				var jsonResponse = JSON.parse(data);
-			}
-		});
-		
-		e.preventDefault();
-	});
-	
 	$("#create-artifact").on("click", function () {
 		$(".modal-header h3").html("Create Artifact");
 		$("#save-button").html("Save Artifact").attr("data-type", "artifact");
@@ -95,10 +76,10 @@ jQuery(function($) {
 						}
 						
 					} else {
-						// Some kind of failure notification.
+						display_error(jsonResponse.data, "#msgs", "append");
 					}
 				} else {
-					// another failure notification.
+					display_error(["The AJAX request did not properly complete."], "#msgs", "append");
 				}
 			}
 			e.preventDefault();
@@ -108,74 +89,70 @@ jQuery(function($) {
 	});
 
 	$(".folder-item").on("click", function (e) {
-		e.preventDefault();
+		
+		$(".artifact-container").empty().addClass("loading");
+		
 		pfolder_id = $(this).data("id");
 		getFolder(pfolder_id);
 		location.hash = $(this).attr("data-id");
+		
+		e.preventDefault();
 	});
 
 	$("#save-button").on("click", function(e) {
 		var button = $(this);
 		var type = $(this).attr("data-type");
 		var pfartifact_id =  jQuery("#save-button").attr("data-artifact");
-		/*
-		 * @todo: fix this non-sense
-		 **/
+		var method;
+		
 		switch (type) {
 			case "file" :
-				if (window.FileReader) {
-
-				} else {
+				if (!window.FileReader) {
 					$("#portfolio-form").append("<input type=\"hidden\" name=\"isie\" value=\"isie\" class=\"isie\" />");
 				}
 				$("#portfolio-form").attr("enctype", "multipart/form-data").attr("action", ENTRADA_URL + "/api/eportfolio.api.php").submit();
 			break;
-			case "artifact" :
-			case "artifact-edit" :
 			case "reflection" :
+				method = "create-entry&pfartifact_id=" + pfartifact_id;
+			break;
 			case "file-edit" :
+				type = "file";
+				method = method + "&filename=" + jQuery("#media-entry-upload").html();
+			break;
+			case "artifact" :
+				method = "create-artifact&pfolder_id=" + pfolder_id;
+			break;
+			case "artifact-edit" :
+				method = "create-artifact&pfolder_id=" + pfolder_id + "&pfartifact_id=" + pfartifact_id;
+			break;
 			case "url" :
-				var method = (type == "reflection" || type == "file-edit" ? "create-entry&pfartifact_id=" + pfartifact_id : "");
-				if (jQuery("#save-button").attr("data-entry")) {
-					var pentry_id = jQuery("#save-button").attr("data-entry");
-					method =  method + "&pentry_id=" + pentry_id;
-				}
-				
-				if (type == "file-edit") {
-					type = "file";
-					method = method + "&filename=" + jQuery("#media-entry-upload").html();
-				}
-				
-				if (type == "artifact") {
-					method = "create-artifact&pfolder_id=" + pfolder_id;
-				}
-				
-				if (type == "artifact-edit") {
-					method = "create-artifact&pfolder_id=" + pfolder_id + "&pfartifact_id=" + pfartifact_id;
-				}
-				
-				if (type == "url") {
-					method = "create-entry&pfartifact_id=" + pfartifact_id;
-				}
-				
-				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
-					type : "POST",
-					data : "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
-					success: function(data) {
-							
-						var jsonResponse = JSON.parse(data);
-						if (jsonResponse.status == "success") {
-							appendContent(type, jsonResponse.data, pfartifact_id);
-							$("#portfolio-modal").modal("hide");
-						} else {
-							var msgs = new Array();
-							display_error(jsonResponse.data, "#modal-msg");
-						}
-					}
-				});
+				method = "create-entry&pfartifact_id=" + pfartifact_id;
 			break;
 		}
+		
+		if (jQuery("#save-button").attr("data-entry")) {
+			var pentry_id = jQuery("#save-button").attr("data-entry");
+			method =  method + "&pentry_id=" + pentry_id;
+		}
+
+		$.ajax({
+			url: ENTRADA_URL + "/api/eportfolio.api.php",
+			type: "POST",
+			data: "method=" + method + "&type=" + type +  "&" + $("#portfolio-form").serialize(),
+			success: function (data) {
+				var jsonResponse = JSON.parse(data);
+				if (jsonResponse.status == "success") {
+					appendContent(type, jsonResponse.data, pfartifact_id);
+					$("#portfolio-modal").modal("hide");
+				} else {
+					var msgs = new Array();
+					display_error(jsonResponse.data, "#modal-msg");
+				}
+			},
+			error: function (data) {
+				display_error(["An error occurred while attempting save this entry. Please try again."], "#modal-msg");
+			}
+		});
 
 		e.preventDefault();
 	});
@@ -259,13 +236,19 @@ function getFolder (pfolder_id) {
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-folder&pfolder_id=" + pfolder_id,
 		type: 'GET',
-		success:function (data) {
+		success: function (data) {
 			var jsonResponse = JSON.parse(data);
 			if (jsonResponse.status === "success") {
 				jQuery("#folder-title").html(jsonResponse.data.title);
 				getFolderArtifacts(pfolder_id);
+			} else {
+				display_error(jsonResponse.data, "#msgs", "append");
 			}
-		}	
+		},
+		error: function (data) {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch this folder. Please try again."], "#msgs", "append");
+		}
 	});
 }
 
@@ -275,7 +258,8 @@ function getFolderArtifacts (pfolder_id) {
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
 		type: 'GET',
-		success:function (data) {
+		success: function (data) {
+			jQuery(".artifact-container").removeClass("loading");
 			var jsonResponse = JSON.parse(data);
 			jQuery(".artifact-container").empty();
 			if (jsonResponse.status == "success") {
@@ -291,11 +275,13 @@ function getFolderArtifacts (pfolder_id) {
 				});
 
 			} else {
-				var msgs = new Array();
-				msgs[0] = jsonResponse.data;
-				display_notice(msgs, "#msgs");
+				display_notice([jsonResponse.data], "#msgs");
 			}
-		}	
+		},
+		error: function (data) {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch the artifacts associated with this folder. Please try again."], "#msgs", "append");
+		}
 	});
 }
 
@@ -305,7 +291,7 @@ function getEntries (pfartifact_id) {
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
 		type: 'GET',
-		success:function (data) {
+		success: function (data) {
 			var jsonResponse = JSON.parse(data);
 			
 			if (jsonResponse.status == "success") {
@@ -370,7 +356,11 @@ function getEntries (pfartifact_id) {
 				jQuery(error_row).append(error_cell).addClass("no-entries");
 				jQuery("#artifact-" + pfartifact_id).append(error_row);
 			}
-		}	
+		},
+		error: function(data) {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch the entries associated with this artifact. Please try again."], "#msgs", "append");
+		}
 	});
 }
 
@@ -671,7 +661,7 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 		data: "method=get-entry&pentry_id=" + pentry_id,
 		type: 'GET',
 		async: false,
-		success:function (data) {
+		success: function (data) {
 			var jsonResponse = JSON.parse(data);
 			if (jsonResponse.status === "success") {
 				jQuery("#media-entry-title").val(jsonResponse.data._edata.title);
@@ -711,8 +701,14 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 						jQuery("#portfolio-form").append(link_control_group);
 					break;
 				}
+			} else {
+				display_error(jsonResponse.data, "#modal-msg", "append");
 			}
-		}	
+		},
+		error: function (data) {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch the entry. Please try again."], "#modal-msg", "append");
+		}
 	});
 }
 
@@ -723,12 +719,18 @@ function populateArtifactForm (pfartifact_id) {
 		data: "method=get-folder-artifact&pfartifact_id=" + pfartifact_id,
 		type: 'GET',
 		async: false,
-		success:function (data) {
+		success: function (data) {
 			var jsonResponse = JSON.parse(data);
 			if (jsonResponse.status == "success") {
 				jQuery("#artifact-title").val(jsonResponse.data.title);
 				jQuery("#artifact-description").val(jsonResponse.data.description);
+			} else {
+				display_error(jsonResponse.data, "#modal-msg", "append");
 			}
+		},
+		error: function (data) {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch the artifact. Please try again."], "#modal-msg", "append");
 		}
 	});	
 }

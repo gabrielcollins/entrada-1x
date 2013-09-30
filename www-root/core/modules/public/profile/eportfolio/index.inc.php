@@ -45,7 +45,16 @@ if (!defined("PARENT_INCLUDED")) {
 	load_rte("minimal");
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
 	?>
+	<style type="text/css">
+		.artifact-container.loading {
+			background-image:url("<?php echo ENTRADA_URL; ?>/images/loading_med.gif");
+			background-position: center;
+			background-repeat:no-repeat;
+			min-height:400px;
+		}
+	</style>
 	<h1>Entrada ePortfolio</h1>
+	<div id="msg"></div>
 	<?php
 	$eportfolio = Models_Eportfolio::fetchRowByGroupID($ENTRADA_USER->getCohort());
 	$folders = $eportfolio->getFolders();
@@ -72,7 +81,7 @@ if (!defined("PARENT_INCLUDED")) {
 			<a href="#" class="btn btn-primary pull-right space-below" data-toggle="modal" data-target="#portfolio-modal" id="create-artifact">Create Artifact</a>
 		</div>
 		<div id="msgs"></div>
-		<div class="artifact-container"></div>
+		<div class="artifact-container loading"></div>
 	</div>
 	<div class="pull-right">
 		<a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio?section=export-portfolio" class="btn btn-primary">Export My Portfolio</a>
