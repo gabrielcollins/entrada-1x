@@ -41,7 +41,7 @@ jQuery(function($) {
 						var entry_row = document.createElement("tr");
 						var entry_delete_cell = document.createElement("td");
 						var entry_delete_button = document.createElement("button");
-						jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+						jQuery(entry_delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger delete-entry").html("<i class=\"icon-trash icon-white\"></i>");
 						jQuery(entry_delete_cell).append(entry_delete_button);
 
 						var entry_title_cell = document.createElement("td");
@@ -129,6 +129,9 @@ jQuery(function($) {
 			break;
 			case "url" :
 				method = "create-entry&pfartifact_id=" + pfartifact_id;
+			break;
+			case "delete-entry" :
+				method = "delete-entry";
 			break;
 		}
 		
@@ -246,7 +249,9 @@ jQuery(function($) {
 	
 	jQuery(".artifact-container").on("click", ".delete-entry", function () {
 		var pentry_id = jQuery(this).parent().parent().data("id");
+		jQuery("#save-button").attr("data-entry", pentry_id);
 		jQuery("#save-button").html("Delete Entry");
+		jQuery("#save-button").attr("data-type", "delete-entry");
 		populateDeleteForm(pentry_id);
 	});
 });
@@ -642,8 +647,8 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 				var entry_delete_cell = document.createElement("td");
 				var entry_delete_button = document.createElement("a");
 				var entry_date_a =  document.createElement("a");
-				var entry_type_a =  document.createElement("a");
-				jQuery(entry_delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+				var entry_content_a =  document.createElement("a");
+				jQuery(entry_delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger delete-entry").html("<i class=\"icon-trash icon-white\"></i>");
 				jQuery(entry_delete_cell).append(entry_delete_button);
 				
 				var entry_title_cell = document.createElement("td");
@@ -684,6 +689,32 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 			if (jQuery("[data-id="+ jsonResponse.pentry_id + "]").length) {
 				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-title").children("a").html(jQuery("#media-entry-title").val());
 			}
+		break;
+		case "delete-entry" :
+			jQuery("tr[data-id="+ jsonResponse.pentry_id + "]").remove();
+			
+			if (!jQuery("#artifact-" + jsonResponse.pfartifact_id + " tbody tr").length) {
+				var entry_tr = document.createElement("tr");
+				var entry_td = document.createElement("td");
+				jQuery(entry_td).attr({"colspan": "4"}).addClass("no-entries").html("No entries attached to this artifact.");
+				jQuery(entry_tr).append(entry_td);
+				jQuery("#artifact-" + jsonResponse.pfartifact_id).append(entry_tr);
+			}
+			
+			if (jQuery("#msgs .alert-success").length) {
+				jQuery("#msgs .alert-success").remove();
+			}
+			
+			var confirmation_div = document.createElement("div");
+			jQuery(confirmation_div).addClass("alert alert-success");
+			var confirmation_button = document.createElement("button");
+			jQuery(confirmation_button).attr({"type": "button", "data-dismiss": "alert"}).html("&times;").addClass("close");
+			var confirmation_ul = document.createElement("ul");
+			var confirmation_li = document.createElement("li");
+			jQuery(confirmation_li).html("Successfully removed entry titled: <strong>" + jsonResponse._edata.title + "</strong>");
+			jQuery(confirmation_ul).append(confirmation_li);
+			jQuery(confirmation_div).append(confirmation_button).append(confirmation_ul);
+			jQuery("#msgs").append(confirmation_div);
 		break;
 	}
 }

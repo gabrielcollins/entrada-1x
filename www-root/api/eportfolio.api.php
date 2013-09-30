@@ -428,7 +428,11 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if (!$ERROR) {
 						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
 						$PROCESSED["active"] = "0";
-						$entry->fromArray($PROCESSED)->update();
+						if ($entry->fromArray($PROCESSED)->update()) {
+							echo json_encode(array("status" => "success", "data" => $entry->toArray()));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Unable to remove artifact entry."));
+						}
 					}
 				break;
 			}
