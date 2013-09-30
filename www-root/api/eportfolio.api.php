@@ -73,7 +73,24 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						add_error("Invalid portfolio entry artifact id: " . $_GET["pfartifact_id"] . " " . $method);
 					}
 					
+					if (${$request_var}["type"] && $tmp_input = clean_input(${$request_var}["type"], array("trim", "striptags"))) {
+						$PROCESSED["type"] = $tmp_input;
+					}
+					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim"))) {
+						if (isset($PROCESSED["type"])) {
+							switch ($PROCESSED["type"]) {
+								case "reflection":
+								case "file":
+									$PROCESSED["description"] = $tmp_input;
+								break;
+								case "url":
+									if (isset($tmp_input)) {
+										$PROCESSED["description"] = clean_input($tmp_input, array("striptags"));
+									}
+								break;
+							}
+						}
 						$PROCESSED["description"] = $tmp_input;
 					} else {
 						$PROCESSED["description"] = "";
@@ -81,15 +98,16 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					
 					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
 						$PROCESSED["title"] = $tmp_input;
+					} else {
+						add_error("<strong>Title</strong> is a Required field.");
 					}
 					
-					if(isset(${$request_var}["url"]) && $tmp_input = clean_input(${$request_var}["url"], array("url"))) {
+					/*if(isset(${$request_var}["url"]) && $tmp_input = clean_input(${$request_var}["url"], array("trim", "striptags"))) {
 						$PROCESSED["url"] = $tmp_input;
-					}
+					} else {
+						add_error("<strong>URL</strong> is a required field.");
+					}*/
 					
-					if (${$request_var}["type"] && $tmp_input = clean_input(${$request_var}["type"], array("trim", "striptags"))) {
-						$PROCESSED["type"] = $tmp_input;
-					}
 					
 					if (isset(${$request_var}["filename"]) && $tmp_input = clean_input(${$request_var}["filename"], "trim")) {
 						$PROCESSED["filename"] = $tmp_input;
@@ -121,6 +139,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						
 						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
 						$PROCESSED["submitted_date"] = time();
+						$PROCESSED["reviewed_by"] = "0";
 						$PROCESSED["reviewed_date"] = "0";
 						$PROCESSED["flag"] = "0";
 						$PROCESSED["flagged_by"] = "0";
@@ -173,7 +192,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
 									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
 								} else {
-									echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+									echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry.".$db->ErrorMsg()));
 								}
 							}
 							
@@ -512,7 +531,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							}
 							echo json_encode(array("status" => "success", "data" => $fa_data));
 						} else {
-							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID."));
+							echo json_encode(array("status" => "error", "data" => "No artifacts attached to this portfolio folder ID. "));
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No portfolio folder ID or invalid portfolio folder ID."));
@@ -540,7 +559,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					}
 					
-					if ($PROCESSED["pfartifact_id"]) { 
+					if ($PROCESSED["pfartifact_id"]) {
 						$artifact_entries = Models_Eportfolio_Entry::fetchAll($PROCESSED["pfartifact_id"], (isset($proxy_id) ? $proxy_id : NULL));
 						if ($artifact_entries) {
 							$ae_data = array();

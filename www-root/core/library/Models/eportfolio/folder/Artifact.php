@@ -79,7 +79,7 @@ class Models_Eportfolio_Folder_Artifact {
 	public static function fetchAll($pfolder_id = NULL, $proxy_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "	SELECT a.* 
+		/*$query = "	SELECT a.* 
 					FROM `portfolio_folder_artifacts` AS a".
 					(!is_null($proxy_id) && !is_null($pfolder_id) ? " JOIN `portfolio_entries` AS b
 					ON a.`pfartifact_id` = b.`pfartifact_id`" : "").
@@ -87,7 +87,14 @@ class Models_Eportfolio_Folder_Artifact {
 					(!is_null($pfolder_id) ? "a.`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
 					(!is_null($proxy_id) ? "b.`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")." 
 					a.`active` = ?
-					GROUP BY a.`pfartifact_id`";
+					GROUP BY a.`pfartifact_id`";*/
+		
+		$query = "	SELECT * FROM `portfolio_folder_artifacts` WHERE ".
+			(!is_null($pfolder_id) ? "`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
+			(!is_null($proxy_id) ? "`proxy_id` = " . $db->qstr($proxy_id) . " AND " : "")." 
+			`active` = ?";
+
+
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();

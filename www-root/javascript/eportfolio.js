@@ -118,7 +118,9 @@ jQuery(function($) {
 		var button = $(this);
 		var type = $(this).attr("data-type");
 		var pfartifact_id =  jQuery("#save-button").attr("data-artifact");
-
+		/*
+		 * @todo: fix this non-sense
+		 **/
 		switch (type) {
 			case "file" :
 				if (window.FileReader) {
@@ -206,6 +208,9 @@ jQuery(function($) {
 			break;
 			case "file-entry":
 				jQuery("#save-button").attr("data-type", "file-edit");
+			break;
+			case "url-entry":
+				jQuery("#save-button").attr("data-type", "url");
 			break;
 		}
 		populateEntryForm(pfartifact_id, pentry_id);
@@ -302,9 +307,10 @@ function getEntries (pfartifact_id) {
 		type: 'GET',
 		success:function (data) {
 			var jsonResponse = JSON.parse(data);
+			
 			if (jsonResponse.status == "success") {
 				jQuery.each(jsonResponse.data, function(key, entry) {
-					// Create row and cells for each entry
+					// Create row and cells for each entry["entry"]
 					var entry_row = document.createElement("tr");
 					var delete_td = document.createElement("td");
 					var entry_title_td = document.createElement("td");
@@ -316,26 +322,26 @@ function getEntries (pfartifact_id) {
 					var entry_date_a = document.createElement("a");
 					
 					// Append the title to the title cell
-					jQuery(entry_title_a).html(entry._edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+					jQuery(entry_title_a).html(entry["entry"]._edata.title).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
 					jQuery(entry_title_td).append(entry_title_a).addClass("entry-title");
 					
 					// Append the date to the date cell
-					jQuery(entry_date_a).html(format_date(entry.submitted_date, "yyyy-mm-dd")).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+					jQuery(entry_date_a).html(format_date(entry["entry"].submitted_date, "yyyy-mm-dd")).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
 					jQuery(entry_date_td).append(entry_date_a).addClass("entry-date");
 
 					// Check to see if the _edata object has a description or filename and put the data in the content cell
-					if (entry._edata.hasOwnProperty("description")) {
+					if (entry["entry"]._edata.hasOwnProperty("description")) {
 						
 						var description = "";
-						if (entry._edata.description != null) {
-							description = entry._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
+						if (entry["entry"]._edata.description != null) {
+							description = entry["entry"]._edata.description.replace(/(<([^>]+)>)/ig,"").substr(0, 80) + "...";
 						}
-						jQuery(entry_content_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry.type + "-entry"}).addClass("edit-entry");
+						jQuery(entry_content_a).html(description).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": entry["entry"].type + "-entry"}).addClass("edit-entry");
 						jQuery(entry_content_td).append(entry_content_a).addClass("entry-content");
 					} 
 
-					if (entry._edata.hasOwnProperty("filename")) {
-						jQuery(entry_content_a).html(entry._edata.filename);
+					if (entry["entry"]._edata.hasOwnProperty("filename")) {
+						jQuery(entry_content_a).html(entry["entry"]._edata.filename);
 						jQuery(entry_content_td).append(entry_content_a);
 					}
 
@@ -351,10 +357,10 @@ function getEntries (pfartifact_id) {
 					jQuery(delete_td).append(delete_button);
 
 					// Append cells to the enrty row
-					jQuery(entry_row).append(delete_td).append(entry_title_td).append(entry_content_td).append(entry_date_td).attr({"data-id": entry.pentry_id, "data-artifact": entry.pfartifact_id});
+					jQuery(entry_row).append(delete_td).append(entry_title_td).append(entry_content_td).append(entry_date_td).attr({"data-id": entry["entry"].pentry_id, "data-artifact": entry["entry"].pfartifact_id});
 
-					// Append entry row to appropriate artifact
-					jQuery("#artifact-" + entry.pfartifact_id).append(entry_row);
+					// Append entry["entry"] row to appropriate artifact
+					jQuery("#artifact-" + entry["entry"].pfartifact_id).append(entry_row);
 				});
 			} else {
 				// Create error row and cell
@@ -424,18 +430,17 @@ function entryForm (pfartifact_id) {
 	jQuery(title_controls).append(title_input);
 	jQuery(title_control_group).append(title_label).append(title_controls);
 
-	var entry_control_group = document.createElement("div");
-	jQuery(entry_control_group).addClass("control-group");
-	var entry_controls = document.createElement("div");
-	jQuery(entry_controls).addClass("controls");
-	var entry_label = document.createElement("label");
-	jQuery(entry_label).addClass("control-label");
-
 	// Add appropriate form controls depending on the selected content type
 	var method = jQuery("#method").val();
 	switch (method) {
 		
 		case "file-entry" :
+			var entry_control_group = document.createElement("div");
+			jQuery(entry_control_group).addClass("control-group");
+			var entry_controls = document.createElement("div");
+			jQuery(entry_controls).addClass("controls");
+			var entry_label = document.createElement("label");
+			jQuery(entry_label).addClass("control-label");
 			var description_control_group = document.createElement("div");
 			jQuery(description_control_group).addClass("control-group");
 			var description_controls = document.createElement("div");
@@ -458,6 +463,12 @@ function entryForm (pfartifact_id) {
 			
 		break;
 		case "reflection-entry" :
+			var entry_control_group = document.createElement("div");
+			jQuery(entry_control_group).addClass("control-group");
+			var entry_controls = document.createElement("div");
+			jQuery(entry_controls).addClass("controls");
+			var entry_label = document.createElement("label");
+			jQuery(entry_label).addClass("control-label");
 			jQuery(entry_label).html("Reflection Body:").attr("for", "reflection-entry");
 			var entry_input = document.createElement("textarea");
 			jQuery(entry_input).attr({id: "entry-description", name: "description", "class": "reflection"});
@@ -468,7 +479,7 @@ function entryForm (pfartifact_id) {
 			var description_controls = document.createElement("div");
 			jQuery(description_controls).addClass("controls");
 			var description_input = document.createElement("input");
-			jQuery(description_input).attr({name: "description", id: "entry-description", type: "text"}).addClass("span9");
+			jQuery(description_input).attr({name: "description", id: "entry-description", type: "text"});
 			var description_label = document.createElement("label");
 			jQuery(description_label).html("URL:").attr("for", "entry-description").addClass("control-label");
 			jQuery(description_controls).append(description_input);
@@ -667,10 +678,10 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 				jQuery("#entry-description").val(jsonResponse.data._edata.description);
 				switch (jsonResponse.data.type) {
 					case "reflection" :
-						jQuery(".modal-header h3").html("Edit Reflection");
+						jQuery(".modal-header h3").html("Edit Entry");
 					break;
 					case "file" :
-						jQuery(".modal-header h3").html("Edit Media");
+						jQuery(".modal-header h3").html("Edit Entry");
 						jQuery("#media-entry-upload").html(jsonResponse.data._edata.filename);
 						
 						var control_group = document.createElement("div");
@@ -686,7 +697,19 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 						jQuery("#portfolio-form").append(control_group);
 					break;
 					case "url" :
-					break
+						jQuery(".modal-header h3").html("Edit Entry");
+						var link_control_group = document.createElement("div");
+						jQuery(link_control_group).addClass("control-group");
+						var link_controls = document.createElement("div");
+						jQuery(link_controls).addClass("controls");
+						var link_label = document.createElement("label");
+						jQuery(link_label).css("width", "150px").addClass("control-label");
+						var link_a = document.createElement("a");
+						jQuery(link_a).html("<i class=\"icon-bookmark\"></i>" + jsonResponse.data._edata.description).attr("href", jsonResponse.data._edata.description);
+						jQuery(link_controls).append(link_a);
+						jQuery(link_control_group).append(link_label).append(link_controls);
+						jQuery("#portfolio-form").append(link_control_group);
+					break;
 				}
 			}
 		}	
