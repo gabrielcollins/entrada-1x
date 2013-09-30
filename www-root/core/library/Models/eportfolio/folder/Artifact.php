@@ -221,6 +221,14 @@ class Models_Eportfolio_Folder_Artifact {
 		return $entries;
 	}
 	
+	public function isOwner($proxy_id) {
+		$is_owner = false;
+		if ($this->proxy_id == $proxy_id) {
+			$is_owner = true;
+		}
+		return $is_owner;
+	}
+	
 }
 
 ?>
