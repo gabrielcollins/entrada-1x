@@ -119,7 +119,7 @@ jQuery(function($) {
 			break;
 			case "file-edit" :
 				type = "file";
-				method = method + "&filename=" + jQuery("#media-entry-upload").html();
+				method = "media-entry&filename=" + jQuery("#media-entry-upload").html() + "&pfartifact_id=" + pfartifact_id;
 			break;
 			case "artifact" :
 				method = "create-artifact&pfolder_id=" + pfolder_id;
