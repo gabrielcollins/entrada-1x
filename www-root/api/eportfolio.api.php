@@ -158,6 +158,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						if ($PROCESSED["filename"]) {
 							$_edata["filename"] = $PROCESSED["filename"];
 						}
+						
 						$PROCESSED["_edata"] = serialize($_edata);
 						
 						if (isset($PROCESSED["pentry_id"])) {

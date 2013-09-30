@@ -266,7 +266,6 @@ function getFolderArtifacts (pfolder_id) {
 				if (jQuery("#display-notice-box-modal").length) {
 					jQuery("#msgs").empty();
 				}
-
 				jQuery.each(jsonResponse.data, function (key, artifact) {
 					var pfartifact_id = artifact.pfartifact_id;
 					var artifact_title = artifact.title;
@@ -359,7 +358,8 @@ function getEntries (pfartifact_id) {
 		},
 		error: function(data) {
 			jQuery(".artifact-container").removeClass("loading");
-			display_error(["An error occurred while attempting to fetch the entries associated with this artifact. Please try again."], "#msgs", "append");
+			jQuery(".artifact .row-fluid, .artifact .btn-group").remove();
+			display_error(["An error occurred while attempting to fetch the entries associated with this artifact. Please try again."], ".artifact", "append");
 		}
 	});
 }
@@ -655,7 +655,6 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 }
 
 function populateEntryForm(pfartifact_id, pentry_id) {
-	entryForm(pfartifact_id);
 	jQuery.ajax({
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-entry&pentry_id=" + pentry_id,
@@ -664,6 +663,7 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 		success: function (data) {
 			var jsonResponse = JSON.parse(data);
 			if (jsonResponse.status === "success") {
+				entryForm(pfartifact_id);
 				jQuery("#media-entry-title").val(jsonResponse.data._edata.title);
 				jQuery("#entry-description").val(jsonResponse.data._edata.description);
 				switch (jsonResponse.data.type) {
