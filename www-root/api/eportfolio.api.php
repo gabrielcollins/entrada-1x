@@ -418,6 +418,19 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 				case "create-portfolio" :
 					
 				break;
+				case "delete-entry" :
+					if (isset(${$request_var}["pentry_id"]) && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
+						$PROCESSED["pentry_id"] = $tmp_input;
+					} else {
+						add_error("Invalid pentry_id.");
+					}
+					
+					if (!$ERROR) {
+						$entry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
+						$PROCESSED["active"] = "0";
+						$entry->fromArray($PROCESSED)->update();
+					}
+				break;
 			}
 		break;
 		case "GET" :

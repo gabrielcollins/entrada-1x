@@ -169,6 +169,14 @@ jQuery(function($) {
 		if ($("#display-error-box-modal")) {
 			$("#modal-msg").empty();
 		}
+		
+		if (jQuery("#portfolio-form .table").length) {
+			jQuery("#portfolio-form .table").remove();
+		}
+
+		if (jQuery("#portfolio-form .alert-notice")) {
+			jQuery("#portfolio-form .alert-notice").remove();
+		}
 	});
 	
 	jQuery(".artifact-container").on("click", ".edit-entry", function (e) {
@@ -228,6 +236,12 @@ jQuery(function($) {
 		var pfartifact_id = jQuery(this).data("artifact");
 		jQuery("#save-button").attr("data-artifact", pfartifact_id);
 		populateArtifactForm(pfartifact_id);
+	});
+	
+	jQuery(".artifact-container").on("click", ".delete-entry", function () {
+		var pentry_id = jQuery(this).parent().parent().data("id");
+		jQuery("#save-button").html("Delete Entry");
+		populateDeleteForm(pentry_id);
 	});
 });
 
@@ -331,8 +345,8 @@ function getEntries (pfartifact_id) {
 					}
 
 					// Create delete button and icon
-					var delete_button = document.createElement("button");
-					jQuery(delete_button).addClass("btn btn-mini btn-danger");
+					var delete_button = document.createElement("a");
+					jQuery(delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger delete-entry");
 
 					var delete_icon = document.createElement("i");
 					jQuery(delete_icon).addClass("icon-trash icon-white");
@@ -606,16 +620,17 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 			jQuery("span[data-artifact="+ jsonResponse.pentry_id + "]").html(jsonResponse.title);
 		break;
 		case "reflection" :
+		case "url" :
 			if (jQuery("[data-id="+ jsonResponse.pentry_id + "]").length) {
 				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-title").children("a").html(jQuery("#media-entry-title").val());
 				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-content").children("a").html(jQuery("#entry-description").val());
 			} else {
 				var entry_row = document.createElement("tr");			
 				var entry_delete_cell = document.createElement("td");
-				var entry_delete_button = document.createElement("button");
+				var entry_delete_button = document.createElement("a");
 				var entry_date_a =  document.createElement("a");
 				var entry_content_a =  document.createElement("a");
-				jQuery(entry_delete_button).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
+				jQuery(entry_delete_button).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).addClass("btn btn-mini btn-danger").html("<i class=\"icon-trash icon-white\"></i>");
 				jQuery(entry_delete_cell).append(entry_delete_button);
 				
 				var entry_title_cell = document.createElement("td");
@@ -695,7 +710,7 @@ function populateEntryForm(pfartifact_id, pentry_id) {
 						var link_label = document.createElement("label");
 						jQuery(link_label).css("width", "150px").addClass("control-label");
 						var link_a = document.createElement("a");
-						jQuery(link_a).html("<i class=\"icon-bookmark\"></i>" + jsonResponse.data._edata.description).attr("href", jsonResponse.data._edata.description);
+						jQuery(link_a).html("<i class=\"icon-bookmark\"></i>" + jsonResponse.data._edata.description).attr({"href": jsonResponse.data._edata.description, "target": "_BLANK"});
 						jQuery(link_controls).append(link_a);
 						jQuery(link_control_group).append(link_label).append(link_controls);
 						jQuery("#portfolio-form").append(link_control_group);
@@ -733,4 +748,59 @@ function populateArtifactForm (pfartifact_id) {
 			display_error(["An error occurred while attempting to fetch the artifact. Please try again."], "#modal-msg", "append");
 		}
 	});	
+}
+
+function populateDeleteForm (pentry_id) {
+	var warning_div = document.createElement("div");
+	jQuery(warning_div).addClass("alert alert-block alert-notice");
+	var warning_button = document.createElement("button");
+	jQuery(warning_button).addClass("close").html("&times;");
+	var warning_ul = document.createElement("ul");
+	var warning_li = document.createElement("li");
+	jQuery(warning_li).html("Please confirm that you wish to remove this artifact entry.");
+	jQuery(warning_ul).append(warning_li);
+	jQuery(warning_div).append(warning_button).append(warning_ul);
+	jQuery("#portfolio-form").append(warning_div);
+	
+	jQuery(".modal-header h3").html("Confirm Entry Removal");
+	var entry_table = document.createElement("table");
+	jQuery(entry_table).addClass("table table-striped table-bordered");
+	jQuery(entry_table).attr("id", "delete-entry-table");
+
+	var entry_thead = document.createElement("thead");
+	jQuery(entry_table).append(entry_thead);
+
+	var entry_thead_row = document.createElement("tr");
+	jQuery(entry_thead).append(entry_thead_row);
+
+	var entry_delete_th =  document.createElement("th");
+	jQuery(entry_delete_th).width("5%");
+	jQuery(entry_thead_row).append(entry_delete_th);
+	
+	var entry_title_th =  document.createElement("th");
+	jQuery(entry_title_th).width("30%");
+	jQuery(entry_title_th).html("Title");
+	jQuery(entry_thead_row).append(entry_title_th);
+	
+	var entry_content_th =  document.createElement("th");
+	jQuery(entry_content_th).html("Content");
+	jQuery(entry_thead_row).append(entry_content_th);
+	
+	var entry_date_th =  document.createElement("th");
+	jQuery(entry_date_th).width("25%");
+	jQuery(entry_date_th).html("Submitted Date");
+	jQuery(entry_thead_row).append(entry_date_th);
+	jQuery("#portfolio-form").append(entry_table);
+	
+	var entry_row = document.createElement("tr");
+	var entry_modified = document.createElement("td");
+	var entry_title = document.createElement("td");
+	var entry_content = document.createElement("td");
+	var entry_date = document.createElement("td");
+	
+	jQuery(entry_title).html(jQuery("tr[data-id="+ pentry_id + "] .entry-title").children("a").html());
+	jQuery(entry_content).html(jQuery("tr[data-id="+ pentry_id + "] .entry-content").children("a").html())
+	jQuery(entry_date).html(jQuery("tr[data-id="+ pentry_id + "] .entry-date").children("a").html());
+	jQuery(entry_row).append(entry_modified).append(entry_title).append(entry_content).append(entry_date);
+	jQuery("#delete-entry-table").append(entry_row);
 }
