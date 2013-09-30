@@ -294,10 +294,17 @@ function getFolderArtifacts (pfolder_id) {
 				jQuery.each(jsonResponse.data, function (key, artifact) {
 					var pfartifact_id = artifact.pfartifact_id;
 					var artifact_title = artifact.title;
-					appendArtifact(pfartifact_id, artifact_title);
+					var artifact_due;
+					if (artifact.finish_date > 0) {
+						artifact_due = artifact.finish_date;
+					} else if (artifact.start_date) {
+						artifact_due = artifact.start_date;
+					} else {
+						artifact_due = 0;
+					}
+					appendArtifact(pfartifact_id, artifact_title, artifact_due);
 					getEntries(pfartifact_id);
 				});
-
 			} else {
 				display_notice([jsonResponse.data], "#msgs");
 			}
@@ -518,7 +525,8 @@ function entryForm (pfartifact_id) {
 	}
 }
 
-function appendArtifact (pfartifact_id, artifact_title) {
+function appendArtifact (pfartifact_id, artifact_title, artifact_due) {
+	var date = new Date(artifact_due * 1000);
 	var folder_artifact = document.createElement("div");
 	var artifact_heading = document.createElement("h3");
 	var artifact_heading_span = document.createElement("span");
@@ -536,7 +544,9 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	var artifact_edit_a = document.createElement("a");
 	jQuery(artifact_edit_a).html("<i class=\"icon-pencil\"></i>").addClass("btn btn-mini space-right edit-artifact").css("margin-top", "-3px").attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": "artifact", "data-artifact": pfartifact_id});
 	jQuery(artifact_heading).prepend(artifact_edit_a);
-
+	if (artifact_due > 0) {
+		jQuery(artifact_heading).append("<span class=\"content-small muted\">Due: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate() + "</span>");
+	}
 	// Create the button group for artifact Content 
 	var artifact_content = document.createElement("div");
 	jQuery(artifact_content).addClass("btn-group pull-right space-below");
@@ -633,7 +643,7 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 	switch (type) {
 		case "artifact" :
 			var artifact_title = jQuery("#artifact-title").val();
-			appendArtifact(jsonResponse.pentry_id, jsonResponse.title);
+			appendArtifact(jsonResponse.pentry_id, jsonResponse.title, json_response.finish_date);
 			var entry_row = document.createElement("tr");
 			var entry_cell = document.createElement("td");
 			jQuery(entry_cell).append("No entries attached to this artifact.").attr("colspan", "4");
