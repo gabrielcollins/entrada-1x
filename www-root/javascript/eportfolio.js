@@ -557,26 +557,32 @@ function appendArtifact (pfartifact_id, artifact_title) {
 	var artifact_option_reflection = document.createElement("li");
 	var artifact_option_media = document.createElement("li");
 	var artifact_option_link = document.createElement("li");
+	var artifact_delete_link = document.createElement("li");
 	
 	var artifact_option_reflection_a = document.createElement("a");
 	jQuery(artifact_option_reflection_a).html("Reflection");
 	jQuery(artifact_option_reflection_a).attr({"href": "#", "data-toggle": "modal", "data-type": "reflection", "data-target": "#portfolio-modal"}).addClass("entry");
 	var artifact_option_media_a = document.createElement("a");
 	jQuery(artifact_option_media_a).html("Media");
-	jQuery(artifact_option_media_a).attr({"href": "#", "data-toggle": "modal", "data-type": "file", "data-target": "#portfolio-modal"}).attr("data-target", "#portfolio-modal").addClass("entry");
+	jQuery(artifact_option_media_a).attr({"href": "#", "data-toggle": "modal", "data-type": "file", "data-target": "#portfolio-modal"}).addClass("entry");
 	var artifact_option_link_a = document.createElement("a");
 	jQuery(artifact_option_link_a).html("Link");
-	jQuery(artifact_option_link_a).attr({"href": "#", "data-toggle": "modal", "data-type": "url", "data-target": "#portfolio-modal"}).attr("data-target", "#portfolio-modal").addClass("entry");
+	jQuery(artifact_option_link_a).attr({"href": "#", "data-toggle": "modal", "data-type": "url", "data-target": "#portfolio-modal"}).addClass("entry");
+	var artifact_delete_link_a = document.createElement("a");
+	jQuery(artifact_delete_link_a).html("Delete Artifact");
+	jQuery(artifact_delete_link_a).attr({"href": "#", "data-toggle": "modal", "data-type": "delete-artifact", "data-target": "#portfolio-modal"}).addClass("artifact-option");
 
 	// Append anchors to list items 
 	jQuery(artifact_option_reflection).append(artifact_option_reflection_a);
 	jQuery(artifact_option_media).append(artifact_option_media_a);
 	jQuery(artifact_option_link).append(artifact_option_link_a);
+	jQuery(artifact_delete_link).append(artifact_delete_link_a);
 
 	// Append list items to artifact options ul
 	jQuery(artifact_options).append(artifact_option_media);
 	jQuery(artifact_options).append(artifact_option_reflection);
 	jQuery(artifact_options).append(artifact_option_link);
+	jQuery(artifact_options).append(artifact_delete_link);
 
 	// Append the artifact options ul to the button group
 	jQuery(artifact_content).append(artifact_options);
@@ -641,7 +647,7 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 		case "url" :
 			if (jQuery("[data-id="+ jsonResponse.pentry_id + "]").length) {
 				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-title").children("a").html(jQuery("#media-entry-title").val());
-				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-content").children("a").html(jQuery("#entry-description").val());
+				jQuery("[data-id="+ jsonResponse.pentry_id + "] .entry-content").children("a").html(jsonResponse.type);
 			} else {
 				var entry_row = document.createElement("tr");			
 				var entry_delete_cell = document.createElement("td");
@@ -674,6 +680,7 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 				jQuery(entry_date_cell).append(entry_date_a).addClass("entry-date");
 
 				var entry_type_cell = document.createElement("td");
+				var entry_type_a = document.createElement("a");
 				jQuery(entry_type_a).html(type).attr({"href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal", "data-type": type + "-entry"}).addClass("edit-entry");
 				jQuery(entry_type_cell).append(entry_type_a).addClass("entry-content");
 				jQuery(entry_row).append(entry_delete_cell).append(entry_title_cell).append(entry_type_cell).append(entry_date_cell).attr("data-id", jsonResponse.pentry_id);

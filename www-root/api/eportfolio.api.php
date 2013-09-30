@@ -165,7 +165,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							$pentry = Models_Eportfolio_Entry::fetchRow($PROCESSED["pentry_id"]);
 							if ($pentry->fromArray($PROCESSED)->update()) {
 								$PROCESSED["_edata"] = unserialize($PROCESSED["_edata"]);
-								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
+								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "type" => $pentry->getType(), "edata" => $pentry->getEdataDecoded(), "submitted_date" => $PROCESSED["submitted_date"])));
 							} else {
 								echo json_encode(array("status" => "error", "data" => "fail"));
 							}
