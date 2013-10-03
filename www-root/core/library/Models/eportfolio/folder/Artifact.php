@@ -81,11 +81,9 @@ class Models_Eportfolio_Folder_Artifact {
 		
 		$query = "	SELECT a.* 
 					FROM `portfolio_folder_artifacts` AS a".
-					(!is_null($proxy_id) && !is_null($pfolder_id) ? " LEFT JOIN `portfolio_entries` AS b
-					ON a.`pfartifact_id` = b.`pfartifact_id`" : "").
 					(!is_null($pfolder_id) || !is_null($proxy_id) ? " WHERE " : "").
 					(!is_null($pfolder_id) ? "a.`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
-					(!is_null($proxy_id) ? "(b.`proxy_id` = " . $db->qstr($proxy_id) ." OR b.`proxy_id` = 0)". " AND " : " a.`proxy_id` = '0' AND ")." 
+					(!is_null($proxy_id) ? "(a.`proxy_id` = " . $db->qstr($proxy_id) ." OR a.`proxy_id` = 0)". " AND " : " a.`proxy_id` = '0' AND ")." 
 					a.`active` = ?
 					GROUP BY a.`pfartifact_id`";
 		$results = $db->GetAll($query, array($active));
