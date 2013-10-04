@@ -41,6 +41,7 @@ if (!defined("PARENT_INCLUDED")) {
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
+	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
 	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."'; var PROXY_ID = '".$ENTRADA_USER->getProxyId()."'; var FLAGGED = false;</script>";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
 	load_rte("minimal");
@@ -573,6 +574,66 @@ if (!defined("PARENT_INCLUDED")) {
 				}
 				e.preventDefault();
 			});
+			$("#advisors").on("click", ".advisor", function(e) {
+				var btn = $(this);
+				$("#advisors .right-pane").empty()
+				$.ajax({
+					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "GET",
+					data : "method=get-advisor-students&padvisor_proxy_id=" + btn.data("id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							var user_list = document.createElement("ul");
+							$.each(jsonResponse.data, function(i, v) {
+								var user_line = document.createElement("li");
+								var user_link = document.createElement("a");
+								$(user_link).attr({"href" : "#", "data-student-id" : v.proxy_id, "data-advisor-id" : btn.data("id")}).html("<i class=\"icon-trash\"></i>").addClass("remove-relation");
+								$(user_line).html(v.fullname).append(user_link);
+								$(user_list).append(user_line);
+							});
+							
+							var title = document.createElement("h1");
+							$(title).html("Students assigned to " + btn.html());
+							
+							$("#advisors .right-pane").append(title).append("<div class=\"row-fluid\"><a href=\"#advisor-modal\" data-advisor-id=\""+btn.data("id")+"\" data-toggle=\"modal\" class=\"btn btn-success pull-right add-student-btn\"><i class=\"icon-plus-sign icon-white\"></i> Add Student</a></div>");
+							$("#advisors .right-pane").append(user_list);
+						}
+						
+					}
+				});
+				e.preventDefault();
+			});
+			$("#advisors").on("click", ".remove-relation", function(e) {
+				var btn = $(this);
+				$.ajax({
+					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=delete-advisor-student&student_id=" + btn.data("student-id") + "&advisor_id=" + btn.data("advisor-id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							btn.parent().remove();
+						}
+					}
+				});
+			});
+			$("#advisors").on("click", ".add-student-btn", function(e) {
+				$("#advisor_id").attr("value", $(this).data("advisor-id"));
+			});
+			$("#advisors").on("click", ".add-students", function(e) {
+				$.ajax({
+					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					type : "POST",
+					data : "method=add-advisor-students&student_ids=" + $("#associated_student").attr("value") + "&advisor_id=" + $("#advisor_id").attr("value"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							
+						}
+					}
+				});
+			});
 		});
 	</script>
 	<style type="text/css">
@@ -640,11 +701,14 @@ if (!defined("PARENT_INCLUDED")) {
 		#ui-datepicker-div {
 			z-index:1050!important;
 		}
+		#advisor-modal .modal-body {
+			overflow-y:visible;
+		}
 	</style>
 	<ul class="nav nav-tabs">
 		<li><a href="#review" data-toggle="tab">Review</a></li>
-		<li class="active"><a href="#manage" data-toggle="tab">Manage</a></li>
-		<li><a href="#advisors" data-toggle="tab">Advisors</a></li>
+		<li><a href="#manage" data-toggle="tab">Manage</a></li>
+		<li class="active"><a href="#advisors" data-toggle="tab">Advisors</a></li>
     </ul>
 	
 	<div class="tab-content visible">
@@ -688,7 +752,7 @@ if (!defined("PARENT_INCLUDED")) {
 				</div>
 			</div>
 		</div>
-		<div class="tab-pane active" id="manage">
+		<div class="tab-pane" id="manage">
 			<div class="pane-container row-fluid">
 				<div class="left-pane span3">
 					<ul>
@@ -727,8 +791,52 @@ if (!defined("PARENT_INCLUDED")) {
 				</div>
 			</div>
 		</div>
-		<div class="tab-pane" id="advisors">
-			
+		<div class="tab-pane active" id="advisors">
+			<div class="pane-container row-fluid">
+				<div class="left-pane span3">
+					<ul>
+						<?php
+						$eportfolio_advisors = Models_Eportfolio_Advisor::fetchAll();
+						if ($eportfolio_advisors) {
+							foreach ($eportfolio_advisors as $advisor) {
+								?><li><a href="#" data-id="<?php echo $advisor->getProxyID(); ?>" class="advisor"><?php echo $advisor->getFirstName() . " " . $advisor->getLastName(); ?></a></li><?php
+							}
+						}
+						?>
+					</ul>
+				</div>
+				<div class="right-pane span9"></div>
+			</div>
+			<div id="advisor-modal" class="modal hide">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h3>Add Students</h3>
+				</div>
+				<div class="modal-body">
+					<form action="<?php echo ENTRADA_URL; ?>/api/eportfolio.api.php" method="POST" class="form-horizontal admin-advisor-form" id="advisor-form">
+						<div class="control-group">
+							<label class="control-label" for="student-name">Student Name</label>
+							<div class="controls">
+								<input type="text" id="student_name" name="fullname" autocomplete="off" placeholder="Example: <?php echo html_encode($ENTRADA_USER->getLastname().", ".$ENTRADA_USER->getFirstname()); ?>" />
+                                <?php
+                                $ONLOAD[] = "student_list = new AutoCompleteList({ type: 'student', url: '". ENTRADA_RELATIVE ."/api/personnel.api.php?type=student', remove_image: '". ENTRADA_RELATIVE ."/images/action-delete.gif'})";
+                                ?>
+                                <div class="autocomplete" id="student_name_auto_complete"></div>
+                                <input type="hidden" id="associated_student" name="associated_student" />
+                                <input type="button" class="btn" id="add_associated_student" value="Add" />
+								<ul id="student_list" class="menu" style="margin-top: 15px"></ul>
+								<input type="hidden" id="student_ref" name="student_ref" value="" />
+                                <input type="hidden" id="student_id" name="student_id" value="" />
+								<input type="hidden" id="advisor_id" name="advisor_id" value="" />
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+					<a href="#" class="btn btn-primary add-students">Add students</a>
+				</div>
+			</div>
 		</div>
 	</div>
 	<?php

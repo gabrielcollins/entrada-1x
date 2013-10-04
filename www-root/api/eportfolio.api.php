@@ -484,7 +484,49 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					} else {
 						echo json_encode(array("status" => "error", "data" => $ERRORS));
 					}
-					
+				break;
+				case "delete-advisor-student" :
+					if(isset(${$request_var}["student_id"]) && $tmp_input = clean_input(${$request_var}["student_id"], "int")) {
+						$PROCESSED["student_id"] = $tmp_input;
+					} else {
+						add_error("Invalid student id");
+					}
+					if(isset(${$request_var}["advisor_id"]) && $tmp_input = clean_input(${$request_var}["advisor_id"], "int")) {
+						$PROCESSED["advisor_id"] = $tmp_input;
+					} else {
+						add_error("Invalid advisor id");
+					}
+					if (!$ERROR) {
+						if (Models_Eportfolio_Advisor::deleteRelation($PROCESSED["advisor_id"], $PROCESSED["student_id"])) {
+							echo json_encode(array("status" => "success", "data" => array("student_id" => $PROCESSED["student_id"])));
+						} else {
+							echo json_encode(array("status" => "error", "data" => array("student_id" => $PROCESSED["student_id"])));
+						}
+					}
+				break;
+				case "add-advisor-students" :
+					if(isset(${$request_var}["student_ids"]) && $tmp_input = clean_input(${$request_var}["student_ids"], array("trim", "striptags"))) {
+						$student_ids = explode(",", $tmp_input);
+						foreach ($student_ids as $id) {
+							$s[] = (int) $id;
+						}
+						if (empty($s)) {
+							add_error("Invalid student ID");
+						}
+					} else {
+						add_error("Invalid student id");
+					}
+					if(isset(${$request_var}["advisor_id"]) && $tmp_input = clean_input(${$request_var}["advisor_id"], "int")) {
+						$PROCESSED["advisor_id"] = $tmp_input;
+					} else {
+						add_error("Invalid advisor id");
+					}
+					if (!$ERROR) {
+						foreach ($s as $student_id) {
+							Models_Eportfolio_Advisor::addRelation($PROCESSED["advisor_id"], $student_id);
+						}
+						echo json_encode(array("status" => "success", "data" => array("student_id" => implode(",", $s))));
+					}
 				break;
 			}
 		break;
@@ -673,6 +715,35 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 					} else {
 						echo json_encode(array("status" => "error", "data" => "No entry ID or invalid entry ID."));
+					}
+				break;
+				case "get-advisor-students" :
+					if (isset(${$request_var}["padvisor_proxy_id"]) && $tmp_input = clean_input(${$request_var}["padvisor_proxy_id"], "int")) {
+						$PROCESSED["padvisor_proxy_id"] = $tmp_input;
+					}
+					
+					if ($PROCESSED["padvisor_proxy_id"]) {
+						$advisor = Models_Eportfolio_Advisor::fetchRow($PROCESSED["padvisor_proxy_id"]);
+						if ($advisor) {
+							$related_users = $advisor->getRelated();
+							if ($related_users) {
+								$users = array();
+								$i = 0;
+								foreach ($related_users as $user) {
+									$u = User::get($user["to"]);
+									$users[$i]["fullname"] = $u->getFullname(false);
+									$users[$i]["proxy_id"] = $user["to"];
+									$i++;
+								}
+								echo json_encode(array("status" => "success", "data" => $users));
+							} else {
+								echo json_encode(array("status" => "error", "data" => array("There are no students associated with this advisor")));
+							}
+						} else {
+							echo json_encode(array("status" => "error", "data" => array("A problem occurred when fetching this advisor.")));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => array("An invalid advisor ID was provided.")));
 					}
 				break;
 			}

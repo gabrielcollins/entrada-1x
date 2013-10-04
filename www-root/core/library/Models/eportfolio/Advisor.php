@@ -25,12 +25,15 @@
 
 class Models_Eportfolio_Advisor {
 
-	private $user,
+	private $padvisor_id,
+			$proxy_id,
+			$firstname,
+			$lastname,
 			$related;
 	
-	public function __construct($proxy_id) {
-		if (is_int($proxy_id)) {
-			$this->user = Models_User::get($proxy_id);
+	public function __construct($arr = NULL) {
+		if (is_array($arr)) {
+			$this->fromArray($arr);
 		}
 	}
 	
@@ -52,35 +55,52 @@ class Models_Eportfolio_Advisor {
 		return $this;
 	}
 	
-	public static function fetchRow($pfolder_id, $active = 1) {
+	public static function fetchRow($proxy_id, $organisation_id = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolio_folders` WHERE `pfolder_id` = ? AND `active` = ?";
-		$result = $db->GetRow($query, array($pfolder_id, $active));
+		$query = "SELECT a.`padvisor_id`, b.`id` AS `proxy_id`, b.`firstname`, b.`lastname`
+					FROM `portfolio-advisors` AS a
+					JOIN `entrada-gh-auth`.`user_data` AS b
+					ON a.`proxy_id` = b.`id`
+					JOIN `entrada-gh-auth`.`user_access` AS c
+					ON a.`proxy_id` = c.`user_id`
+					AND c.`organisation_id` = ".$db->qstr($organisation_id)."
+					WHERE a.`proxy_id` = ".$db->qstr($proxy_id)."
+					GROUP BY a.`proxy_id`";
+		$result = $db->GetRow($query);
 		if ($result) {
-			$folder = new self($result);
-			return $folder;
+			$query = "SELECT * FROM `".AUTH_DATABASE."`.`user_relations` WHERE `from` = ".$db->qstr($proxy_id);
+			$related = $db->GetAll($query);
+			if ($related) {
+				$result["related"] = $related;
+			}
+			$advisor = new self($result);
+			return $advisor;
 		} else {
 			return false;
 		}
 	}
 	
-	public static function fetchAll($role = "faculty", $assigned = NULL, $active = 1) {
+	public static function fetchAll($organisation_id = 1) {
 		global $db;
 		
-		$query = "SELECT a.`proxy_id`
-					FROM `".AUTH_DATABASE."`.`user_data` AS a
-					JOIN `".AUTH_DATABASE."`.`user_access` AS b
-					ON a.`id` = b.`user_id`"
-					.(!is_null($assigned) ? "JOIN `user_relations` AS c ON a.`id` = c.`from`" : "")."
-					WHERE b.`group` = ".$db->qstr($role)."
-					AND b.`organisation_id` = 1
-					AND (b.`access_expires` = 0 || b.`access_expires` > UNIX_TIMESTAMP(NOW()))
-					GROUP BY a.`id`";
-		$results = $db->GetAll($query, array($active));
+		$query = "SELECT a.`padvisor_id`, b.`id` AS `proxy_id`, b.`firstname`, b.`lastname`
+					FROM `portfolio-advisors` AS a
+					JOIN `entrada-gh-auth`.`user_data` AS b
+					ON a.`proxy_id` = b.`id`
+					JOIN `entrada-gh-auth`.`user_access` AS c
+					ON a.`proxy_id` = c.`user_id`
+					AND c.`organisation_id` = ".$db->qstr($organisation_id)."
+					GROUP BY a.`proxy_id`";
+		$results = $db->GetAll($query);
 		if ($results) {
 			$advisors = array();
 			foreach ($results as $result) {
+				$query = "SELECT * FROM `".AUTH_DATABASE."`.`user_relations` WHERE `from` = ".$db->qstr($result["proxy_id"]);
+				$related = $db->GetAll($query);
+				if ($related) {
+					$result["related"] = $related;
+				}
 				$advisors[] = new self($result);
 			}
 			return $advisors;
@@ -91,8 +111,8 @@ class Models_Eportfolio_Advisor {
 	
 	public function insert() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_folders`", $this->toArray(), "INSERT")) {
-			$this->pfolder_id = $db->Insert_ID();
+		if ($db->AutoExecute("`portfolio-advisors`", $this->toArray(), "INSERT")) {
+			$this->padvisor_id = $db->Insert_ID();
 			return true;
 		} else {
 			return false;
@@ -101,7 +121,7 @@ class Models_Eportfolio_Advisor {
 	
 	public function update() {
 		global $db;
-		if ($db->AutoExecute("`portfolio_folders`", $this->toArray(), "UPDATE", "`pfolder_id` = ".$db->qstr($this->getID()))) {
+		if ($db->AutoExecute("`portfolio-advisors`", $this->toArray(), "UPDATE", "`padvisor_id` = ".$db->qstr($this->getID()))) {
 			return true;
 		} else {
 			return false;
@@ -111,10 +131,52 @@ class Models_Eportfolio_Advisor {
 	public function delete() {
 		global $db;
 		
-		$query = "DELETE FROM `portfolio_folders` WHERE `pfolder_id` = ?";
+		$query = "DELETE FROM `portfolio-advisors` WHERE `padvisor_id` = ?";
 		$result = $db->Execute($query, array($this->getID()));
 		
 		return $result;
+	}
+	
+	public function getFirstName() {
+		return $this->firstname;
+	}
+	
+	public function getLastName() {
+		return $this->lastname;
+	}
+	
+	public function getID() {
+		return $this->padvisor_id;
+	}
+	
+	public function getProxyID() {
+		return $this->proxy_id;
+	}
+	
+	public function getRelated() {
+		return $this->related;
+	}
+	
+	public static function deleteRelation($advisor_id, $student_id) {
+		global $db;
+		$query = "DELETE FROM `".AUTH_DATABASE."`.`user_relations` WHERE `from` = ".$db->qstr($advisor_id)." AND `to` = ".$db->qstr($student_id);
+		$result = $db->Execute($query);
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public static function addRelation($advisor_id, $student_id) {
+		global $db;
+		$query = "INSERT INTO `".AUTH_DATABASE."`.`user_relations` (`from`, `to`, `type`) VALUES (".$db->qstr($advisor_id).", ".$db->qstr($student_id).", '1')";
+		$results = $db->Execute($query);
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 }
