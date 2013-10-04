@@ -88,11 +88,11 @@ class Models_Eportfolio_Folder_Artifact {
 					GROUP BY a.`pfartifact_id`";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
-			$portfolios = array();
+			$artifacts = array();
 			foreach ($results as $result) {
-				$portfolios[] = new self($result);
+				$artifacts[] = new self($result);
 			}
-			return $portfolios;
+			return $artifacts;
 		} else {
 			return false;
 		}

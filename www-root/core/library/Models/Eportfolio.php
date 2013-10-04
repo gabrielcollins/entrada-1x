@@ -86,10 +86,10 @@ class Models_Eportfolio {
 		}
 	}
 	
-	public static function fetchAll($active = 1) {
+	public static function fetchAll($organisation_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolios` WHERE `active` = ?";
+		$query = "SELECT * FROM `portfolios` WHERE ".(!is_null($organisation_id) ? " `organisation_id` = ".$db->qstr($organisation_id)." AND " : "")."`active` = ?";
 		$results = $db->GetAll($query, array($active));
 		if ($results) {
 			$portfolios = array();

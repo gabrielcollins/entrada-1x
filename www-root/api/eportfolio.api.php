@@ -235,26 +235,41 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["finish_date"] = 0;
 					}
 					
+					if ($PROCESSED["finish_date"] > 0 && $PROCESSED["finish_date"] < $PROCESSED["start_date"]) {
+						add_error("The finish date can not be before the start date.");
+					}
+					
+					if(${$request_var}["allow_commenting"] && !empty(${$request_var}["allow_commenting"])) {
+						$PROCESSED["allow_commenting"] = 1;
+					} else {
+						$PROCESSED["allow_commenting"] = 0;
+					}
+					
 					if (!$ERROR) {
 						
 						$PROCESSED["artifact_id"] = 2;
-						$PROCESSED["proxy_id"] = $ENTRADA_USER->getID(); // @todo: this needs to be fixed
+						if ($ENTRADA_USER->getGroup() == "student") {
+							$PROCESSED["proxy_id"] = $ENTRADA_USER->getID();
+						} else {
+							// Proxy ID has to be set to 0 for the artifact to be available to everyone.
+							$PROCESSED["proxy_id"] = 0;
+						}
 						$PROCESSED["submitted_date"] = time();
 						$PROCESSED["updated_date"] = date(time());
 						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 						$PROCESSED["order"] = 0;
-						
+
 						if (isset($PROCESSED["pfartifact_id"])) {
-							$pentry = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
-							if ($pentry->fromArray($PROCESSED)->update()) { 
-								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
+							$pfartifact = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
+							if ($pfartifact->fromArray($PROCESSED)->update()) { 
+								echo json_encode(array("status" => "success", "data" => array("pfartifact_id" => $pfartifact->getID(), "pfolder_id" => $pfartifact->getPfolderID(), "title" => $pfartifact->getTitle(), "description" => $pfartifact->getDescription())));
 							} else {
 								echo json_encode(array("error" => "error", "data" => "Unable to create folder artifact. DB said:"));
 							}
 						} else {
-							$pentry = new Models_Eportfolio_Folder_Artifact();
-							if ($pentry->fromArray($PROCESSED)->insert()) {
-								echo json_encode(array("status" => "success", "data" => array("pentry_id" => $pentry->getID(), "title" => $pentry->getTitle(), "edata" => $pentry->getEdataDecoded())));
+							$pfartifact = new Models_Eportfolio_Folder_Artifact();
+							if ($pfartifact->fromArray($PROCESSED)->insert()) {
+								echo json_encode(array("status" => "success", "data" => array("pfartifact_id" => $pfartifact->getID(), "pfolder_id" => $pfartifact->getPfolderID(), "title" => $pfartifact->getTitle(), "description" => $pfartifact->getDescription())));
 							} else {
 								echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
 							}
@@ -434,6 +449,42 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 							echo json_encode(array("status" => "error", "data" => "Unable to remove artifact entry."));
 						}
 					}
+				break;
+				case "delete-artifact" :
+					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portfolio entry artifact id: " . $_GET["pfartifact_id"] . " " . $method);
+					}
+					
+					if (!$ERROR) {
+						$pfartifact = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
+						if ($pfartifact->fromArray(array("active" => 0))->update()) {
+							echo json_encode(array("status" => "success", "data" => $pfartifact->toArray()));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Unable to remove artifact entry."));
+						}
+					}
+				break;
+				case "delete-folder" :
+					if(isset(${$request_var}["pfolder_id"]) && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					} else {
+						add_error("Invalid entry folder id: " . $_GET["pfartifact_id"] . " " . $method);
+					}
+					
+					if (!$ERROR) {
+						$pfolder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
+						
+						if ($pfolder->fromArray(array("active" => 0))->update()) {
+							echo json_encode(array("status" => "success", "data" => $pfartifact->toArray()));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Failed to delete folder"));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORS));
+					}
+					
 				break;
 			}
 		break;
