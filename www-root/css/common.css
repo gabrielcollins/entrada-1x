@@ -4408,4 +4408,20 @@ a.help {
 /*Style for eportfolio module*/
 .artifact-container h3 {
 	line-height: 17px;
-} 
+}
+
+.artifact-due-warning {
+	background: #f0f0f0;
+	border-bottom: 1px solid #dfdfdf;
+}
+
+.artifact-meta-warning {
+	color: #fe1e1e;
+	font-weight: bold;
+}
+
+.entries-list-title {
+	background: #cac9c9;
+	border-bottom: 1px solid #b6b5b5;
+	padding: 4px 10px;
+}

@@ -36,6 +36,8 @@ class Models_Eportfolio_Folder_Artifact {
 			$active = 1,
 			$updated_date,
 			$updated_by,
+			$has_entry = 0,
+			$total_entries = 0,
 			$_edata;
 	
 	public function __construct($arr = NULL) {
@@ -75,21 +77,17 @@ class Models_Eportfolio_Folder_Artifact {
 			return false;
 		}
 	}
-	
+
 	public static function fetchAll($pfolder_id = NULL, $proxy_id = NULL, $active = 1) {
 		global $db;
 		
-		$query = "	SELECT a.* 
-					FROM `portfolio_folder_artifacts` AS a".
-					(!is_null($pfolder_id) || !is_null($proxy_id) ? " WHERE " : "").
-					(!is_null($pfolder_id) ? "a.`pfolder_id` = " . $db->qstr($pfolder_id) . " AND " : ""). 
-					(!is_null($proxy_id) ? "(a.`proxy_id` = " . $db->qstr($proxy_id) ." OR a.`proxy_id` = 0)". " AND " : " a.`proxy_id` = '0' AND ")." 
-					a.`active` = ?
-					GROUP BY a.`pfartifact_id`";
-		$results = $db->GetAll($query, array($active));
+		$query = "  SELECT * FROM `portfolio_folder_artifacts` WHERE `pfolder_id` = ? AND (`proxy_id` = ? OR proxy_id = '0') AND `active` = ? ORDER BY `finish_date`";
+		$results = $db->GetAll($query, array($pfolder_id, $proxy_id, $active));
 		if ($results) {
 			$artifacts = array();
 			foreach ($results as $result) {
+				$result["has_entry"] = self::hasEntry($result["pfartifact_id"], $proxy_id);
+				$result["total_entries"] = self::countEntries($result["pfartifact_id"], $proxy_id);
 				$artifacts[] = new self($result);
 			}
 			return $artifacts;
@@ -193,6 +191,14 @@ class Models_Eportfolio_Folder_Artifact {
 		return $this->_edata;
 	}
 	
+	public function getHasEntry() {
+		return $this->has_entry;
+	}
+	
+	public function getTotalEntries() {
+		return $this->total_entries;
+	}
+	
 	public function getEdataDecoded() {
 		return unserialize($this->_edata);
 	}
@@ -220,6 +226,27 @@ class Models_Eportfolio_Folder_Artifact {
 		return $is_owner;
 	}
 	
+	public function hasEntry ($pfartifact_id = null, $proxy_id = null, $active = 1) {
+		global $db;
+		$has_entry = false;
+		$query = "SELECT * FROM `portfolio_entries` WHERE `pfartifact_id` = ? AND `proxy_id` = ? AND `active` = ?";
+		$result = $db->GetRow($query, array($pfartifact_id, $proxy_id, $active));
+		if ($result) {
+			$has_entry = true;
+		}
+		return $has_entry;
+	}
+	
+	public function countEntries ($pfartifact_id = null, $proxy_id = null, $active = 1) {
+		global $db;
+		$count = false;
+		$query = "SELECT COUNT(*) AS `total_entries` FROM `portfolio_entries` WHERE `pfartifact_id` = ? AND `proxy_id` = ? AND `active` = ?";
+		$result = $db->GetRow($query, array($pfartifact_id, $proxy_id, $active));
+		if ($result) {
+			$count = $result["total_entries"];
+		}
+		return $count;
+	}
 }
 
 ?>

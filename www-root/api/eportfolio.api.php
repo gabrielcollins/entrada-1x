@@ -70,7 +70,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					} else {
-						add_error("Invalid portfolio entry artifact id: " . $_GET["pfartifact_id"] . " " . $method);
+						add_error("Invalid portfolio entry artifact id");
 					}
 					
 					if (${$request_var}["type"] && $tmp_input = clean_input(${$request_var}["type"], array("trim", "striptags"))) {
@@ -150,10 +150,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$_edata = array();
 						$_edata["description"] = $PROCESSED["description"];
 						$_edata["title"] = $PROCESSED["title"];
-						
-						if (isset($PROCESSED["url"])) {
-							$_edata["url"] = $PROCESSED["url"];
-						}
 						
 						if ($PROCESSED["filename"]) {
 							$_edata["filename"] = $PROCESSED["filename"];

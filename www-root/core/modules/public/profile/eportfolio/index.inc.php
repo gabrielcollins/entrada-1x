@@ -1,5 +1,4 @@
-<?php
-/**
+<?php /**
  * Entrada [ http://www.entrada-project.org ]
  *
  * Entrada is free software: you can redistribute it and/or modify
@@ -53,39 +52,64 @@ if (!defined("PARENT_INCLUDED")) {
 			min-height:400px;
 		}
 	</style>
-	<h1>Entrada ePortfolio</h1>
 	<div id="msg"></div>
 	<?php
 	$eportfolio = Models_Eportfolio::fetchRowByGroupID($ENTRADA_USER->getCohort());
 	$folders = $eportfolio->getFolders();
 	?>
-	
-	<h2><?php echo $eportfolio->getPortfolioName(); ?></h2>
 	<div class="btn-group">
-		<a class="btn btn-primary">Folders</a>
-		<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+		<a class="btn btn-info btn-large dropdown-toggle" data-toggle="dropdown" href="#">
+			<i class="icon-road icon-white"></i> 
+			<span id="current-folder">My ePortfolio</span>
+			<span class="caret"></span>
+		</a>
 		<ul class="dropdown-menu" id="folder-list">
 		<?php 
 		foreach ($folders as $folder) { ?>
 			<li>
-				<a href="#" data-id="<?php echo $folder->getID(); ?>" class="folder-item"><?php echo $folder->getTitle(); ?></a>
+				<a href="#" data-id="<?php echo $folder->getID(); ?>" class="folder-item">
+					<i class="icon-folder-open"></i> 
+					<span><?php echo $folder->getTitle(); ?></span>
+				</a>
 			</li>
 		<?php
 		}
 		?>
+			<li class="divider"></li>
+			<li><a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio?section=export-portfolio">Export My Portfolio</a></li>
+		</ul>
+	</div>
+	<div class="btn-group pull-right">
+		<a class="btn btn-large btn-success dropdown-toggle" data-toggle="dropdown" href="#">
+			<i class="icon-white icon-folder-open"></i> My Artifacts
+			<span class="caret"></span>
+		</a>
+		<ul class="dropdown-menu" id="artifact-list">
+			<li id="entries-required" class="entries-list-title"><strong>Artifacts that require entries</strong></li>
+			<li id="entries-attached" class="entries-list-title"><strong>Artifacts with attached entries</strong></li>
+			<li id="entries-user" class="entries-list-title"><strong>Artifacts created by you</strong></li>
+			<li class="divider"></li>
+			<li>
+				<a href="#" data-id="2" id="create-artifact" data-toggle="modal" data-target="#portfolio-modal">
+					<i class="icon-plus"></i> Create My Own Artifact
+				</a>
+			</li>
 		</ul>
 	</div>
 	<div class="folder-container">
-		<h1 id="folder-title"></h1>
+		<h2 id="folder-title"></h2>
 		<div class="row">
-			<a href="#" class="btn btn-primary pull-right space-below" data-toggle="modal" data-target="#portfolio-modal" id="create-artifact">Create Artifact</a>
+			<!--<a href="#" class="btn btn-primary pull-right space-below" data-toggle="modal" data-target="#portfolio-modal" id="create-artifact">Create Artifact</a>-->
 		</div>
 		<div id="msgs"></div>
-		<div class="artifact-container loading"></div>
+		<div id="artifact-container" class="artifact-container loading">
+		</div>
 	</div>
+	<!--
 	<div class="pull-right">
 		<a href="<?php echo ENTRADA_URL; ?>/profile/eportfolio?section=export-portfolio" class="btn btn-primary">Export My Portfolio</a>
 	</div>
+	-->
 	<div class="modal hide fade" id="portfolio-modal" style="width:700px;">
 		<div class="modal-header">
 			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
