@@ -95,7 +95,8 @@ class Entrada_ACL extends ACL_Factory {
 			"myowndepartment",
 			"group",
             "encounter_tracking",
-			"eportfolio"
+			"eportfolio",
+			"eportfolio-artifact"
 		)
 	);
 	/**
@@ -2107,6 +2108,34 @@ class CourseResource extends EntradaAclResource {
 		return "course".($this->specific ? $this->course_id : "");
 	}
 }
+
+class EportfolioArtifactOwnerResource extends EntradaAclResource {
+/**
+ * The artifact ID for this resource
+ * @var integer
+ */
+	var $pfartifact_id;
+
+	/**
+	 * Constructs this artifact resource with the supplied values
+	 * @param integer $pfartifact_id The artifact ID to represent
+	 */
+	function __construct($pfartifact_id, $assert = null) {
+		$this->pfartifact_id = $pfartifact_id;
+		if (isset($assert)) {
+			$this->assert = $assert;
+		}
+	}
+
+	/**
+	 * ACL method for keeping track. Required by Zend_Acl_Resource_Interface.
+	 * Will return based on specifc property of this resource instance.
+	 * @return string
+	 */
+	public function getResourceId() {
+		return "eportfolioArtifactOwner".($this->specific ? $this->pfartifact_id : "");
+	}
+}
 /**
  * Smart gradebook resource object for the EntradaACL.
  *
@@ -2791,6 +2820,33 @@ class EportfolioOwnerAssertion implements Zend_Acl_Assert_Interface {
         }
 
         $res = $db->fetchOne('SELECT * FROM group_members WHERE group_id = '.$resource->portfolio->group_id.' AND proxy_id = '.$role->details["id"]);
+		if(!is_null($res)) {
+			return true;
+		}
+
+		return false;
+	}
+}
+
+class EportfolioArtifactOwnerAssertion implements Zend_Acl_Assert_Interface {
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+		if (!($resource instanceof Core_Acl_Resource_EportfolioResource)) {
+			return false;
+		}
+		if(!isset($resource->pfartifact_id)) {
+			return false;
+		}
+
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+		$role = $acl->_entrada_last_query_role;
+		if(!isset($role->details["id"])) {
+			return false;
+		}
+
+		if ($resource->viewUser->id != Zend_Auth::getInstance()->getIdentity()->id) {
+            return false;
+        }
+        $res = $db->fetchOne('SELECT * FROM `portfolio_folder_artifacts`');
 		if(!is_null($res)) {
 			return true;
 		}

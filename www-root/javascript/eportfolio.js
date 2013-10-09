@@ -26,6 +26,7 @@ jQuery(function($) {
 			fd.append("method", "create-entry");
 			fd.append("type", "file");
 			fd.append("title", jQuery("#entry-title").val());
+			fd.append("filename", jQuery("#file-upload").val());
 			fd.append("description", jQuery("#entry-description").val());
 			fd.append("pfartifact_id", pfartifact_id);
 			
@@ -59,19 +60,17 @@ jQuery(function($) {
 						jQuery(entry_li).append(entry_li_a).append(entry_div);
 						jQuery("#artifact-" + pfartifact_id).append(entry_li);
 						
-
-						jQuery('#portfolio-modal').modal('hide');
+						jQuery("#portfolio-modal").modal("hide");
 						if (jQuery("#artifact-" + pfartifact_id + " .no-entries").length) {
 							jQuery(".no-entries").remove();
 						}
 						
 					} else {
-						display_error(jsonResponse.data, "#msgs", "append");
+						display_error(jsonResponse.data, "#modal-msg", "append");
 					}
 				}
 			}
 		}
-
 		e.preventDefault();
 	});
 
@@ -84,6 +83,11 @@ jQuery(function($) {
 		getFolderArtifacts(pfolder_id);
 		location.hash = $(this).attr("data-id");
 		jQuery("#current-folder").html(jQuery(this).children("span").html());
+		
+		if (jQuery("#msgs .alert-success").length) {
+			jQuery("#msgs .alert-success").remove();
+		}
+		
 		e.preventDefault();
 	});
 
@@ -134,7 +138,7 @@ jQuery(function($) {
 				success: function (data) {
 					var jsonResponse = JSON.parse(data);
 					if (jsonResponse.status == "success") {
-						appendContent(type, jsonResponse.data, pfartifact_id);
+						appendContent(type, jsonResponse.data, pfartifact_id, pfolder_id);
 						$("#portfolio-modal").modal("hide");
 					} else {
 						var msgs = new Array();
@@ -209,6 +213,7 @@ jQuery(function($) {
 				jQuery("#save-button").attr("data-type", "url");
 			break;
 		}
+		
 		buildEntryForm(data_type, pentry_id, true);
 		populateEntryForm(pentry_id);
 		e.preventDefault();
@@ -262,7 +267,6 @@ jQuery(function($) {
 	
 	jQuery("#artifact-list").on("click", ".artifact", function () {
 		var pfartifact_id = jQuery(this).data("id");
-		var proxy_id = PROXY_ID;
 		jQuery("#save-button").attr({"data-artifact": pfartifact_id});
 		entryForm(pfartifact_id);
 	});
@@ -298,10 +302,12 @@ function getFolder (pfolder_id) {
 }
 
 function getFolderArtifacts (pfolder_id) {
+	var proxy_id = PROXY_ID;
+	
 	if (jQuery("#artifact-list .artifact-list-item").length) {
 		jQuery("#artifact-list .artifact-list-item").remove();
 	}
-	var proxy_id = PROXY_ID;
+	
 	jQuery.ajax({
 		url: ENTRADA_URL + "/api/eportfolio.api.php",
 		data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
@@ -311,6 +317,10 @@ function getFolderArtifacts (pfolder_id) {
 			jQuery(".artifact-container").removeClass("loading");
 			jQuery(".artifact-container").empty();
 			if (jsonResponse.status == "success") {
+				if (jQuery("#msgs .alert-info")) {
+					jQuery("#msgs .alert-info").remove();
+				}
+				
 				jQuery.each(jsonResponse.data, function (key, artifact) {
 					var pfartifact_id = artifact.pfartifact_id;
 					var artifact_title = artifact.title;
@@ -324,7 +334,6 @@ function getFolderArtifacts (pfolder_id) {
 					} else {
 						artifact_due = 0;
 					}
-					
 					appendArtifact(pfartifact_id, artifact_title, artifact_due, artifact.total_entries, artifact.has_entry, proxy_id);
 					getEntries(pfartifact_id);
 				});
@@ -342,24 +351,7 @@ function getFolderArtifacts (pfolder_id) {
 			} else {
 				display_notice([jsonResponse.data], "#msgs");
 			}
-			
-			if (!jQuery(".entries-required").length) {
-				var error_required_li = document.createElement("li");
-				jQuery(error_required_li).html("There are no artifacts that require entries.").addClass("artifact-list-item muted entries-required-error").css("padding", "8px 10px");
-				jQuery("#entries-required").after(error_required_li);
-			}
-
-			if (!jQuery(".entries-attached").length) {
-				var error_attached_li = document.createElement("li");
-				jQuery(error_attached_li).html("There are no artifacts with attached entries.").addClass("artifact-list-item muted entries-attached-error").css("padding", "8px 10px");
-				jQuery("#entries-attached").after(error_attached_li);
-			}
-
-			if (!jQuery(".entries-user").length) {
-				var error_user_li = document.createElement("li");
-				jQuery(error_user_li).html("You have not created any artifacts for this folder.").addClass("artifact-list-item muted entries-user-error").css("padding", "8px 10px");
-				jQuery("#entries-user").after(error_user_li);
-			}
+			updateArtifactList(pfolder_id);
 		},
 		error: function () {
 			jQuery(".artifact-container").removeClass("loading");
@@ -492,66 +484,16 @@ function appendArtifact (pfartifact_id, artifact_title, artifact_due, total_entr
 		jQuery(artifact_div).attr({"data-id": pfartifact_id}).append(artifact_title_h2).append(artifact_list).addClass("artifact-group");
 		jQuery("#artifact-container").append(artifact_div);
 	}
-	
-	// Elements for My Artifacts list
-	var artifact_li = document.createElement("li");
-	var artifact_li_a = document.createElement("a");
-	var artifact_li_a_span = document.createElement("span");
-	var artifact_li_div = document.createElement("div");
-	var date_string = "";
-	
-	if (artifact_due != 0) {
-		var date = new Date(artifact_due * 1000);
-		date_string = "Due: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate();
-	} else {
-		date_string = "Due: N/A";
-	}
-	
-	if (has_entry || date_string == "Due: N/A") {
-		jQuery(artifact_li_div).html((total_entries > 0 ? "<span class=\"badge badge-info\">" + total_entries + "</span> " + date_string : "<span class=\"badge\">" + total_entries + "</span> " + date_string )).addClass("muted");
-	} else {
-		var warning_span = document.createElement("span");
-		
-		jQuery(artifact_li_a_span).addClass("artifact-meta-warning");
-		jQuery(warning_span).html(date_string).addClass("badge badge-important");
-		jQuery(artifact_li).addClass("artifact-due-warning");
-		jQuery(artifact_li_div).append(warning_span);
-	}
-	
-	jQuery(artifact_li_a_span).html(artifact_title);
-	jQuery(artifact_li_a).attr({"data-id": pfartifact_id, "href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).append(artifact_li_a_span).append(artifact_li_div).addClass("artifact").css("padding-bottom", "8px");
-	jQuery(artifact_li).append(artifact_li_a).addClass("artifact-list-item");
-
-	if (proxy_id != PROXY_ID) {
-		if (!has_entry) {
-			jQuery(artifact_li).addClass("entries-required");
-			jQuery("#entries-required").after(artifact_li);
-			
-			if (jQuery(".entries-required-error").length) {
-				jQuery(".entries-required-error").remove();
-			}
-		} else {
-			jQuery(artifact_li).addClass("entries-attached");
-			jQuery("#entries-attached").after(artifact_li);
-			
-			if (jQuery(".entries-attached-error").length) {
-				jQuery(".entries-attached-error").remove();
-			}
-		}
-	} else {
-		jQuery(artifact_li).addClass("entries-user");
-		jQuery("#entries-user").after(artifact_li);
-	}
 }
 
-function appendContent (type, jsonResponse, pfartifact_id) {
+function appendContent (type, jsonResponse, pfartifact_id, pfolder_id) {
 	if (jQuery("#display-notice-box-modal").length) {
 		jQuery("#msgs").empty();
 	}
 	
 	switch (type) {
 		case "artifact" :
-			appendArtifactItem(jsonResponse);
+			//appendArtifactItem(jsonResponse);
 		break;
 		case "artifact-edit" :
 			jQuery("span[data-artifact="+ jsonResponse.pentry_id + "]").html(jsonResponse.title);
@@ -637,6 +579,7 @@ function appendContent (type, jsonResponse, pfartifact_id) {
 			jQuery("#msgs").append(confirmation_div);
 		break;
 	}
+	updateArtifactList(pfolder_id);
 }
 
 function populateEntryForm(pentry_id) {
@@ -819,7 +762,7 @@ function buildEntryForm(entry_type, pentry_id, edit_mode) {
 			jQuery(url_control_group).addClass("control-group");
 			jQuery(url_controls).addClass("controls");
 			jQuery(url_input).attr({"name": "description", "id": "entry-description", "type": "text"});
-			jQuery(url_label).attr({"for": "url"}).html("URL").addClass("control-label");
+			jQuery(url_label).attr({"for": "entry-description"}).html("URL").addClass("control-label");
 			jQuery(url_controls).append(url_input);
 			jQuery(url_control_group).append(url_label).append(url_controls);
 			jQuery(url_fieldset).append(url_control_group);
@@ -852,10 +795,107 @@ function appendArtifactItem(artifact) {
 	jQuery(artifact_title_span).html(artifact.title);
 	jQuery(artifact_due).html("<span class=\"badge\">0</span> Due: N/A").addClass("muted");
 	jQuery(artifact_item_a).attr({"href": "#", "data-id": artifact.pentry_id, "data-toggle": "modal", "data-target": "#portfolio-modal"}).append(artifact_title_span).append(artifact_due).css("padding-bottom", "8px").addClass("artifact");
-	jQuery(artifact_item).append(artifact_item_a).addClass("artifact-list-items");
+	jQuery(artifact_item).append(artifact_item_a).addClass("artifact-list-item");
 	jQuery("#entries-user").after(artifact_item);
 	
 	if (jQuery(".entries-user-error").length) {
 		jQuery(".entries-user-error").remove();
 	}
+}
+
+function updateArtifactList (pfolder_id) {
+	
+	var proxy_id = PROXY_ID;
+	
+	if (jQuery(".artifact-list-item").length) {
+		jQuery(".artifact-list-item").remove();
+	}
+	
+	jQuery.ajax({
+		url: ENTRADA_URL + "/api/eportfolio.api.php",
+		data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
+		type: 'GET',
+		success: function (data) {
+			var jsonResponse = JSON.parse(data);
+			if (jsonResponse.status == "success") {
+				jQuery.each(jsonResponse.data, function (key, artifact) {
+					// Elements for My Artifacts list
+					var artifact_li = document.createElement("li");
+					var artifact_li_a = document.createElement("a");
+					var artifact_li_a_span = document.createElement("span");
+					var artifact_li_div = document.createElement("div");
+					var date_string = "";
+					var artifact_due = artifact.finish_date;
+
+					if (artifact_due != 0) {
+						var date = new Date(artifact_due * 1000);
+						date_string = "Due: " + date.getFullYear() + "-" + (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1) + "-" +  (date.getDate() <= 9 ? "0" : "") + date.getDate();
+					} else {
+						date_string = "Due: N/A";
+					}
+
+					if (artifact.has_entry || date_string == "Due: N/A") {
+						jQuery(artifact_li_div).html((artifact.total_entries > 0 ? "<span class=\"badge badge-info\">" + artifact.total_entries + "</span> " + date_string : "<span class=\"badge\">" + artifact.total_entries + "</span> " + date_string )).addClass("muted");
+					} else {
+						var warning_span = document.createElement("span");
+
+						jQuery(artifact_li_a_span).addClass("artifact-meta-warning");
+						jQuery(warning_span).html(date_string).addClass("badge badge-important");
+						jQuery(artifact_li).addClass("artifact-due-warning");
+						jQuery(artifact_li_div).append(warning_span);
+					}
+
+					jQuery(artifact_li_a_span).html(artifact.title);
+					jQuery(artifact_li_a).attr({"data-id": artifact.pfartifact_id, "href": "#", "data-toggle": "modal", "data-target": "#portfolio-modal"}).append(artifact_li_a_span).append(artifact_li_div).addClass("artifact").css("padding-bottom", "8px");
+					jQuery(artifact_li).append(artifact_li_a).addClass("artifact-list-item");
+
+					if (artifact.proxy_id != PROXY_ID) {
+						if (!artifact.has_entry) {
+							jQuery(artifact_li).addClass("entries-required");
+							jQuery("#entries-required").after(artifact_li);
+
+							if (jQuery(".entries-required-error").length) {
+								jQuery(".entries-required-error").remove();
+							}
+						} else {
+							jQuery(artifact_li).addClass("entries-attached");
+							jQuery("#entries-attached").after(artifact_li);
+
+							if (jQuery(".entries-attached-error").length) {
+								jQuery(".entries-attached-error").remove();
+							}
+						}
+					} else {
+						jQuery(artifact_li).addClass("entries-user");
+						jQuery("#entries-user").after(artifact_li);
+					}
+				});
+
+			} else {
+				display_notice([jsonResponse.data], "#msgs");
+			}
+
+			if (!jQuery(".entries-required").length) {
+				var error_required_li = document.createElement("li");
+				jQuery(error_required_li).html("There are no artifacts that require entries.").addClass("artifact-list-item muted entries-required-error").css("padding", "8px 10px");
+				jQuery("#entries-required").after(error_required_li);
+			}
+
+			if (!jQuery(".entries-attached").length) {
+				var error_attached_li = document.createElement("li");
+				jQuery(error_attached_li).html("There are no artifacts with attached entries.").addClass("artifact-list-item muted entries-attached-error").css("padding", "8px 10px");
+				jQuery("#entries-attached").after(error_attached_li);
+			}
+
+			if (!jQuery(".entries-user").length) {
+				var error_user_li = document.createElement("li");
+				jQuery(error_user_li).html("You have not created any artifacts for this folder.").addClass("artifact-list-item muted entries-user-error").css("padding", "8px 10px");
+				jQuery("#entries-user").after(error_user_li);
+			}
+		},
+		error: function () {
+			jQuery(".artifact-container").removeClass("loading");
+			display_error(["An error occurred while attempting to fetch the artifacts associated with this folder. Please try again."], "#msgs", "append");
+		}
+	});
 }

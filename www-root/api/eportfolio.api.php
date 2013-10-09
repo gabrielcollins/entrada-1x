@@ -77,6 +77,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["type"] = $tmp_input;
 					}
 					
+					if (isset($PROCESSED["type"]) && $PROCESSED["type"] == "file") {
+						if (isset(${$request_var}["filename"]) && $tmp_input = clean_input(${$request_var}["filename"], "trim")) {
+							$PROCESSED["filename"] = $tmp_input;
+						} else {
+							add_error("No file");
+						}
+					}
+					
 					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim"))) {
 						if (isset($PROCESSED["type"])) {
 							switch ($PROCESSED["type"]) {
@@ -107,11 +115,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					} else {
 						add_error("<strong>URL</strong> is a required field.");
 					}*/
-					
-					
-					if (isset(${$request_var}["filename"]) && $tmp_input = clean_input(${$request_var}["filename"], "trim")) {
-						$PROCESSED["filename"] = $tmp_input;
-					}
 					
 					if (isset($_FILES) && $_FILES["file"]["name"] && $tmp_input = clean_input($_FILES["file"]["name"], array("trim", "striptags"))) {
 						$PROCESSED["filename"] = preg_replace('/[^a-zA-Z0-9-_\.]/', '', str_replace(" ", "-", trim($tmp_input)));
@@ -741,6 +744,14 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					} else {
 						echo json_encode(array("status" => "error", "data" => array("An invalid advisor ID was provided.")));
 					}
+				break;
+				case "get-is-artifact-owner" :
+					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
+						$PROCESSED["pfartifact_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portfolio entry artifact id");
+					}
+					//echo json_encode($ENTRADA_ACL->amIAllowed(EportfolioArtifactOwnerResource($PROCESSED["pfartifact_id"]), "delete"));
 				break;
 			}
 		break;
