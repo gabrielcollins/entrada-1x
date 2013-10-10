@@ -147,6 +147,9 @@ jQuery(function($) {
 						var msgs = new Array();
 						display_error(jsonResponse.data, "#modal-msg");
 					}
+					if (method == "delete-artifact") {
+						jQuery("#artifact-"+jsonResponse.data.pfartifact_id).parent().remove();
+					}
 				},
 				error: function (data) {
 					display_error(["An error occurred while attempting save this entry. Please try again."], "#modal-msg");
