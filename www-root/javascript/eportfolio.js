@@ -123,6 +123,9 @@ jQuery(function($) {
 			case "delete-entry" :
 				method = "delete-entry";
 			break;
+			case "delete-artifact" :
+				method = "delete-artifact";
+			break;
 		}
 		
 		if (jQuery("#save-button").attr("data-entry")) {
@@ -191,6 +194,14 @@ jQuery(function($) {
 		
 		if (jQuery("#portfolio-form .alert-danger").length) {
 			jQuery("#portfolio-form .alert-danger").remove();
+		}
+		
+		if (jQuery("#display-error-box-modal").length) {
+			jQuery("#display-error-box-modal").remove();
+		}
+		
+		if (jQuery("#save-button").hasClass("btn-danger")) {
+			jQuery("#save-button").removeClass("btn-danger").addClass("btn-primary").html("Save changes");
 		}
 	});
 	
@@ -269,6 +280,14 @@ jQuery(function($) {
 		var pfartifact_id = jQuery(this).data("id");
 		jQuery("#save-button").attr({"data-artifact": pfartifact_id});
 		entryForm(pfartifact_id);
+	});
+	
+	jQuery("#artifact-list").on("click", ".remove-artifact", function(e) {
+		jQuery("#portfolio-modal .modal-header h3").html("Remove Artifact");
+		display_error(["<strong>Warning</strong> You have chosen to remove an artifact you have created.<br /><br />Please use the button below to remove the artifact."], "#portfolio-form", "prepend");
+		jQuery("#save-button").addClass("btn-danger").removeClass("btn-primary").html("Remove").attr("data-type", "delete-artifact");
+		jQuery("#portfolio-form").append("<input type=\"hidden\" name=\"pfartifact_id\" value=\""+jQuery(this).data("id")+"\" />")
+		e.preventDefault();
 	});
 	
 	jQuery("#portfolio-form").on("change", "#entry-type-select", function () {
@@ -866,7 +885,7 @@ function updateArtifactList (pfolder_id) {
 							}
 						}
 					} else {
-						jQuery(artifact_li).addClass("entries-user");
+						jQuery(artifact_li).addClass("entries-user").append("<i class=\"icon-trash remove-artifact\" data-toggle=\"modal\" data-target=\"#portfolio-modal\" data-id=\""+artifact.pfartifact_id+"\"></i>");
 						jQuery("#entries-user").after(artifact_li);
 					}
 				});

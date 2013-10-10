@@ -490,15 +490,19 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if(isset(${$request_var}["pfartifact_id"]) && $tmp_input = clean_input(${$request_var}["pfartifact_id"], "int")) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					} else {
-						add_error("Invalid portfolio entry artifact id: " . $_GET["pfartifact_id"] . " " . $method);
+						add_error("Invalid portfolio entry artifact id: " . ${$request_var}["pfartifact_id"] . " " . $method);
 					}
 					
 					if (!$ERROR) {
 						$pfartifact = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
-						if ($pfartifact->fromArray(array("active" => 0))->update()) {
-							echo json_encode(array("status" => "success", "data" => $pfartifact->toArray()));
+						if ($ENTRADA_USER->getGroup() != "student" || $ENTRADA_USER->getGroup() == "student" && $pfartifact->getProxyID() == $ENTRADA_USER->getID()) {
+							if ($pfartifact->fromArray(array("active" => 0))->update()) {
+								echo json_encode(array("status" => "success", "data" => $pfartifact->toArray()));
+							} else {
+								echo json_encode(array("status" => "error", "data" => "Unable to remove artifact."));
+							}
 						} else {
-							echo json_encode(array("status" => "error", "data" => "Unable to remove artifact entry."));
+							echo json_encode(array("status" => "error", "data" => "You are not authorized to remove this artifact."));
 						}
 					}
 				break;
