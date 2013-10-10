@@ -192,7 +192,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 								if (isset($_POST["isie"]) && $_POST["isie"] == "isie") {
 									header('Location: '.ENTRADA_URL.'/profile/eportfolio#'.$pfolder->getID());
 								} else {
-									echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry.".$db->ErrorMsg()));
+									echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
 								}
 							}
 							
@@ -318,6 +318,46 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
 					}
 				break;
+				case "edit-folder" :
+					if(${$request_var}["pfolder_id"] && $tmp_input = clean_input(${$request_var}["pfolder_id"], "int")) {
+						$PROCESSED["pfolder_id"] = $tmp_input;
+					} else {
+						add_error("Invalid folder ID.");
+					}
+					
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+						$PROCESSED["description"] = $tmp_input;
+					}
+					
+					if(${$request_var}["title"] && $tmp_input = clean_input(${$request_var}["title"], array("trim", "striptags"))) {
+						$PROCESSED["title"] = $tmp_input;
+					} else {
+						add_error("Invalid title.");
+					}
+					
+					if(${$request_var}["allow_learner_artifacts"] && $tmp_input = clean_input(${$request_var}["allow_learner_artifacts"], array("int"))) {
+						$PROCESSED["allow_learner_artifacts"] = $tmp_input;
+					} else {
+						$PROCESSED["allow_learner_artifacts"] = 0;
+					}
+					
+					if (isset($PROCESSED["pfolder_id"])) {
+						$PROCESSED["order"] = 1;
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$PROCESSED["updated_date"] = time();
+						
+						$pfolder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
+						
+						if ($pfolder->fromArray($PROCESSED)->update()) {
+							echo json_encode(array("status" => "success", "data" => $pfolder->toArray()));
+						} else {
+							echo json_encode(array("error" => "error", "data" => "Unable to create portfolio entry."));
+						}
+						
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
 				case "add-pentry-comment" :
 					if(${$request_var}["entry-comment"] && $tmp_input = clean_input(${$request_var}["entry-comment"], array("trim", "allowedtags"))) {
 						$PROCESSED["comment"] = $tmp_input;
@@ -429,9 +469,6 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						
 					}
 				break;
-				case "create-portfolio" :
-					
-				break;
 				case "delete-entry" :
 					if (isset(${$request_var}["pentry_id"]) && $tmp_input = clean_input(${$request_var}["pentry_id"], array("int"))) {
 						$PROCESSED["pentry_id"] = $tmp_input;
@@ -476,7 +513,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$pfolder = Models_Eportfolio_Folder::fetchRow($PROCESSED["pfolder_id"]);
 						
 						if ($pfolder->fromArray(array("active" => 0))->update()) {
-							echo json_encode(array("status" => "success", "data" => $pfartifact->toArray()));
+							echo json_encode(array("status" => "success", "data" => $pfolder->toArray()));
 						} else {
 							echo json_encode(array("status" => "error", "data" => "Failed to delete folder"));
 						}
@@ -515,6 +552,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					} else {
 						add_error("Invalid student id");
 					}
+					
 					if(isset(${$request_var}["advisor_id"]) && $tmp_input = clean_input(${$request_var}["advisor_id"], "int")) {
 						$PROCESSED["advisor_id"] = $tmp_input;
 					} else {
@@ -526,6 +564,160 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						}
 						echo json_encode(array("status" => "success", "data" => array("student_id" => implode(",", $s))));
 					}
+				break;
+				case "add-advisors" :
+					if(isset(${$request_var}["advisor_ids"]) && $tmp_input = clean_input(${$request_var}["advisor_ids"], array("trim", "striptags"))) {
+						$advisor_ids = explode(",", $tmp_input);
+						foreach ($advisor_ids as $id) {
+							$a[] = (int) $id;
+						}
+						if (empty($a)) {
+							add_error("Invalid advisor ID");
+						}
+					} else {
+						add_error("Invalid advisor id");
+					}
+					
+					if (!$ERROR) {
+						$i = 0;
+						foreach ($a as $advisor_id) {
+							$advisor = new Models_Eportfolio_Advisor();
+							if (!$advisor->fromArray(array("proxy_id" => $advisor_id))->insert()) {
+								add_error("Failed to insert advisor");
+							} else {
+								$advisor_data = Models_Eportfolio_Advisor::fetchRow($advisor_id); 
+								$advisors[$i] = $advisor_data->toArray();
+								$i++;
+							}
+						}
+						if (!$ERROR) {
+							echo json_encode(array("status" => "success", "data" => $advisors));
+						} else {
+							echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
+				case "delete-portfolio" :
+					if(isset(${$request_var}["portfolio_id"]) && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+					} else {
+						add_error("Invalid portfolio id");
+					}
+					if (!$ERROR) {
+						$portfolio = Models_Eportfolio::fetchRow($PROCESSED["portfolio_id"]);
+						if ($portfolio->fromArray(array("active" => 0))->update()) {
+							echo json_encode(array("status" => "success", "data" => "Successfully deleted portfolio"));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Failed to delete portfolio"));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
+				case "create-portfolio" :
+					if(isset(${$request_var}["portfolio_id"]) && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$PROCESSED["portfolio_id"] = $tmp_input;
+						$method = "update";
+					} else {
+						$method = "insert";
+					}
+					
+					if(isset(${$request_var}["group_id"]) && $tmp_input = clean_input(${$request_var}["group_id"], "int")) {
+						$PROCESSED["group_id"] = $tmp_input;
+					} else {
+						if (!isset($PROCESSED["portfolio_id"])) {
+							add_error("Invalid group id");
+						}
+					}
+					if(isset(${$request_var}["portfolio_name"]) && $tmp_input = clean_input(${$request_var}["portfolio_name"], array("trim", "striptags"))) {
+						$PROCESSED["portfolio_name"] = $tmp_input;
+					} else {
+						if (!isset($PROCESSED["portfolio_id"])) {
+							add_error("Invalid group name");
+						}
+					}
+					if(isset(${$request_var}["start_date"]) && $tmp_input = clean_input(${$request_var}["start_date"], array("trim", "striptags"))) {
+						$PROCESSED["start_date"] = strtotime($tmp_input);
+					} else {
+						add_error("Invalid start date");
+					}
+					if(isset(${$request_var}["finish_date"]) && $tmp_input = clean_input(${$request_var}["finish_date"], array("trim", "striptags"))) {
+						$PROCESSED["finish_date"] = strtotime($tmp_input);
+					} else {
+						add_error("Invalid finish date");
+					}
+					if(isset(${$request_var}["export"]) && $tmp_input = clean_input(${$request_var}["export"], array("int"))) {
+						$PROCESSED["allow_student_export"] = "1";
+					} else {
+						$PROCESSED["allow_student_export"] = "0";
+					}
+					if (!$ERROR) {
+						$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$portfolio = new Models_Eportfolio();
+						$portfolio->fromArray($PROCESSED);
+						if ($portfolio->$method()) {
+							echo json_encode(array("status" => "success", "data" => $portfolio->toArray()));
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Unable to create new portfolio"));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
+				case "copy-portfolio" :
+					if(isset(${$request_var}["portfolio_id"]) && $tmp_input = clean_input(${$request_var}["portfolio_id"], "int")) {
+						$portfolio_id = $tmp_input;
+					} else {
+						add_error("Invalid portfolio id provided.");
+					}
+					if(isset(${$request_var}["group_id"]) && $tmp_input = clean_input(${$request_var}["group_id"], "int")) {
+						$PROCESSED["group_id"] = $tmp_input;
+					} else {
+						add_error("Invalid group id");
+					}
+					if(isset(${$request_var}["portfolio_name"]) && $tmp_input = clean_input(${$request_var}["portfolio_name"], array("trim", "striptags"))) {
+						$PROCESSED["portfolio_name"] = $tmp_input;
+					} else {
+						add_error("Invalid group name");
+					}
+					if(isset(${$request_var}["start_date"]) && $tmp_input = clean_input(${$request_var}["start_date"], array("trim", "striptags"))) {
+						$PROCESSED["start_date"] = strtotime($tmp_input);
+					} else {
+						add_error("Invalid start date");
+					}
+					if(isset(${$request_var}["finish_date"]) && $tmp_input = clean_input(${$request_var}["finish_date"], array("trim", "striptags"))) {
+						$PROCESSED["finish_date"] = strtotime($tmp_input);
+					} else {
+						add_error("Invalid finish date");
+					}
+					if(isset(${$request_var}["export"]) && $tmp_input = clean_input(${$request_var}["export"], array("int"))) {
+						$PROCESSED["allow_student_export"] = "1";
+					} else {
+						$PROCESSED["allow_student_export"] = "0";
+					}
+					if (!$ERROR) {
+						$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
+						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
+						$portfolio = new Models_Eportfolio();
+						$portfolio->fromArray($PROCESSED);
+						if ($portfolio->insert()) {
+							if ($portfolio->copy($portfolio_id)) {
+								echo json_encode(array("status" => "success", "data" => $portfolio->toArray()));
+							} else {
+								echo json_encode(array("status" => "error", "data" => array("Created new portfolio but failed to copy previous portfolio.")));
+							}
+						} else {
+							echo json_encode(array("status" => "error", "data" => "Unable to create new portfolio"));
+						}
+					} else {
+						echo json_encode(array("status" => "error", "data" => $ERRORSTR));
+					}
+				break;
+				default :
+					application_log("error", "eportfolio.api.php POST called but no valid method provided [".$method."]");
 				break;
 			}
 		break;
@@ -557,11 +749,15 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 					if (${$request_var}["flagged"] && ${$request_var}["flagged"] == true) {
 						$flagged = true;
 					}
+					
+					if (${$request_var}["proxy_id"] && $tmp_input = clean_input(${$request_var}["proxy_id"], "int")) {
+						$PROCESSED["proxy_id"] = $tmp_input;
+					}
 
 					if ($PROCESSED["portfolio_id"]) {
 						$portfolio = Models_Eportfolio::fetchRow($PROCESSED["portfolio_id"]);
 						if ($portfolio) {
-							$group = $portfolio->getGroup($flagged);
+							$group = $portfolio->getGroup($flagged, isset($PROCESSED["proxy_id"]) ? $PROCESSED["proxy_id"] : false);
 							echo json_encode(array("status" => "success", "data" => $group));
 						} else {
 							echo json_encode(array("status" => "error", "data" => "No portfolio found with this portfolio ID."));
@@ -752,6 +948,28 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						add_error("Invalid portfolio entry artifact id");
 					}
 					//echo json_encode($ENTRADA_ACL->amIAllowed(EportfolioArtifactOwnerResource($PROCESSED["pfartifact_id"]), "delete"));
+				break;
+				case "get-cohorts" :
+					$query = "SELECT a.`group_id`, a.`group_name`, a.`start_date`, a.`expire_date`
+								FROM `groups` AS a
+								JOIN `group_organisations` AS b
+								ON a.`group_id` = b.`group_id`
+								LEFT JOIN `portfolios` AS c
+								ON a.`group_id` = c.`group_id`
+								WHERE a.`group_active` = '1'
+								AND b.`organisation_id` = ?
+								AND IF (a.`start_date` IS NOT NULL AND a.`start_date` <> 0, UNIX_TIMESTAMP(NOW()) BETWEEN a.`start_date` AND a.`expire_date`, '1' = '1')
+								AND c.`portfolio_id` IS NULL
+								ORDER BY a.`group_id`";
+					$results = $db->GetAll($query, $ENTRADA_USER->getActiveOrganisation());
+					if (isset($results) && $results) {
+						echo json_encode(array("status" => "success", "data" => $results));
+					} else {
+						echo json_encode(array("status" => "success", "data" => array("No active groups are attached to this organisation.")));
+					}
+				break;
+				default :
+					application_log("error", "eportfolio.api.php GET called but no valid method provided [".$method."]");
 				break;
 			}
 		break;

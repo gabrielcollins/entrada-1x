@@ -29,7 +29,8 @@ class Models_Eportfolio_Advisor {
 			$proxy_id,
 			$firstname,
 			$lastname,
-			$related;
+			$related,
+			$active = 1;
 	
 	public function __construct($arr = NULL) {
 		if (is_array($arr)) {

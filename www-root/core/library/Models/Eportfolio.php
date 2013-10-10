@@ -47,7 +47,9 @@ class Models_Eportfolio {
 		$class_vars = get_class_vars(get_called_class());
 		if (isset($class_vars)) {
 			foreach ($class_vars as $class_var => $value) {
-				$arr[$class_var] = $this->$class_var;
+				if (!is_null($this->$class_var)) {
+					$arr[$class_var] = $this->$class_var;
+				}
 			}
 		}
 		return $arr;
@@ -86,11 +88,27 @@ class Models_Eportfolio {
 		}
 	}
 	
-	public static function fetchAll($organisation_id = NULL, $active = 1) {
+	public static function fetchAll($organisation_id = NULL, $advisor = NULL, $active = 1) {
 		global $db;
 		
-		$query = "SELECT * FROM `portfolios` WHERE ".(!is_null($organisation_id) ? " `organisation_id` = ".$db->qstr($organisation_id)." AND " : "")."`active` = ?";
-		$results = $db->GetAll($query, array($active));
+		if (!is_null($advisor)) {
+			$query = "SELECT e.*
+						FROM `".AUTH_DATABASE."`.`user_relations` AS a
+						JOIN `portfolio_folder_artifacts` AS b
+						ON a.`to` = b.`proxy_id`
+						JOIN `portfolio_entries` AS c
+						ON a.`to` = c.`proxy_id`
+						JOIN `portfolio_folders` AS d
+						ON b.`pfolder_id` = d.`pfolder_id`
+						JOIN `portfolios` AS e
+						ON d.`portfolio_id` = e.`portfolio_id`
+						WHERE a.`from` = ".$db->qstr($advisor)."
+						GROUP BY e.`portfolio_id`";
+		} else {
+			$query = "SELECT * FROM `portfolios` WHERE ".(!is_null($organisation_id) ? " `organisation_id` = ".$db->qstr($organisation_id)." AND " : "")."`active` = ".$db->qstr($active);
+		}
+
+		$results = $db->GetAll($query);
 		if ($results) {
 			$portfolios = array();
 			foreach ($results as $result) {
@@ -138,19 +156,39 @@ class Models_Eportfolio {
 		return $this->group_id;
 	}
 	
-	public function getGroup($flagged = false) {
+	public function getGroup($flagged = false, $proxy_id = false) {
 		global $db;
 		
 		if ($flagged) {
-			$query = "SELECT a.`proxy_id`
-						FROM `group_members` AS a 
-						JOIN `portfolio_entries` AS b
-						ON a.`proxy_id` = b.`proxy_id`
-						WHERE a.`group_id` = ".$db->qstr($this->group_id)." AND a.`member_active` = 1
-						AND b.`flag` = 1
-						GROUP BY a.`gmember_id`, a.`proxy_id`";
+			if ($proxy_id) {
+				$query = "SELECT a.`proxy_id`
+							FROM `group_members` AS a 
+							JOIN `portfolio_entries` AS b
+							ON a.`proxy_id` = b.`proxy_id`
+							JOIN `entrada-gh-auth`.`user_relations` AS c
+							ON a.`proxy_id` = c.`to`
+							WHERE a.`group_id` = ".$db->qstr($this->group_id)." AND a.`member_active` = 1
+							AND b.`flag` = 1
+							AND c.`from` = ".$db->qstr($proxy_id)."
+							GROUP BY a.`gmember_id`, a.`proxy_id`";
+			} else {
+				$query = "SELECT a.`proxy_id`
+							FROM `group_members` AS a 
+							JOIN `portfolio_entries` AS b
+							ON a.`proxy_id` = b.`proxy_id`
+							WHERE a.`group_id` = ".$db->qstr($this->group_id)." AND a.`member_active` = 1
+							AND b.`flag` = 1
+							GROUP BY a.`gmember_id`, a.`proxy_id`";
+			}
 		} else {
-			$query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($this->group_id)." AND `member_active` = 1";
+			if ($proxy_id) {
+				$query = "SELECT a.* FROM `group_members` AS a 
+							LEFT JOIN `".AUTH_DATABASE."`.`user_relations` AS b
+							ON a.`proxy_id` = b.`to`
+							WHERE a.`group_id` = ".$db->qstr($this->group_id)." AND a.`member_active` = 1 AND b.`from` = ".$db->qstr($proxy_id);
+			} else {
+				$query = "SELECT * FROM `group_members` WHERE `group_id` = ".$db->qstr($this->group_id)." AND `member_active` = 1";
+			}
 		}
 		$results = $db->GetAll($query);
 		if ($results) {
@@ -211,6 +249,31 @@ class Models_Eportfolio {
 	public function getFolders() {
 		$folders = Models_Eportfolio_Folder::fetchAll($this->portfolio_id);
 		return $folders;
+	}
+	
+	public function copy($old_portfolio_id) {
+		$old_folders = Models_Eportfolio_Folder::fetchAll($old_portfolio_id);
+		if ($old_folders) {
+			foreach ($old_folders as $folder) {
+				$old_folder_artifacts = $folder->getArtifacts();
+				$folder->fromArray(array("pfolder_id" => NULL, "portfolio_id" => $this->portfolio_id));
+				if ($folder->insert()) {
+					if ($old_folder_artifacts) {
+						foreach ($old_folder_artifacts as $artifact) {
+							$artifact->fromArray(array("pfartifact_id" => NULL, "pfolder_id" => $folder->getID()));
+							if (!$artifact->insert()) {
+								$error;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (!$error) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 }

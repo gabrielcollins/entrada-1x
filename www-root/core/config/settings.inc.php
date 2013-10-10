@@ -514,6 +514,7 @@ $MODULES["notices"] = array("title" => "Manage Notices", "resource" => "notice",
 $MODULES["polls"] = array("title" => "Manage Polls", "resource" => "poll", "permission" => "update");
 $MODULES["quizzes"] = array("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update");
 $MODULES["users"] = array("title" => "Manage Users", "resource" => "user", "permission" => "update");
+$MODULES["eportfolio"] = array("title" => "Manage Eportfolios", "resource" => "eportfolio", "permission" => "read");
 $MODULES["regionaled"] = array("title" => "Regional Education", "resource" => "regionaled", "permission" => "update");
 $MODULES["reports"] = array("title" => "System Reports", "resource" => "reportindex", "permission" => "read");
 $MODULES["settings"] = array("title" => "System Settings", "resource" => "configuration", "permission" => "update");

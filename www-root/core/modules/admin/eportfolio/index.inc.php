@@ -42,20 +42,29 @@ if (!defined("PARENT_INCLUDED")) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/AutoCompleteList.js?release=".html_encode(APPLICATION_VERSION)."\"></script>";
-	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."'; var PROXY_ID = '".$ENTRADA_USER->getProxyId()."'; var FLAGGED = false;</script>";
+	$HEAD[] = "<script type=\"text/javascript\">var ENTRADA_URL = '".ENTRADA_URL."'; var PROXY_ID = '".$ENTRADA_USER->getProxyId()."'; var FLAGGED = false; var ADVISOR = false; var STUDENT_PROXY_ID;</script>";
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/eportfolio.js\"></script>";
 	load_rte("minimal");
 	$HEAD[] = "<script type=\"text/javascript\" src=\"".ENTRADA_URL."/javascript/ckeditor/adapters/jquery.js\"></script>\n";
 	?>
 	<h1>Entrada ePortfolio</h1>
 	<?php
-	$eportfolios = Models_Eportfolio::fetchAll($ENTRADA_USER->getActiveOrganisation());
+	
+	$is_advisor = false;
+	if ($ENTRADA_USER->getRole() != "admin") {
+		$is_advisor = true;
+	}
+	$eportfolios = Models_Eportfolio::fetchAll($ENTRADA_USER->getActiveOrganisation(), $is_advisor ? $ENTRADA_USER->GetID() : NULL);
 	?>
 	<script type="text/javascript">
+		<?php if ($is_advisor == true) { ?>
+		ADVISOR = true;
+		<?php } ?>
+		var api_url = ENTRADA_URL + "/api/eportfolio.api.php";
 		function getPortfolio(portfolio_id) {
 			jQuery.ajax({
-				url: ENTRADA_URL + "/api/eportfolio.api.php",
-				data: "method=get-portfolio-members&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true" : ""),
+				url: api_url,
+				data: "method=get-portfolio-members&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true" : "") + (ADVISOR == true ? "&proxy_id=" + PROXY_ID : ""),
 				type: 'GET',
 				success:function (data) {
 					var jsonResponse = JSON.parse(data);
@@ -64,6 +73,7 @@ if (!defined("PARENT_INCLUDED")) {
 						var user_list = document.createElement("ul");
 						var back_row = document.createElement("li");
 						var back_btn = document.createElement("a");
+						jQuery(back_btn).addClass("back");
 						jQuery(back_row).append(back_btn);
 						jQuery(user_list).append(back_row);
 						jQuery(back_btn).html("<i class=\"icon-chevron-left\"></i> Back")
@@ -83,13 +93,14 @@ if (!defined("PARENT_INCLUDED")) {
 		
 		function getFolders(portfolio_id) {
 			jQuery.ajax({
-				url: ENTRADA_URL + "/api/eportfolio.api.php",
-				data: "method=get-folders&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true&proxy_id="+PROXY_ID : ""),
+				url: api_url,
+				data: "method=get-folders&portfolio_id=" + portfolio_id + (FLAGGED === true ? "&flagged=true&proxy_id="+STUDENT_PROXY_ID : ""),
 				type: 'GET',
 				success:function (data) {
 					var jsonResponse = JSON.parse(data);
 					if (jsonResponse.status == "success") {
 						var folder_list = document.createElement("ul");
+						jQuery(folder_list).attr("class", "folder-list");
 						jQuery.each(jsonResponse.data, function(i, v) {
 							var folder_row = document.createElement("li");
 							var folder_link = document.createElement("a");
@@ -164,18 +175,19 @@ if (!defined("PARENT_INCLUDED")) {
 			var pfolder_id_input = document.createElement("input");
 			jQuery(pfolder_id_input).attr({"type" : "hidden", "name" : "pfolder_id", "value" : btn.data("pfolder-id")});
 
-			jQuery("#portfolio-form").append(pfolder_id_input).append("<input type=\"hidden\" name=\"method\" value=\"create-artifact\" />").append(reviewers_control_group).append(start_date_control_group).append(finish_date_control_group).append(enable_commenting_control_group).attr("action", ENTRADA_URL + "/api/eportfolio.api.php");
+			jQuery("#portfolio-form").append(pfolder_id_input).append("<input type=\"hidden\" name=\"method\" value=\"create-artifact\" />").append(reviewers_control_group).append(start_date_control_group).append(finish_date_control_group).append(enable_commenting_control_group).attr("action", api_url);
 			jQuery("#start_date").datepicker({ dateFormat: "yy-mm-dd" });
 			jQuery("#finish_date").datepicker({ dateFormat: "yy-mm-dd" });
-			jQuery("#artifact-description").ckeditor()
+//			jQuery("#artifact-description").ckeditor()
 		}
 		
 		jQuery(function($) {
+			
 			$("#portfolio-list, #breadcrumb").on("click", ".portfolio-item", function (e) {
 				portfolio_id = $(this).data("id");
 				getPortfolio(portfolio_id);
 				location.hash = $(this).attr("data-id");
-				
+				console.log(portfolio_id);
 				$("#breadcrumb").html("");
 				$("#user-portfolio").html("");
 				var span = document.createElement("span");
@@ -183,15 +195,15 @@ if (!defined("PARENT_INCLUDED")) {
 				$(span).append(breadcrumb_link);
 				$("#breadcrumb").append(span);
 				
-				jQuery("#user-portfolio").html("<h1>"+$(breadcrumb_link).html()+"</h1>");
+				jQuery("#user-portfolio").html("<div class=\"title-container row-fluid\"><h1 class=\"pull-left\">"+$(breadcrumb_link).html()+"</h1></div>");
 				display_notice(["Select a learner from the menu on the left to review their portfolio."], $("#user-portfolio"), "append");
-				
+
 				e.preventDefault();
 			});
 			$("#portfolio-container, #breadcrumb").on("click", ".portfolio-user", function(e) {
 				$(".portfolio-user").removeClass("active");
 				$(this).addClass("active");
-				PROXY_ID = $(this).data("proxy-id");
+				STUDENT_PROXY_ID = $(this).data("proxy-id");
 				portfolio_id = $(this).data("portfolio-id");
 				
 				$("#breadcrumb .portfolio-user").parent().remove();
@@ -200,14 +212,26 @@ if (!defined("PARENT_INCLUDED")) {
 				var breadcrumb_link = $(this).clone();
 				$(span).append(" / ").append(breadcrumb_link);
 				$("#breadcrumb").append(span);
-				
-				jQuery("#user-portfolio").html("<h1>"+$(breadcrumb_link).html()+"</h1>");
+
+				jQuery("#user-portfolio").html("<div class=\"title-container row-fluid\"><h1 class=\"pull-left\">"+$(breadcrumb_link).html()+"</h1></div>");
 				
 				getFolders(portfolio_id);
 				
 				e.preventDefault();
 			});
+			$("#portfolio-container").on("click", ".back", function(e) {
+				if ($("#breadcrumb span").length > 1) {
+					$("#breadcrumb span:eq("+ ($("#breadcrumb span").length - 2) + ")").children("a").click();
+				}
+			});
 			$("#portfolio-container, #breadcrumb").on("click", ".portfolio-folder", function(e) {
+				
+				var group_container = $(document.createElement("div"));
+				group_container.addClass("btn-group space-above pull-right");
+				group_container.append("<a class=\"btn dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">Folder<span class=\"caret\"></span></a>");
+				var folder_list = $(".folder-list").clone();
+				folder_list.addClass("dropdown-menu");
+				group_container.append(folder_list);
 				
 				$("#user-portfolio").html("");
 				
@@ -216,12 +240,14 @@ if (!defined("PARENT_INCLUDED")) {
 				var breadcrumb_link = $(this).clone();
 				$(span).append(" / ").append(breadcrumb_link);
 				$("#breadcrumb").append(span);
-				$("#user-portfolio").append("<h1>" + $(breadcrumb_link).html() + "</h1>");
+				$("#user-portfolio").append("<div class=\"title-container row-fluid\"><h1 class=\"pull-left\">" + $(breadcrumb_link).html() + "</h1></div>");
+				
+				$(".title-container").append(group_container);
 				
 				var pfolder_id = $(this).data("pfolder-id");
-				var proxy_id = PROXY_ID;
+				var proxy_id = STUDENT_PROXY_ID;
 				$.ajax({
-					url: ENTRADA_URL + "/api/eportfolio.api.php",
+					url: api_url,
 					data: "method=get-folder-artifacts&pfolder_id=" + pfolder_id + "&proxy_id=" + proxy_id,
 					type: 'GET',
 					success:function (data) {
@@ -236,7 +262,7 @@ if (!defined("PARENT_INCLUDED")) {
 								$(artifact_title).html(v.title);
 								var entries = document.createElement("ul");
 								$.ajax({
-									url : ENTRADA_URL + "/api/eportfolio.api.php",
+									url : api_url,
 									data : "method=get-artifact-entries&pfartifact_id=" + pfartifact_id + "&proxy_id=" + proxy_id,
 									type : 'GET',
 									success : function (data) {
@@ -244,7 +270,7 @@ if (!defined("PARENT_INCLUDED")) {
 										if (typeof entryJsonResponse.data != "string") {
 											$.each(entryJsonResponse.data, function(i, v) {
 												var entry_row = document.createElement("li");
-												$(entry_row).addClass("well");
+												$(entry_row).addClass("well entry-row entry-"+v.entry.pentry_id);
 												if (typeof v.entry._edata != 'undefined') {
 													if (typeof v.entry._edata.title != 'undefined' && v.entry._edata.description.title > 0) {
 														$(entry_row).append("<h3>" + v.entry._edata.title + "</h3>");
@@ -262,13 +288,14 @@ if (!defined("PARENT_INCLUDED")) {
 														var comment_container = document.createElement("div");
 														$(comment_container).addClass("comments well space-above").html("<strong>Comments:</strong><hr />").attr("id", "comments-"+v.entry.pentry_id);
 														$.each(v.comments, function(c_i, comment) {
-															$(comment_container).append("<div class=\"comment\">&ldquo;"+comment.comment+"&rdquo;<br /><span class=\"muted content-small\">"+comment.commentor+" - "+comment.submitted_date + "</span> - <i class=\"icon-trash comment-delete\" style=\"cursor:pointer;\" data-pecomment-id=\""+comment.pecomment_id+"\"></i><hr /></div>");
+															console.log(PROXY_ID);
+															$(comment_container).append("<div class=\"comment\">&ldquo;"+comment.comment+"&rdquo;<br /><span class=\"muted content-small\">"+comment.commentor+" - "+comment.submitted_date + "</span> " + ((ADVISOR == true && comment.proxy_id == PROXY_ID) || ADVISOR == false ? " - <i class=\"icon-trash comment-delete\" style=\"cursor:pointer;\" data-pecomment-id=\""+comment.pecomment_id+"\"></i>" : "") + "<hr /></div>");
 														});
 														$(entry_row).append(comment_container);
 													}
 													
 													var entry_controls = document.createElement("div");
-													$(entry_controls).addClass("row-fluid space-above");
+													$(entry_controls).addClass("row-fluid space-above controls");
 													
 													var flag_btn = document.createElement("button");
 													$(flag_btn).addClass("btn btn-danger btn-mini pull-right add-flag space-right" + (v.entry.flag == 1 ? " flagged" : "")).attr("data-pentry-id", v.entry.pentry_id).html("<i class=\"icon-flag icon-white\"></i> " + (v.entry.flag == 1 ? "Flagged" : "Flag"))
@@ -313,10 +340,16 @@ if (!defined("PARENT_INCLUDED")) {
 				} else {
 					FLAGGED = false;
 				}
-			
+				
+				if ($("#breadcrumb .portfolio-item").length > 0) {
+					$("#breadcrumb .portfolio-item").click();
+				}
+				
 				e.preventDefault();
 			})
 			$("#user-portfolio").on("click", ".add-comment", function(e) {
+
+				$("#entry-modal .modal-body #modal-form").empty();
 
 				$("#entry-modal .modal-header h3").html("Add Comment");
 				$("#entry-modal .modal-footer .btn-primary").html("Save Comment");
@@ -333,7 +366,7 @@ if (!defined("PARENT_INCLUDED")) {
 				$(comment_box_container).addClass("controls");
 				var comment_box = document.createElement("textarea");
 				$(comment_box).attr("id", "entry-comment").attr("name", "entry-comment");
-				
+				$(comment_box).ckeditor();
 				$(comment_box_container).append(comment_box);
 				$(comment_row).append(comment_box_container);
 				
@@ -346,24 +379,33 @@ if (!defined("PARENT_INCLUDED")) {
 				var form = $(this);
 				
 				$.ajax({
-				url : ENTRADA_URL + "/api/eportfolio.api.php",
+				url : api_url,
 					type : "POST",
 					data : "method=add-pentry-comment&" + form.serialize(),
 					success: function(data) {
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
-							var comment = "&ldquo;"+jsonResponse.data.comment+"&rdquo;<br /><span class=\"muted content-small\">"+jsonResponse.data.commentor+" - "+jsonResponse.data.submitted_date+"</span><hr />";
-							$("#comments-"+jsonResponse.data.pentry_id).append(comment);
+							var comment = "&ldquo;"+jsonResponse.data.comment+"&rdquo;<br /><span class=\"muted content-small\">" + jsonResponse.data.commentor + " - "+jsonResponse.data.submitted_date+" - <i class=\"icon-trash comment-delete\" style=\"cursor:pointer;\" data-pecomment-id=\""+comment.pecomment_id+"\"></i></span><hr />";
+							if ($("#comments-"+jsonResponse.data.pentry_id).length > 0) {
+								$("#comments-"+jsonResponse.data.pentry_id).append(comment);
+							} else {
+								var comment_container = document.createElement("div");
+								$(comment_container).addClass("comments well space-above").html("<strong>Comments:</strong><hr />").attr("id", "comments-"+jsonResponse.data.pentry_id);
+								$(".entry-"+jsonResponse.data.pentry_id+" .controls").prepend(comment_container);
+								$("#comments-"+jsonResponse.data.pentry_id).append(comment);
+							}
 						}
 					}
 				});
 
+				$("#entry-modal").modal("hide");
+
 				e.preventDefault();
 			});
-			$("#entry-modal .modal-footer .btn-primary").on("click", function(e) {
-				$("#modal-form").submit();
-				e.preventDefault();
-			});
+//			$("#entry-modal .modal-footer .btn-primary").on("click", function(e) {
+//				$("#modal-form").submit();
+//				e.preventDefault();
+//			});
 			$("#user-portfolio").on("click", ".add-flag", function(e) {
 				var btn = $(this);
 				var action = "flag";
@@ -371,7 +413,7 @@ if (!defined("PARENT_INCLUDED")) {
 					action = "unflag";
 				}
 				$.ajax({
-				url : ENTRADA_URL + "/api/eportfolio.api.php",
+				url : api_url,
 					type : "POST",
 					data : "method=pentry-flag&action="+action+"&pentry_id=" + btn.data("pentry-id"),
 					success: function(data) {
@@ -392,7 +434,7 @@ if (!defined("PARENT_INCLUDED")) {
 					action = "unreview";
 				}
 				$.ajax({
-				url : ENTRADA_URL + "/api/eportfolio.api.php",
+				url : api_url,
 					type : "POST",
 					data : "method=pentry-review&action="+action+"&pentry_id=" + btn.data("pentry-id"),
 					success: function(data) {
@@ -409,7 +451,7 @@ if (!defined("PARENT_INCLUDED")) {
 			$("#user-portfolio").on("click", ".comment-delete", function(e) {
 				var btn = $(this);
 				$.ajax({
-				url : ENTRADA_URL + "/api/eportfolio.api.php",
+				url : api_url,
 					type : "POST",
 					data : "method=delete-pentry-comment&pecomment_id=" + btn.data("pecomment-id"),
 					success: function(data) {
@@ -423,11 +465,14 @@ if (!defined("PARENT_INCLUDED")) {
 			});
 			
 			$("#manage").on("click", ".portfolio-item", function(e) {
+				
+				$("#portfolio-actions").show().attr("data-portfolio-id", $(this).data("portfolio-id"));
 				var btn = $(this);
+				$("#manage .add-folder").attr("data-id", btn.data("portfolio-id"));
 				$("#manage-eportfolio-title").html(btn.html())
 				$("#artifacts").empty();
 				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					url : api_url,
 					type : "GET",
 					data : "method=get-folders&portfolio_id=" + btn.data("portfolio-id"),
 					success: function(data) {
@@ -447,7 +492,7 @@ if (!defined("PARENT_INCLUDED")) {
 								var artifacts = document.createElement("ul");
 								$(artifacts).addClass("artifacts");
 								$.ajax({
-									url : ENTRADA_URL + "/api/eportfolio.api.php",
+									url : api_url,
 										type : "GET",
 										data : "method=get-folder-artifacts&pfolder_id=" + v.pfolder_id + "&proxy_id=0",
 										async: false,
@@ -463,7 +508,7 @@ if (!defined("PARENT_INCLUDED")) {
 										}
 								});
 								$(artifacts_container).append(artifacts);
-								$(folder_container).append(folder_title).append(folder_desc).append(artifacts_container);
+								$(folder_container).addClass("folder-container").attr("data-pfolder-id", v.pfolder_id).append(folder_title).append(folder_desc).append(artifacts_container);
 								$("#artifacts").append(folder_container);
 							});
 						}
@@ -471,12 +516,85 @@ if (!defined("PARENT_INCLUDED")) {
 				});
 				e.preventDefault();
 			});
+			$("#manage").on("click", ".add-folder, .edit-folder", function(e) {
+		
+				var cloned_form = $("#portfolio-form").clone();
+				$("#manage-modal .modal-body").empty().append(cloned_form);
+				
+				$("#manage-modal .modal-footer .save-btn").addClass("btn-primary add-folder-modal").removeClass("btn-danger").html("Add Folder");
+				var btn = $(this);
+				
+				var folder_title = document.createElement("input");
+				var folder_desc = document.createElement("textarea");
+				var folder_allow_artifact = document.createElement("input");
+				
+				$(folder_title).attr({"name" : "title", "type" : "text"});
+				$(folder_desc).attr({"name" : "description", "id" : "folderdesc"});
+				$(folder_allow_artifact).attr({"name" : "allow_learner_artifacts", "type" : "checkbox", "value" : "1"});
+				
+				var title_row = document.createElement("div");
+				$(title_row).addClass("control-group");
+				var title_label = document.createElement("label");
+				$(title_label).addClass("control-label form-required").attr("for", "entry-comment").html("Title");
+				$(title_row).append(title_label);
+				var title_input_container = document.createElement("div");
+				$(title_input_container).addClass("controls");
+				$(title_input_container).append(folder_title);
+				$(title_row).append(title_input_container);
+				$("#portfolio-form").append(title_row);
+		
+				var desc_row = document.createElement("div");
+				$(desc_row).addClass("control-group");
+				var desc_label = document.createElement("label");
+				$(desc_label).addClass("control-label form-required").attr("for", "entry-comment").html("Description");
+				$(desc_row).append(desc_label);
+				var desc_input_container = document.createElement("div");
+				$(desc_input_container).addClass("controls");
+				$(desc_input_container).append(folder_desc);
+				$(desc_row).append(desc_input_container);
+				$("#portfolio-form").append(desc_row);
+				
+				var allow_artifact_row = document.createElement("div");
+				$(allow_artifact_row).addClass("control-group");
+				var allow_artifact_label = document.createElement("label");
+				$(allow_artifact_label).addClass("control-label").attr("for", "entry-artifact").html("Allow Learner Artifacts");
+				$(allow_artifact_row).append(allow_artifact_label);
+				var allow_artifact_input_container = document.createElement("div");
+				$(allow_artifact_input_container).addClass("controls");
+				$(allow_artifact_input_container).append(folder_allow_artifact);
+				$(allow_artifact_row).append(allow_artifact_input_container);
+				$("#portfolio-form").append(allow_artifact_row);
+				$("#portfolio-form").append("<input type=\"hidden\" name=\"" + (btn.hasClass("add-folder") ? "portfolio_id" : "pfolder_id") + "\" value=\""+btn.data("pfolder-id")+"\" />");
+				
+				if (btn.hasClass("edit-folder")) {
+					$("#portfolio-form").append("<input type=\"hidden\" name=\"method\" value=\"edit-folder\" />");
+					$.ajax({
+						url : api_url,
+						type : "GET",
+						data : "method=get-folder&pfolder_id=" + btn.data("pfolder-id"),
+						success: function(data) {
+							var jsonResponse = JSON.parse(data);
+							if (jsonResponse.status == "success") {
+								$("#manage input[name='title']").val(jsonResponse.data.title);
+								$("#folderdesc").val(jsonResponse.data.description);
+								if (jsonResponse.data.allow_learner_artifacts == 1) {
+									$("#manage input[name='allow_learner_artifacts']").attr("checked", "checked");
+								}
+							}
+						}
+					});
+				} else {
+					$("#portfolio-form").append("<input type=\"hidden\" name=\"method\" value=\"create-folder\" />");
+				}
+			});
 			$("#manage").on("click", ".add-artifact", function(e) {
-				$("#manage-modal .modal-footer .save-btn").addClass("btn-primary").removeClass("btn-danger").html("Save");
+				$("#manage-modal .modal-footer .save-btn").addClass("btn-primary add-artifact-modal").removeClass("btn-danger").html("Save");
 				var btn = $(this);
 				$("#portfolio-form").empty()
 				$("#display-error-box-modal").remove();
 				adminArtifactForm(btn);
+				$("#artifact-description").addClass("artifact-description-field");
+				$(".artifact-description-field").ckeditor();
 				e.preventDefault();
 			});
 			$("#manage").on("click", ".edit-artifact", function(e) {
@@ -487,7 +605,7 @@ if (!defined("PARENT_INCLUDED")) {
 				adminArtifactForm(btn);
 				
 				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					url : api_url,
 					type : "GET",
 					data : "method=get-folder-artifact&pfartifact_id="+btn.data("id"),
 					success: function(data) {
@@ -496,7 +614,7 @@ if (!defined("PARENT_INCLUDED")) {
 							$("#portfolio-form input[name='pfolder_id']").attr("value", jsonResponse.data.pfolder_id);
 							$("#portfolio-form").append("<input type=\"hidden\" name=\"pfartifact_id\" value=\""+jsonResponse.data.pfartifact_id+ "\" />")
 							$("#artifact-title").attr("value", jsonResponse.data.title);
-							$("#artifact-description").attr("value", jsonResponse.data.description);
+							$("#artifact-description").addClass("artifact-description-"+jsonResponse.data.pfartifact_id).attr("value", jsonResponse.data.description);
 							var start_date = new Date(jsonResponse.data.start_date * 1000);
 							$("#start_date").attr("value", start_date.getFullYear() + "-" + (start_date.getMonth() <= 9 ? "0" : "") + (start_date.getMonth() + 1) + "-" +  (start_date.getDate() <= 9 ? "0" : "") + start_date.getDate());
 							var finish_date = new Date(jsonResponse.data.finish_date * 1000);
@@ -504,7 +622,7 @@ if (!defined("PARENT_INCLUDED")) {
 							if (jsonResponse.data.allow_commenting == 1) {
 								$("#allow_commenting").attr("checked", "checked");
 							}
-							$("#artifact-description").ckeditor();
+							$(".artifact-description-"+jsonResponse.data.pfartifact_id).ckeditor();
 						}
 					}
 				})
@@ -518,67 +636,94 @@ if (!defined("PARENT_INCLUDED")) {
 				if (btn.hasClass("delete-artifact")) {
 					$("#manage-modal .modal-header h3").html("Delete Artifact");
 					var modal_btn = $("#manage-modal .modal-footer .btn-primary");
-					modal_btn.removeClass("btn-primary").addClass("btn-danger").html("Delete").attr("data-pfartifact-id", btn.data("id"));
+					modal_btn.removeClass("btn-primary").addClass("btn-danger delete-artifact-modal").html("Delete").attr("data-pfartifact-id", btn.data("id"));
 					display_error(["<strong>Warning</strong>, you have clicked the delete artifact button. <br/><br /> Please confirm you wish to delete the artifact by clicking on the button below."], "#manage-modal .modal-body", "append");
 				} else if (btn.hasClass("delete-folder")) {
 					$("#manage-modal .modal-header h3").html("Delete Folder");
 					var modal_btn = $("#manage-modal .modal-footer .btn-primary");
-					modal_btn.removeClass("btn-primary").addClass("btn-danger").html("Delete").attr("data-pfolder-id", btn.data("pfolder-id"));
+					modal_btn.removeClass("btn-primary").addClass("btn-danger delete-artifact-modal").html("Delete").attr("data-pfolder-id", btn.data("pfolder-id"));
 					display_error(["<strong>Warning</strong>, you have clicked the delete folder button. <br/><br /> Please confirm you wish to delete the folder by clicking on the button below. All artifacts will also be deleted."], "#manage-modal .modal-body", "append");
 				}
 				e.preventDefault();
 			});
-			$("#manage-modal .modal-footer .save-btn").on("click", function(e) {
+			$("#manage-modal .modal-footer").on("click", ".delete-artifact-modal", function(e) {
 				var btn = $(this);
-				if ($(this).hasClass("btn-danger")) {
-					
-					var method = "delete-artifact";
-					var datatype = "pfartifact_id";
-					var data = btn.data("pfartifact-id");
-					console.log(btn.data("pfolder-id"));
-					if (typeof btn.data("pfolder-id") != "undefined") {
-						method = "delete-folder"
-						datatype = "pfolder_id";
-						data = btn.data("pfolder-id");
-					}
-					
-					$.ajax({
-						url : ENTRADA_URL + "/api/eportfolio.api.php",
-						type : "POST",
-						data : "method=" + method + "&" + datatype + "=" + data,
-						success: function(data) {
-							var jsonResponse = JSON.parse(data);
-							if (jsonResponse.status == "success") {
-								$("ul.artifacts li[data-id='" + btn.data("pfartifact-id") + "']").remove();
-								$("#manage-modal").modal("hide");
-							}
-						}
-					});
-				} else {
-					$.ajax({
-						url : ENTRADA_URL + "/api/eportfolio.api.php",
-						type : "POST",
-						data : $(".admin-portfolio-form").serialize(),
-						success: function(data) {
-							var jsonResponse = JSON.parse(data);
-							if (jsonResponse.status == "success") {
-								if ($("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul li[data-id='"+jsonResponse.data.pfartifact_id+"']").length > 0) {
-									$("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul li[data-id='"+jsonResponse.data.pfartifact_id+"']").html("<strong>" + jsonResponse.data.title + "</strong> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"edit-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-edit\"></i></a> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"delete-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-trash\"></i></a><div>" + jsonResponse.data.description + "</div>");
-								} else {
-									$("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul").append("<li data-id=\""+jsonResponse.data.pfartifact_id+"\"><strong>" + jsonResponse.data.title + "</strong> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"edit-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-edit\"></i></a> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"delete-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-trash\"></i></a><div>" + jsonResponse.data.description + "</div></li>");
-								}
-								$("#manage-modal").modal("hide");
-							}
-						}
-					});
+				var method = "delete-artifact";
+				var datatype = "pfartifact_id";
+				var data = btn.data("pfartifact-id");
+				if (typeof btn.data("pfolder-id") != "undefined") {
+					method = "delete-folder"
+					datatype = "pfolder_id";
+					data = btn.data("pfolder-id");
+					$(".folder-container[data-pfolder-id='"+data+"']").remove();
 				}
+
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=" + method + "&" + datatype + "=" + data,
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							$("ul.artifacts li[data-id='" + btn.data("pfartifact-id") + "']").remove();
+							$("#manage-modal").modal("hide");
+						}
+					}
+				});
+			});
+			
+			$("#manage-modal .modal-footer").on("click", ".add-folder-modal", function(e) {
+				var btn = $(this);
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : $(".admin-portfolio-form").serialize(),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							var folder_row = document.createElement("div");
+							var folder_title = document.createElement("h3");
+							$(folder_title).append(jsonResponse.data.title + " <a class=\"add-artifact\" data-pfolder-id=\""+jsonResponse.data.pfolder_id+"\" data-toggle=\"modal\" href=\"#manage-modal\"><i class=\"icon-plus-sign\"></i></a> <a class=\"edit-folder\" data-pfolder-id=\""+jsonResponse.data.pfolder_id+"\" data-toggle=\"modal\" href=\"#manage-modal\"><i class=\"icon-edit\"></i></a> <a class=\"delete-folder\" data-pfolder-id=\""+jsonResponse.data.pfolder_id+"\" data-toggle=\"modal\" href=\"#manage-modal\"><i class=\"icon-trash\"></i></a>");
+							var folder_desc = document.createElement("p");
+							$(folder_desc).html(jsonResponse.data.description);
+							var artifact_container = document.createElement("div");
+							$(artifact_container).addClass("well").append("<ul class=\"artifacts\"><li><strong>No artifacts in this folder</strong></li></ul>");
+							$(folder_row).append(folder_title).append(folder_desc).append(artifact_container);
+							$("#artifacts").append(folder_row);
+						}
+						$("#manage-modal").modal("hide");
+					}
+				});
 				e.preventDefault();
+			});
+			$("#manage-modal .modal-footer").on("click", ".add-artifact-modal", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : $(".admin-portfolio-form").serialize(),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							if ($("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul li[data-id='"+jsonResponse.data.pfartifact_id+"']").length > 0) {
+								$("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul li[data-id='"+jsonResponse.data.pfartifact_id+"']").html("<strong>" + jsonResponse.data.title + "</strong> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"edit-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-edit\"></i></a> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"delete-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-trash\"></i></a><div>" + jsonResponse.data.description + "</div>");
+							} else {
+								$("div[data-pfolder-id='" + jsonResponse.data.pfolder_id + "'] ul").append("<li data-id=\""+jsonResponse.data.pfartifact_id+"\"><strong>" + jsonResponse.data.title + "</strong> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"edit-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-edit\"></i></a> <a href=\"#manage-modal\" data-toggle=\"modal\" class=\"delete-artifact\" data-id=\""+jsonResponse.data.pfartifact_id+"\"><i class=\"icon-trash\"></i></a><div>" + jsonResponse.data.description + "</div></li>");
+							}
+							$("#manage-modal").modal("hide");
+						}
+					}
+				});
+			});
+			$("#manage-modal").on("hide", function(e) {
+				$("#portfolio-form").empty();
+				var cloned_form = $("#portfolio-form").clone();
+				$("#manage-modal .modal-body").empty().append(cloned_form);
 			});
 			$("#advisors").on("click", ".advisor", function(e) {
 				var btn = $(this);
 				$("#advisors .right-pane").empty()
 				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					url : api_url,
 					type : "GET",
 					data : "method=get-advisor-students&padvisor_proxy_id=" + btn.data("id"),
 					success: function(data) {
@@ -607,7 +752,7 @@ if (!defined("PARENT_INCLUDED")) {
 			$("#advisors").on("click", ".remove-relation", function(e) {
 				var btn = $(this);
 				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					url : api_url,
 					type : "POST",
 					data : "method=delete-advisor-student&student_id=" + btn.data("student-id") + "&advisor_id=" + btn.data("advisor-id"),
 					success: function(data) {
@@ -623,18 +768,242 @@ if (!defined("PARENT_INCLUDED")) {
 			});
 			$("#advisors").on("click", ".add-students", function(e) {
 				$.ajax({
-					url : ENTRADA_URL + "/api/eportfolio.api.php",
+					url : api_url,
 					type : "POST",
 					data : "method=add-advisor-students&student_ids=" + $("#associated_student").attr("value") + "&advisor_id=" + $("#advisor_id").attr("value"),
 					success: function(data) {
 						var jsonResponse = JSON.parse(data);
 						if (jsonResponse.status == "success") {
-							
+							console.log(jsonResponse.data);
 						}
 					}
 				});
 			});
+			$("a.add-advisors").on("click", function(e) {
+				$("#add-advisor-form").submit();
+				e.preventDefault();
+			});
+			$("#add-advisor-form").on("submit", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=add-advisors&advisor_ids=" + $("#associated_advisor").attr("value"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							$.each(jsonResponse.data, function(i, v) {
+								var advisor_line = document.createElement("li");
+								var advisor_link = document.createElement("a");
+								$(advisor_link).html(v.firstname + " " + v.lastname).addClass("advisor").attr({"data-id" : v.proxy_id, "href" : "#"});
+								$(advisor_line).append(advisor_link);
+								$("#advisors .left-pane ul").append(advisor_line);
+								$("#add-advisor-modal").modal("hide");
+							});
+						}
+					}
+				});
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".delete-portfolio", function(e) {
+				display_error(["<strong>WARNING</strong> You are about to delete a portfolio. Please use the button below to confirm you wish to delete it."], "#manage-modal .modal-body", "append");
+				$("#manage-modal .modal-footer .btn-primary").addClass("btn-danger").addClass("delete-portfolio").removeClass("btn-primary").html("Delete");
+			});
+			$("#manage-modal .modal-footer").on("click", ".delete-portfolio", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=delete-portfolio&portfolio_id=" + $("#portfolio-actions").data("portfolio-id"),
+					success: function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							$(".portfolio-item[data-portfolio-id='" + $("#portfolio-actions").data("portfolio-id") + "']").parent().remove();
+							$("#manage .left-pane ul li:eq(1) a").click();
+						}
+					}
+				});
+				$("#manage-modal").modal("hide");
+				e.preventDefault();
+			});
+			$("#manage").on("change", "#group-id", function(e) {
+				$("#group-name").attr("value", $(this).children("option[value='"+$(this).val()+"']").html());
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".add-portfolio", function(e) {
+				if ($("#display-error-box-modal").length > 0) {
+					$("#display-error-box-modal").remove();
+				}
+				$("#manage-modal .modal-header h3").html("New Portfolio");
+				$("#manage-modal .modal-footer .save-btn").html("Add").addClass("add-new-portfolio").removeClass("btn-danger");
+				portfolioForm("add");
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".edit-portfolio", function(e) {
+				if ($("#display-error-box-modal").length > 0) {
+					$("#display-error-box-modal").remove();
+				}
+				$("#manage-modal .modal-header h3").html("New Portfolio");
+				$("#manage-modal .modal-footer .btn-primary").html("Update").addClass("update-portfolio");
+				portfolioForm("edit");
+
+				$.ajax({
+					url : api_url,
+					type : "GET",
+					data : "method=get-portfolio&portfolio_id=" + $(".add-folder").data("id"),
+					success : function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							var start_date = new Date(jsonResponse.data.start_date * 1000);
+							var finish_date = new Date(jsonResponse.data.finish_date * 1000);
+							$("#portfolio-form input[name='start_date']").attr("value", start_date.getFullYear() + "-" + (start_date.getMonth() <= 9 ? "0" : "") + (start_date.getMonth() + 1) + "-" +  (start_date.getDate() <= 9 ? "0" : "") + start_date.getDate())
+							$("#portfolio-form input[name='finish_date']").attr("value", finish_date.getFullYear() + "-" + (finish_date.getMonth() <= 9 ? "0" : "") + (finish_date.getMonth() + 1) + "-" +  (finish_date.getDate() <= 9 ? "0" : "") + finish_date.getDate())
+							if (jsonResponse.data.active != 1) {
+								$("#portfolio-form input[name='active']").removeAttr("checked");
+							}
+							if (jsonResponse.data.allow_student_export != 1) {
+								$("#portfolio-form input[name='export']").removeAttr("checked");
+							}
+						}
+					}
+				});
+				
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".copy-portfolio", function(e) {
+				if ($("#display-error-box-modal").length > 0) {
+					$("#display-error-box-modal").remove();
+				}
+				$("#manage-modal .modal-header h3").html("Copy Portfolio");
+				$("#manage-modal .modal-footer .btn-primary").html("Copy").addClass("copy-new-portfolio");
+				portfolioForm("add");
+				display_notice(["Please select the group, start, and finish dates the copied portfolio will apply to."], "#portfolio-form", "prepend");
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".add-new-portfolio", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=create-portfolio&" + $("#portfolio-form").serialize(),
+					success : function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							$("#manage .left-pane ul").append("<li><a href=\"#\" data-portfolio-id=\""+jsonResponse.data.portfolio_id+"\" class=\"portfolio-item\">"+jsonResponse.data.portfolio_name+"</a></li>");
+							$("#manage-modal").modal("hide");
+						}
+					}
+				});
+				e.preventDefault();
+			});
+			$("#manage").on("click", ".update-portfolio", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=create-portfolio&" + $("#portfolio-form").serialize() + "&portfolio_id=" + $(".add-folder").data("id"),
+					success : function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							display_success(["Successfully updated portfolio."], "#portfolio-msg", "append");
+							$("#manage-modal").modal("hide");
+						}
+					}
+				});
+				e.preventDefault();
+			});
+			$("#manage-modal .modal-footer").on("click", ".copy-new-portfolio", function(e) {
+				$.ajax({
+					url : api_url,
+					type : "POST",
+					data : "method=copy-portfolio&" + $("#portfolio-form").serialize() + "&portfolio_id=" + $(".add-folder").data("id"),
+					success : function(data) {
+						var jsonResponse = JSON.parse(data);
+						console.log(jsonResponse);
+						if (jsonResponse.status == "success") {
+							$("#manage .left-pane ul").append("<li><a href=\"#\" data-portfolio-id=\""+jsonResponse.data.portfolio_id+"\" class=\"portfolio-item\">"+jsonResponse.data.portfolio_name+"</a></li>");
+							$("#manage-modal").modal("hide");
+						}
+					}
+				});
+				e.preventDefault();
+			});
 		});
+		
+		function portfolioForm(mode) {
+			
+			if (mode == "add") {
+				var cohort_row = document.createElement("div");
+				jQuery(cohort_row).addClass("control-group");
+				var cohort_label = document.createElement("label");
+				jQuery(cohort_label).addClass("control-label form-required").html("Group");
+				jQuery(cohort_row).append(cohort_label);
+				var cohort_container = document.createElement("div");
+				jQuery(cohort_container).addClass("controls");
+				var cohorts = document.createElement("select");
+				jQuery(cohorts).attr({"name" : "group_id", "id" : "group-id"});
+				jQuery(cohorts).append("<option>Please select a group</option>");
+
+				jQuery.ajax({
+					url : api_url,
+					type : "GET",
+					data : "method=get-cohorts",
+					success : function(data) {
+						var jsonResponse = JSON.parse(data);
+						if (jsonResponse.status == "success") {
+							jQuery.each(jsonResponse.data, function(i, v) {
+								var option = document.createElement("option");
+								jQuery(option).attr({"value" : v.group_id}).html(v.group_name);
+								jQuery(cohorts).append(option);
+							});
+						}
+					}
+				});
+			}
+			jQuery(cohort_container).append(cohorts);
+			jQuery(cohort_row).append(cohort_container);
+			var cohort_name = document.createElement("input");
+			jQuery(cohort_name).attr({"name" : "portfolio_name", "type" : "hidden", "id" : "group-name"})
+
+			jQuery("#portfolio-form").append(cohort_row).append(cohort_name);
+
+			var start_row = document.createElement("div");
+			jQuery(start_row).addClass("control-group");
+			var start_label = document.createElement("label");
+			jQuery(start_label).addClass("control-label form-required").html("Start");
+			jQuery(start_row).append(start_label);
+			var start_container = document.createElement("div");
+			jQuery(start_container).addClass("controls");
+			var start_input = document.createElement("input");
+			jQuery(start_input).attr({"type":"text", "name" : "start_date"}).addClass("input-small").datepicker({dateFormat: "yy-mm-dd"});
+			jQuery(start_container).append(start_input);
+			jQuery(start_row).append(start_container);
+
+			var finish_row = document.createElement("div");
+			jQuery(finish_row).addClass("control-group");
+			var finish_label = document.createElement("label");
+			jQuery(finish_label).addClass("control-label form-required").html("Finish");
+			jQuery(finish_row).append(finish_label);
+			var finish_container = document.createElement("div");
+			jQuery(finish_container).addClass("controls");
+			var finish_input = document.createElement("input");
+			jQuery(finish_input).attr({"type":"text", "name" : "finish_date"}).addClass("input-small").datepicker({dateFormat: "yy-mm-dd"});
+			jQuery(finish_container).append(finish_input);
+			jQuery(finish_row).append(finish_container);
+
+			var export_row = document.createElement("div");
+			jQuery(export_row).addClass("control-group");
+			var export_label = document.createElement("label");
+			jQuery(export_label).addClass("control-label form-required").html("Allow exporting");
+			jQuery(export_row).append(export_label);
+			var export_container = document.createElement("div");
+			jQuery(export_container).addClass("controls");
+			var export_input = document.createElement("input");
+			jQuery(export_input).attr({"type":"checkbox", "name" : "export", "checked" : "checked", "value" : "1"});
+			var export_input_wrapper = document.createElement("label");
+			jQuery(export_input_wrapper).addClass("checkbox").append(export_input).append("<span class=\"muted\">Allow learners to export their ePortfolio.</span>");
+			jQuery(export_container).append(export_input_wrapper);
+			jQuery(export_row).append(export_container);
+
+			jQuery("#portfolio-form").append(start_row).append(finish_row).append(export_row);
+		}
+		
 	</script>
 	<style type="text/css">
 		.tab-content.visible {
@@ -701,21 +1070,23 @@ if (!defined("PARENT_INCLUDED")) {
 		#ui-datepicker-div {
 			z-index:1050!important;
 		}
-		#advisor-modal .modal-body {
+		#advisor-modal .modal-body, #add-advisor-modal .modal-body {
 			overflow-y:visible;
 		}
 	</style>
 	<ul class="nav nav-tabs">
-		<li><a href="#review" data-toggle="tab">Review</a></li>
-		<li><a href="#manage" data-toggle="tab">Manage</a></li>
-		<li class="active"><a href="#advisors" data-toggle="tab">Advisors</a></li>
+		<li <?php echo $is_advisor ? "class=\"active\"" : ""; ?>><a href="#review" data-toggle="tab">Review</a></li>
+		<?php if (!$is_advisor) { ?>
+		<li class="active"><a href="#manage" data-toggle="tab">Manage</a></li>
+		<li class=""><a href="#advisors" data-toggle="tab">Advisors</a></li>
+		<?php } ?>
     </ul>
 	
 	<div class="tab-content visible">
-		<div class="tab-pane" id="review">
+		<div class="tab-pane <?php echo $is_advisor ? "active" : ""; ?>" id="review">
 			<div class="row-fluid space-below">
 				<div class="btn-group">
-					<a class="btn btn-primary">Year</a>
+					<a class="btn btn-primary">Portfolio</a>
 					<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
 					<ul class="dropdown-menu" id="portfolio-list">
 					<?php foreach ($eportfolios as $eportfolio) { ?>
@@ -735,7 +1106,7 @@ if (!defined("PARENT_INCLUDED")) {
 				<div id="user-list" class="left-pane span3"></div>
 				<div id="user-portfolio" class="right-pane span9">
 					<h1>Portfolio</h1>
-					<?php echo display_generic("Please select a year from the dropdown above to get started."); ?>
+					<?php echo display_generic("Please select a student from the menu on the left to get started."); ?>
 				</div>
 			</div>
 			<div id="entry-modal" class="modal hide">
@@ -747,15 +1118,17 @@ if (!defined("PARENT_INCLUDED")) {
 					<form action="" method="POST" class="form-horizontal" id="modal-form"></form>
 				</div>
 				<div class="modal-footer">
-					<a href="#" class="btn">Close</a>
+					<a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
 					<a href="#" class="btn btn-primary">Save</a>
 				</div>
 			</div>
 		</div>
-		<div class="tab-pane" id="manage">
+		<?php if (!$is_advisor) { ?>
+		<div class="tab-pane active" id="manage">
 			<div class="pane-container row-fluid">
 				<div class="left-pane span3">
 					<ul>
+						<li><a href="#manage-modal" data-toggle="modal" class="add-portfolio"><i class="icon-plus-sign"></i> New Portfolio</a></li>
 					<?php foreach ($eportfolios as $eportfolio) { ?>
 						<li><a href="#" class="portfolio-item" data-portfolio-id="<?php echo $eportfolio->getID(); ?>"><?php echo $eportfolio->getPortfolioName(); ?></a></li>
 					<?php } ?>
@@ -763,15 +1136,16 @@ if (!defined("PARENT_INCLUDED")) {
 				</div>
 				<div class="right-pane span9">
 					<h1 id="manage-eportfolio-title">Manage Eportfolio</h1>
-					<div class="btn-group">
+					<div id="portfolio-msg"></div>
+					<div id="portfolio-actions" class="btn-group hide">
 						<a href="#manage-modal" data-toggle="modal" class="btn add-folder"><i class="icon-folder-open" title="Edit"></i> Add Folder</a>
 						<button class="btn dropdown-toggle" data-toggle="dropdown">
 							<span class="caret"></span>
 						</button>
 						<ul class="dropdown-menu">
-							<li><a href="#"><i class="icon-edit" title="Edit"></i> Edit Portfolio</a></li>
-							<li><a href="#"><i class="icon-refresh" title="Copy"></i> Copy Portfolio</a></li>
-							<li><a href="#"><i class="icon-trash" title="Delete"></i> Delete Portfolio</a></li> 
+							<li><a href="#manage-modal" data-toggle="modal" class="edit-portfolio"><i class="icon-edit" title="Edit"></i> Edit Portfolio</a></li>
+							<li><a href="#manage-modal" data-toggle="modal" class="copy-portfolio"><i class="icon-refresh" title="Copy"></i> Copy Portfolio</a></li>
+							<li><a href="#manage-modal" data-toggle="modal" class="delete-portfolio"><i class="icon-trash" title="Delete"></i> Delete Portfolio</a></li> 
 						</ul>
 					</div>
 					<div id="artifacts"></div>
@@ -791,7 +1165,8 @@ if (!defined("PARENT_INCLUDED")) {
 				</div>
 			</div>
 		</div>
-		<div class="tab-pane active" id="advisors">
+		<div class="tab-pane" id="advisors">
+			<div class="row-fluid space-below"><a href="#add-advisor-modal" class="btn btn-success pull-right" data-toggle="modal"><i class="icon-plus-sign icon-white"></i> Add Advisor</a></div>
 			<div class="pane-container row-fluid">
 				<div class="left-pane span3">
 					<ul>
@@ -805,7 +1180,39 @@ if (!defined("PARENT_INCLUDED")) {
 						?>
 					</ul>
 				</div>
-				<div class="right-pane span9"></div>
+				<div class="right-pane span9">
+					<?php echo display_notice(); ?>
+				</div>
+			</div>
+			<div id="add-advisor-modal" class="modal hide">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h3>Add Advisors</h3>
+				</div>
+				<div class="modal-body">
+					<form action="<?php echo ENTRADA_URL; ?>/api/eportfolio.api.php" method="POST" class="form-horizontal admin-advisor-form" id="add-advisor-form">
+						<div class="control-group">
+							<label class="control-label" for="advisor-name">advisor Name</label>
+							<div class="controls">
+								<input type="text" id="advisor_name" name="fullname" autocomplete="off" placeholder="Example: <?php echo html_encode($ENTRADA_USER->getLastname().", ".$ENTRADA_USER->getFirstname()); ?>" />
+                                <?php
+                                $ONLOAD[] = "advisor_list = new AutoCompleteList({ type: 'advisor', url: '". ENTRADA_RELATIVE ."/api/personnel.api.php?type=facultyorstaff', remove_image: '". ENTRADA_RELATIVE ."/images/action-delete.gif'})";
+                                ?>
+                                <div class="autocomplete" id="advisor_name_auto_complete"></div>
+                                <input type="hidden" id="associated_advisor" name="associated_advisor" />
+                                <input type="button" class="btn" id="add_associated_advisor" value="Add" />
+								<ul id="advisor_list" class="menu" style="margin-top: 15px"></ul>
+								<input type="hidden" id="advisor_ref" name="advisor_ref" value="" />
+                                <input type="hidden" id="advisor_id" name="advisor_id" value="" />
+								<input type="hidden" id="advisor_id" name="advisor_id" value="" />
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+					<a href="#" class="btn btn-primary add-advisors">Add Advisors</a>
+				</div>
 			</div>
 			<div id="advisor-modal" class="modal hide">
 				<div class="modal-header">
@@ -838,6 +1245,7 @@ if (!defined("PARENT_INCLUDED")) {
 				</div>
 			</div>
 		</div>
+		<?php } ?>
 	</div>
 	<?php
 }
