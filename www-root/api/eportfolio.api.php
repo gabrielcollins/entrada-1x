@@ -212,7 +212,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["pfartifact_id"] = $tmp_input;
 					}
 					
-					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim", "striptags"))) {
+					if(${$request_var}["description"] && $tmp_input = clean_input(${$request_var}["description"], array("trim"))) {
 						$PROCESSED["description"] = $tmp_input;
 					}
 					
@@ -257,6 +257,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 						$PROCESSED["updated_date"] = date(time());
 						$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 						$PROCESSED["order"] = 0;
+						$PROCESSED["active"] = 1;
 
 						if (isset($PROCESSED["pfartifact_id"])) {
 							$pfartifact = Models_Eportfolio_Folder_Artifact::fetchRow($PROCESSED["pfartifact_id"]);
