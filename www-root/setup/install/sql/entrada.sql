@@ -2740,7 +2740,7 @@ CREATE TABLE IF NOT EXISTS `event_files` (
   KEY `access_method` (`access_method`),
   KEY `event_id` (`event_id`),
   KEY `release_date` (`release_date`,`release_until`),
-  FULLTEXT KEY `event_contents` (`event_contents`)
+  FULLTEXT KEY `file_contents` (`file_contents`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `event_history` (
@@ -3434,7 +3434,8 @@ CREATE TABLE IF NOT EXISTS `global_lu_objectives` (
   `updated_by` int(12) NOT NULL,
   PRIMARY KEY (`objective_id`),
   KEY `objective_order` (`objective_order`),
-  KEY `objective_code` (`objective_code`)
+  KEY `objective_code` (`objective_code`),
+  FULLTEXT KEY `objective_description` (`objective_description`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 INSERT INTO `global_lu_objectives` (`objective_id`, `objective_name`, `objective_description`, `objective_code`, `objective_parent`, `objective_order`, `objective_active`, `updated_date`, `updated_by`) VALUES

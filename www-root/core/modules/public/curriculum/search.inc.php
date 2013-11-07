@@ -98,42 +98,56 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CURRICULUM"))) {
 
 		if ($SEARCH_MODE == "standard") {
 			$search_terms  = $db->qstr(str_replace(array("%", " AND ", " NOT "), array("%%", " +", " -"), $SEARCH_QUERY));
+			$search_terms .= " IN BOOLEAN MODE";
 			$query_counter = "	SELECT COUNT(DISTINCT(a.`event_id`)) AS `total_rows`
-								FROM `events` AS a
-								LEFT JOIN `event_audience` AS b					ON b.`event_id` = a.`event_id`
-								LEFT JOIN `courses` AS c						ON a.`course_id` = c.`course_id`
-								LEFT JOIN `event_files` AS f    				ON a.`event_id` = f.`event_id`
-								LEFT OUTER JOIN `event_objectives` 	AS eo 		ON eo.`event_id` = a.`event_id`
-								LEFT OUTER JOIN `global_lu_objectives` AS go 	ON go.`objective_id` = eo.`objective_id`  
+						FROM `events` AS a
+						LEFT JOIN `event_audience` AS b
+						ON b.`event_id` = a.`event_id`
+						LEFT JOIN `courses` AS c
+						ON a.`course_id` = c.`course_id`
+						LEFT JOIN `event_files` AS f
+						ON a.`event_id` = f.`event_id`
+						LEFT OUTER JOIN `event_objectives` 	AS eo
+						ON eo.`event_id` = a.`event_id`
+						LEFT OUTER JOIN `global_lu_objectives` AS go
+						ON go.`objective_id` = eo.`objective_id`  
 					
-								WHERE (a.`parent_id` IS NULL OR a.`parent_id` = '0')
-									AND".(($SEARCH_CLASS) ? " b.`audience_type` = 'cohort' AND b.`audience_value` = ".$db->qstr((int) $SEARCH_CLASS)." AND" : "").
-									(($SEARCH_ORGANISATION) && $SEARCH_ORGANISATION != 'all' ? " c.`organisation_id` = ".$db->qstr((int) $SEARCH_ORGANISATION)." AND" : "").
-									(($SEARCH_YEAR) ? " (`event_start` BETWEEN ".$db->qstr($SEARCH_DURATION["start"])." AND ".$db->qstr($SEARCH_DURATION["end"]).") AND" : "")."
-									MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`, `file_contents`, go.`objective_description`) AGAINST ($search_terms IN BOOLEAN MODE)";
+						WHERE (a.`parent_id` IS NULL OR a.`parent_id` = '0')
+						AND".(($SEARCH_CLASS) ? " b.`audience_type` = 'cohort' AND b.`audience_value` = ".$db->qstr((int) $SEARCH_CLASS)." AND" : "").
+						(($SEARCH_ORGANISATION) && $SEARCH_ORGANISATION != 'all' ? " c.`organisation_id` = ".$db->qstr((int) $SEARCH_ORGANISATION)." AND" : "").
+						(($SEARCH_YEAR) ? " (`event_start` BETWEEN ".$db->qstr($SEARCH_DURATION["start"])." AND ".$db->qstr($SEARCH_DURATION["end"]).") AND" : "")."
+						MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`)  AGAINST ($search_terms) +
+						MATCH (`file_contents`)  AGAINST ($search_terms) +
+						MATCH (`objective_description`)  AGAINST ($search_terms)";
 
 			$query_search = "	SELECT a.*, b.`audience_type`, b.`audience_value` AS `event_cohort`, 
-										MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`) AGAINST ($search_terms) + 
-										MATCH (`file_contents`) AGAINST ($search_terms) + 
-										MATCH (`objective_description`) AGAINST ($search_terms)
-										AS `rank`
-								FROM `events` AS a
-								LEFT JOIN `event_audience` AS b 				ON b.`event_id` = a.`event_id`
-								LEFT JOIN `courses` AS c        				ON a.`course_id` = c.`course_id`
-								LEFT JOIN `event_files` AS f    				ON a.`event_id` = f.`event_id` 
-								LEFT OUTER JOIN `event_objectives` 	AS eo 		ON eo.`event_id` = a.`event_id`
-								LEFT OUTER JOIN `global_lu_objectives` AS go 	ON go.`objective_id` = eo.`objective_id`
-								  
-								WHERE (a.`parent_id` IS NULL OR a.`parent_id` = '0')
-									AND".(($SEARCH_CLASS) ? " b.`audience_type` = 'cohort' AND b.`audience_value` = ".$db->qstr((int) $SEARCH_CLASS)." AND" : "").
-									(($SEARCH_ORGANISATION) && $SEARCH_ORGANISATION != 'all' ? " c.`organisation_id` = ".$db->qstr((int) $SEARCH_ORGANISATION)." AND" : "").
-									(($SEARCH_YEAR) ? " (`event_start` BETWEEN ".$db->qstr($SEARCH_DURATION["start"])." AND ".$db->qstr($SEARCH_DURATION["end"]).") AND" : "")."
-									MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`, `file_contents`, go.`objective_description`) AGAINST ($search_terms IN BOOLEAN MODE)
-									
-								GROUP BY a.`event_id`
-								HAVING `rank` > 0
-								ORDER BY `rank` DESC, `event_start` DESC
-								LIMIT %s, %s";
+						MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`) AGAINST ($search_terms) +
+						MATCH (`file_contents`) AGAINST ($search_terms) +
+						MATCH (`objective_description`) AGAINST ($search_terms) AS  `rank`
+						FROM `events` AS a
+						LEFT JOIN `event_audience` AS b
+						ON b.`event_id` = a.`event_id`
+						LEFT JOIN `courses` AS c
+						ON a.`course_id` = c.`course_id`
+						LEFT JOIN `event_files` AS f
+						ON a.`event_id` = f.`event_id` 
+						LEFT OUTER JOIN `event_objectives` AS eo
+						ON eo.`event_id` = a.`event_id`
+						LEFT OUTER JOIN `global_lu_objectives` AS go
+						ON go.`objective_id` = eo.`objective_id`
+						
+						WHERE (a.`parent_id` IS NULL OR a.`parent_id` = '0')
+						AND".(($SEARCH_CLASS) ? " b.`audience_type` = 'cohort' AND b.`audience_value` = ".$db->qstr((int) $SEARCH_CLASS)." AND" : "").
+						(($SEARCH_ORGANISATION) && $SEARCH_ORGANISATION != 'all' ? " c.`organisation_id` = ".$db->qstr((int) $SEARCH_ORGANISATION)." AND" : "").
+						(($SEARCH_YEAR) ? " (`event_start` BETWEEN ".$db->qstr($SEARCH_DURATION["start"])." AND ".$db->qstr($SEARCH_DURATION["end"]).") AND" : "")."
+						MATCH (`event_title`, `event_description`, `event_goals`, `event_objectives`, `event_message`) AGAINST ($search_terms) OR
+						MATCH (`file_contents`) AGAINST ($search_terms) OR
+						MATCH (`objective_description`) AGAINST ($search_terms)
+
+						GROUP BY a.`event_id`
+						HAVING `rank` > 0
+						ORDER BY `rank` DESC, `event_start` DESC
+						LIMIT %s, %s";
 			/**
 			 * Get the total number of results using the generated queries above and calculate the total number
 			 * of pages that are available based on the results per page preferences.

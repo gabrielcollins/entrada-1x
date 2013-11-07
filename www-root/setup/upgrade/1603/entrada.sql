@@ -26,4 +26,9 @@ VALUES
 	
 UPDATE `evaluations_lu_questiontypes` SET `questiontype_title` = 'Horizontal Choice Matrix (single response)' WHERE `questiontype_shortname` = 'question_matrix';
 
+ALTER TABLE `event_files` ADD COLUMN `file_contents` longtext DEFAULT NULL AFTER `file_notes`;
+CREATE FULLTEXT INDEX `file_contents` ON `event_files` (`file_contents`);
+
+CREATE FULLTEXT INDEX `objective_description` ON `global_lu_objectives` (`objective_description`);
+
 UPDATE `settings` SET `value` = '1603' WHERE `shortname` = 'version_db';
