@@ -153,7 +153,7 @@ if($EVALUATION_ID) {
 		});
 		</script>";
 		
-        if ($ENTRADA_ACL->amIAllowed(new EvaluationResource($evaluation_details["evaluation_id"]), 'update')) {
+        if ($ENTRADA_ACL->amIAllowed(new EvaluationResource($evaluation_details["evaluation_id"], $evaluation_details["organisation_id"], true), 'update')) {
             echo "<div class=\"no-printing\">\n";
             echo "	<div style=\"float: right; margin-top: 8px\">\n";
             echo "		<a href=\"".ENTRADA_URL."/admin/evaluations?".replace_query(array("section" => "edit", "id" => $evaluation_details["evaluation_id"]))."\"><img src=\"".ENTRADA_URL."/images/event-details.gif\" width=\"16\" height=\"16\" alt=\"Edit details\" title=\"Edit evaluation details\" border=\"0\" style=\"vertical-align: middle\" /></a> <a href=\"".ENTRADA_URL."/admin/evaluations?".replace_query(array("section" => "edit", "id" => $evaluation_details["evaluation_id"]))."\" style=\"font-size: 10px; margin-right: 8px\">Edit details</a>\n";
@@ -251,7 +251,9 @@ if($EVALUATION_ID) {
 								$max_submittable = ($evaluation_targets_count * (int) $evaluation_details["max_submittable"]);
 							} elseif ($evaluation_details["target_shortname"] == "peer" && $evaluation_details["max_submittable"] == 0) {
 								$max_submittable = $evaluation_targets_count;
-							}
+							} elseif ($evaluation_details["max_submittable"] == 0 && $evaluation_details["allow_repeat_targets"]) {
+                                $max_submittable = "-";
+                            }
 						} else {
 							$target_name = "";
 						}

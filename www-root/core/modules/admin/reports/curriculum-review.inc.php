@@ -73,6 +73,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 	if (isset($_POST["event_title_search"]) && $_POST["event_title_search"]) {
 		$event_title_search = clean_input($_POST["event_title_search"], "notags");
 	}
+	if (isset($_POST["show_children"]) && $_POST["show_children"] == "true") {
+		$show_children = true;
+	} else {
+		$show_children = false;
+	}
 	?>
 	
 	<div class="no-printing">
@@ -111,6 +116,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 							}
 							?>
 							</select>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="form-nrequired control-label">Show child events:</label>
+				<div class="controls">
+					<input type="checkbox" name="show_children" value="true" <?php echo $show_children === true ? "checked=\"checked\"" : ""; ?> />
 				</div>
 			</div>
 			<div class="control-group">
@@ -201,8 +212,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_REPORTS"))) {
 						ON b.`course_id` = a.`course_id`
 						WHERE (a.`event_start` BETWEEN ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_start"])." AND ".$db->qstr($_SESSION[APPLICATION_IDENTIFIER][$MODULE]["reporting_finish"]).")
 						AND a.`course_id` = ".$db->qstr($course_id).
-						$organisation_where."
-						AND (a.`parent_id` IS NULL OR a.`parent_id` = '0')
+						$organisation_where.
+						($show_children == false ? "AND (a.`parent_id` IS NULL OR a.`parent_id` = '0')" : "")."
 						ORDER BY a.`event_start` ASC";
 			$results = $db->CacheGetAll(LONG_CACHE_TIMEOUT, $query);
 			

@@ -74,6 +74,30 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 				$ERRORSTR[] = "The <strong>Curriculum Level</strong> is a required field.";
 			}
 
+			if (isset($_POST["curriculum_start_date"]) && count($_POST["curriculum_start_date"])) {
+				foreach($_POST["curriculum_start_date"] as $key => $date) {
+					$period_entry = array();
+					$period_entry["curriculum_type_id"] = $PROCESSED["curriculum_type_id"];
+					$period_entry["start_date"] = strtotime(clean_input($date, array("trim", "notags")));
+					$period_entry["finish_date"] = strtotime(clean_input($_POST["curriculum_finish_date"][$key], array("trim", "notags")));
+					$period_entry["curriculum_period_title"] = clean_input($_POST["curriculum_period_title"][$key],array("trim","notags"));
+					$period_entry["active"] = clean_input($_POST["curriculum_active"][$key],array("trim","int"));
+
+					if (!$period_entry["start_date"]) {
+						add_error("A start date is required.");
+					} elseif (!$period_entry["finish_date"]) {
+						add_error("An end date is required.");
+					} elseif ($period_entry["finish_date"] < $period_entry["start_date"]) {
+						$fieldname = (($period_entry["curriculum_period_title"]) ? $period_entry["curriculum_period_title"] : date("F jS, Y" ,$period_entry["start_date"])." to ".date("F jS, Y" ,$period_entry["finish_date"]));
+						add_error("The curriculum period <strong>".$fieldname."</strong> has a Finish Date that is before the Start Date.");
+					}
+
+					$PROCESSED["periods"][$key] = $period_entry;
+				}
+			} else {
+				add_error("A <strong>Curriculum Period</strong> is required.");
+			}				
+
 			if (!$ERROR) {
 				$PROCESSED["updated_date"] = time();
 				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
@@ -99,7 +123,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
                                 $period_entry["start_date"] = strtotime(clean_input($date, array("trim", "notags")));
                                 $period_entry["finish_date"] = strtotime(clean_input($_POST["curriculum_finish_date"][$key], array("trim", "notags")));
 								$period_entry["curriculum_period_title"] = clean_input($_POST["curriculum_period_title"][$key],array("trim","notags"));
-                                $period_entry["active"] = 1;
+                                $period_entry["active"] = clean_input($_POST["curriculum_active"][$key],array("trim","int"));
 
                                 switch ($period_action) {
                                     case "add" :
@@ -170,7 +194,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 			}
 
 
-			$query = "SELECT * FROM `curriculum_periods` WHERE `curriculum_type_id` = ".$db->qstr($PROCESSED["curriculum_type_id"])." AND `active` = '1' ORDER BY `start_date` ASC";
+			$query = "SELECT * FROM `curriculum_periods` WHERE `curriculum_type_id` = ".$db->qstr($PROCESSED["curriculum_type_id"])." ORDER BY `start_date` ASC";
 			$result = $db->GetAll($query);
 
 			if($result){
@@ -328,7 +352,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 														<input type="text" name="curriculum_period_title[<?php echo $currentIdx;?>]" id="curriculum_period_title_<?php echo $currentIdx;?>" value="<?php echo $period["curriculum_period_title"];?>" />
 													</td>
 													<td>
-														<select id="curriculum_active_<?php echo $currentIdx;?>" name="curriculum_active[]">
+														<select name="curriculum_active[<?php echo $currentIdx;?>]" id="curriculum_active_<?php echo $currentIdx;?>">
 															<option value="1" selected="selected">Active</option>
 															<option value="0" <?php echo (($period["active"] == 0)?"selected=\"selected\"":"");?>>Inactive</option>
 														</select>
@@ -395,8 +419,8 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 
 							$('#add_period').click(function(){
 								var today = new Date();
-								var month = ((today.getMonth()+1)/10 > 1)?today.getMonth()+1:"0"+(today.getMonth()+1);
-								var day = (today.getDate()/10 > 1)?today.getDate():"0"+(today.getDate());
+								var month = ((today.getMonth()+1).toString().length > 1) ? today.getMonth()+1 : "0"+(today.getMonth()+1);
+								var day = (today.getDate().toString().length > 1) ? today.getDate() : "0"+(today.getDate());
 								var date = today.getFullYear()+"-"+month+"-"+day;
 								var formattedRow = rowTemplate.replace(/:id/g,'add-' + currentIdx).replace(/:date/g,date);
 								$('#curriculum_periods').append(formattedRow);

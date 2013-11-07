@@ -3069,7 +3069,7 @@ function clean_input($string, $rules = array()) {
  * @param array $success_messages
  * @return string containing the HTML of the message or false if there is no HTML.
  */
-function display_success($success_messages = array()) {
+function display_success($success_messages = array(), $mobile = false) {
 	global $SUCCESS, $SUCCESSSTR;
 
 	$output_html = "";
@@ -3090,7 +3090,7 @@ function display_success($success_messages = array()) {
 
 	if ($num_success) {
 		$output_html .= "<div id=\"display-success-box\" class=\"alert alert-block alert-success\">\n";
-        $output_html .= "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n";
+        $output_html .= (!$mobile ? "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" : "");
 		$output_html .= "	<ul>\n";
 		foreach ($success_messages as $success_message) {
 			$output_html .= "	<li>".$success_message."</li>\n";
@@ -3108,7 +3108,7 @@ function display_success($success_messages = array()) {
  * @param array $generic_messages
  * @return string containing the HTML of the message or false if there is no HTML.
  */
-function display_generic($generic_messages = array()) {
+function display_generic($generic_messages = array(), $mobile = false) {
 	global $GENERIC, $GENERICSTR;
 
 	$output_html = "";
@@ -3129,7 +3129,7 @@ function display_generic($generic_messages = array()) {
 
 	if ($num_generic) {
 		$output_html .= "<div id=\"display-generic-box\" class=\"alert alert-block alert-generic\">\n";
-        $output_html .= "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n";
+        $output_html .= (!$mobile ? "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" : "");
 		$output_html .= "	<ul>\n";
 		foreach ($generic_messages as $generic_message) {
 			$output_html .= "	<li>".$generic_message."</li>\n";
@@ -3147,7 +3147,7 @@ function display_generic($generic_messages = array()) {
  * @param array $notice_messages
  * @return string containing the HTML of the message or false if there is no HTML.
  */
-function display_notice($notice_messages = array()) {
+function display_notice($notice_messages = array(), $mobile = false) {
 	global $NOTICE, $NOTICESTR;
 
 	$output_html = "";
@@ -3168,7 +3168,7 @@ function display_notice($notice_messages = array()) {
 
 	if ($num_notices) {
 		$output_html .= "<div id=\"display-notice-box\" class=\"alert alert-block\">\n";
-        $output_html .= "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n";
+        $output_html .= (!$mobile ? "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" : "");
 		$output_html .= "	<ul>\n";
 		foreach ($notice_messages as $notice_message) {
 			$output_html .= "	<li>".$notice_message."</li>\n";
@@ -3186,7 +3186,7 @@ function display_notice($notice_messages = array()) {
  * @param array $error_messages
  * @return string containing the HTML of the message or false if there is no HTML.
  */
-function display_error($error_messages = array()) {
+function display_error($error_messages = array(), $mobile = false) {
 	global $ERROR, $ERRORSTR;
 
 	$output_html = "";
@@ -3207,7 +3207,7 @@ function display_error($error_messages = array()) {
 
 	if($num_errors) {
 		$output_html .= "<div id=\"display-error-box\" class=\"alert alert-block alert-error\">\n";
-        $output_html .= "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n";
+        $output_html .= (!$mobile ? "   <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" : "");
 		$output_html .= "	<ul>\n";
 		foreach ($error_messages as $error_message) {
 			$output_html .= "	<li>".$error_message."</li>\n";
@@ -17114,8 +17114,8 @@ function count_objective_child_events($objective_id = 0, $start = NULL, $end = N
 				JOIN `events` AS b
 				ON a.`event_id` = b.`event_id`
 				JOIN `event_audience` AS c
-				ON a.`event_id` = c.`event_id`
-				AND c.`audience_type` = 'cohort'
+				ON a.`event_id` = c.`event_id`".
+				($group_id != NULL ? " AND c.`audience_type` = 'cohort' " : "")."
 				WHERE `objective_id` = ".$db->qstr($objective_id).
 				($start != NULL ? " AND (IF (b.`event_id` IS NOT NULL, b.`event_start` BETWEEN ".$db->qstr($start)." AND ".$db->qstr($end).", '1' = '1'))" : "").
 				($course_id != NULL ? " AND b.`course_id` = ".$db->qstr($course_id) : "").

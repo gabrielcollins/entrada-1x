@@ -65,7 +65,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					WHERE a.`eform_id` = ".$db->qstr($FORM_ID)."
 					AND a.`form_active` = '1'";
 		$form_record = $db->GetRow($query);
-		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), "update")) {
+		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"], $question_record["organisation_id"], true), "update")) {
 			if ($ALLOW_QUESTION_MODIFICATIONS) {
 				/**
 				 * Clears all open buffers so we can return a simple REST response.
@@ -85,16 +85,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							$query = "SELECT `erubric_id` FROM `evaluation_rubric_questions` WHERE `equestion_id` = ".$db->qstr($equestion_id);
 							$rubric_id = $db->GetOne($query);
 							if ($rubric_id) {
-								$query = "SELECT b.*, c.* FROM `evaluation_rubric_questions` AS a
+								$query = "SELECT b.*, c.*, d.`organisation_id` FROM `evaluation_rubric_questions` AS a
 											JOIN `evaluations_lu_questions` AS b
 											ON a.`equestion_id` = b.`equestion_id`
 											JOIN `evaluation_form_questions` AS c
 											ON b.`equestion_id` = c.`equestion_id`
 											AND c.`eform_id` = ".$db->qstr($FORM_ID)."
+											JOIN `evaluation_forms` AS d
+											ON c.`eform_id` = d.`eform_id`
 											WHERE a.`erubric_id` = ".$db->qstr($rubric_id);
 								$questions = $db->GetAll($query);
 								foreach ($questions as $question) {
-									if($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), "update")) {
+									if($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"], $question_record["organisation_id"], true), "update")) {
 										if(!$db->AutoExecute("evaluation_form_questions", array("question_order" => (int) $order), "UPDATE", "`equestion_id` = ".$db->qstr($question["equestion_id"])." AND `eform_id` = ".$db->qstr($FORM_ID))) {
 
 											$ERROR++;
@@ -107,7 +109,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 									echo "---".$order++;
 								}
 							} else {
-								if($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), "update")) {
+								if($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"], $question_record["organisation_id"], true), "update")) {
 									if(!$db->AutoExecute("evaluation_form_questions", array("question_order" => (int) $order), "UPDATE", "`equestion_id` = ".$db->qstr($equestion_id)." AND `eform_id` = ".$db->qstr($FORM_ID))) {
 
 										$ERROR++;

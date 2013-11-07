@@ -196,15 +196,15 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			/**
 			 * Required field "max_submittable" / Max Submittable
 			 */
-			if (isset($_POST["max_submittable"]) && ($max_submittable = clean_input($_POST["max_submittable"], "int")) && ($max_submittable <= 99)) {
+			if (isset($_POST["max_submittable"]) && (($max_submittable = clean_input($_POST["max_submittable"], "int")) || ($max_submittable === 0)) && ($max_submittable <= 999)) {
 				$PROCESSED["max_submittable"] = $max_submittable;
 			} elseif ($evaluation_target_type == "peer") {
 				$PROCESSED["max_submittable"] = 0;
 			} else {
-				add_error("The evaluation <strong>Max Submittable</strong> field is required and must be less than 99.");
+				add_error("The evaluation <strong>Max Submittable</strong> field is required and must be less than 999.");
 			}
 
-			if ($PROCESSED["min_submittable"] > $PROCESSED["max_submittable"]) {
+			if ($PROCESSED["min_submittable"] > $PROCESSED["max_submittable"] && $PROCESSED["max_submittable"] !== 0) {
 				add_error("Your <strong>Min Submittable</strong> value may not be greater than your <strong>Max Submittable</strong> value.");
 			}
 
@@ -416,6 +416,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 
 			if (!$ERROR) {
 				$PROCESSED["evaluation_active"] = 1;
+				$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
 				$PROCESSED["updated_date"] = time();
 				$PROCESSED["updated_by"] = $ENTRADA_USER->getID();
 
@@ -1091,14 +1092,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			<div class="control-group">
 				<label for="min_submittable" class="form-required control-label">Min Submittable:</label>
 				<div class="controls">
-					<input type="text" id="min_submittable" name="min_submittable" value="<?php echo (isset($PROCESSED["min_submittable"]) ? $PROCESSED["min_submittable"] : 1); ?>" maxlength="2" style="width: 30px; margin-right: 10px" />
+					<input type="text" id="min_submittable" name="min_submittable" value="<?php echo (isset($PROCESSED["min_submittable"]) ? $PROCESSED["min_submittable"] : 1); ?>" maxlength="3" style="width: 30px; margin-right: 10px" />
 					<span class="content-small"><strong>Tip:</strong> The minimum number of times each evaluator must complete this evaluation.</span>
 				</div>
 			</div>
 			<div class="control-group">
 				<label for="max_submittable" class="form-required control-label">Max Submittable:</label>
 				<div class="controls">
-					<input type="text" id="max_submittable" name="max_submittable" value="<?php echo (isset($PROCESSED["max_submittable"]) ? $PROCESSED["max_submittable"] : 1); ?>" maxlength="2" style="width: 30px; margin-right: 10px" />
+					<input type="text" id="max_submittable" name="max_submittable" value="<?php echo (isset($PROCESSED["max_submittable"]) ? $PROCESSED["max_submittable"] : 1); ?>" maxlength="3" style="width: 30px; margin-right: 10px" />
 					<span class="content-small"><strong>Tip:</strong> The maximum number of times each evaluator may complete this evaluation.</span>
 				</div>
 			</div>

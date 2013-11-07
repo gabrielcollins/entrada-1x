@@ -17,10 +17,10 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 		$query = "SELECT * FROM `curriculum_periods` WHERE `curriculum_type_id` = ".$db->qstr($type_id);
 		$periods = $db->GetAll($query);
 		if ($periods) {
-			echo "<select name=\"curriculum_period\" id = \"period_select\" onchange=\"addPeriod(this.options[this.selectedIndex].value,this.options[this.selectedIndex].text,this.selectedIndex)\">";
+			echo "<select name=\"curriculum_period\" id = \"period_select\">";
 			echo "<option value=\"0\">-- Select a Period --</option>";
 			foreach ($periods as $period) {
-				echo "<option value = \"".$period["cperiod_id"]."\">".date("F jS,Y",$period["start_date"])." to ".date("F jS,Y",$period["finish_date"])."</option>";
+				echo "<option value = \"".$period["cperiod_id"]."\">".(($period["curriculum_period_title"]) ? $period["curriculum_period_title"] . " - " : "").date("F jS, Y",$period["start_date"])." to ".date("F jS, Y",$period["finish_date"])."</option>";
 			}
 			echo "</select>";
 		} else {

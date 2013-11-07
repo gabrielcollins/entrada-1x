@@ -110,6 +110,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		<table class="tableList" id="evaluationquestions" cellspacing="0" summary="List of Evaluation Questions">
 		<colgroup>
 			<col class="modified" />
+            <col class="actions" />
 			<col class="title" />
 			<col class="type-title" />
 			<col class="actions" />
@@ -117,6 +118,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		<thead>
 			<tr>
 				<td class="modified">&nbsp;</td>
+				<td class="actions">Question Code</td>
 				<td class="title">Question</td>
 				<td class="type-title">Question Type</td>
 				<td class="actions">&nbsp;</td>
@@ -136,6 +138,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				if (isset($question_controls[$result["equestion_id"]])) {
 					echo "<tr id=\"equestion-".$result["equestion_id"]."\">\n";
 					echo "	<td><input type=\"checkbox\" name=\"checked[]\" class=\"attach\" value=\"".$result["equestion_id"]."\" /></td>\n";
+					echo "	<td><a href=\"".ENTRADA_URL."/admin/evaluations/questions?section=edit&amp;id=".$result["equestion_id"]."\">".html_encode($result["question_code"])."</a></td>\n";
 					echo "	<td><div class=\"evaluation-questions-list\">".$question_controls[$result["equestion_id"]]."</div></td>\n";
 					echo "	<td><a href=\"".ENTRADA_URL."/admin/evaluations/questions?section=edit&amp;id=".$result["equestion_id"]."\">".html_encode($result["questiontype_title"])."</a></td>\n";
 					echo "	<td><img style=\"cursor: pointer;\" height=\"16\" width=\"16\" src=\"".ENTRADA_URL."/images/magnify.gif\" onclick=\"openDialog(".$result["equestion_id"].")\" alt=\"View Evaluation Question Full Size\" title=\"View Evaluation Question Full Size\" /> <a href=\"".ENTRADA_URL."/admin/evaluations/questions?section=edit&amp;id=".$result["equestion_id"]."\"><img src=\"".ENTRADA_URL."/images/action-edit.gif\" width=\"16\" height=\"16\" alt=\"Edit Evaluation Question\" title=\"Edit Evaluation Question\" border=\"0\" /></a> <a href=\"".ENTRADA_URL."/admin/evaluations/questions?section=attach&amp;id=".$result["equestion_id"].(isset($FORM_ID) && (int)$FORM_ID ? "&amp;form_id=".((int)$FORM_ID) : "")."\"><img src=\"".ENTRADA_URL."/images/attachment.gif\" width=\"16\" height=\"16\" alt=\"Attach Evaluation Question to Form\" title=\"Attach Evaluation Question to Form\" border=\"0\" /></a></td>\n";

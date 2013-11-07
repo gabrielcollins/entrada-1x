@@ -263,8 +263,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					AND f.`proxy_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
 					LEFT JOIN `assignments` g
 					ON g.`course_id` = a.`course_id`
-					LEFT JOIN `assignment_contacts` h
-					ON g.`assignment_id` = h.`assignment_id`
 					WHERE
 					(
 						a.`pcoord_id` = ".$db->qstr($ENTRADA_USER->getActiveId())."
@@ -272,8 +270,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 						OR f.`member_acl` = '1'
 					)
 					AND a.`course_active` = '1'
-					AND a.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."
-					AND h.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "					
+					AND a.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation())."					
 					UNION
 					SELECT a.`course_id`, a.`organisation_id`, a.`course_name`, a.`course_code`, a.`course_url`, a.`notifications`, c.`curriculum_type_name`, CONCAT_WS(', ', d.`lastname`, d.`firstname`) AS `fullname`
 					FROM `assignment_contacts` b
@@ -288,10 +285,11 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 					WHERE b.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
 					AND bb.`assignment_active` = 1
 					) x
+					GROUP BY `course_id`
 					ORDER BY %s LIMIT %s, %s";
 	} 
 	
-	$query		= sprintf($query, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);	
+	$query		= sprintf($query, $sort_by, $limit_parameter, $_SESSION[APPLICATION_IDENTIFIER][$MODULE]["pp"]);
 	$results	= $db->GetAll($query);
 	
 	if ($results) {

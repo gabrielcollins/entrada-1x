@@ -42,8 +42,7 @@ if ($RECORD_ID) {
 						AND c.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 			$permitted = $db->GetRow($query);
 		}
-		if ($permitted) {
-			$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=view-folder&id=".$folder_record["cshare_id"], "title" => limit_chars($folder_record["folder_title"], 32));
+		if ($permitted) {			
 			$BREADCRUMB[] = array("url" => COMMUNITY_URL.$COMMUNITY_URL.":".$PAGE_URL."?section=add-file&assignment_id=".$RECORD_ID, "title" => "Upload File");
 
 			$file_uploads = array();

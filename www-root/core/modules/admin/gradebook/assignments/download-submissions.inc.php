@@ -27,7 +27,7 @@ if ($ASSIGNMENT_ID) {
 	$query = "SELECT * FROM `assignment_contacts` WHERE `assignment_id` = ".$db->qstr($ASSIGNMENT_ID)." AND `proxy_id` = ".$db->qstr($ENTRADA_USER->getID());
 	if ($iscontact = $db->GetRow($query)) {
 		$USER_ID = $tmp;
-	} elseif ($assignment && $ENTRADA_ACL->amIAllowed(new CourseResource($assignment["course_id"], $assignment["organisation_id"]), "update")) {
+	} elseif ($assignment && $ENTRADA_ACL->amIAllowed(new GradebookResource($assignment["course_id"], $assignment["organisation_id"]), "update")) {
 		$iscontact = true;	
 	} else {
 		$iscontact = false;
@@ -103,8 +103,10 @@ if ($ASSIGNMENT_ID) {
 
 			}
 			if ((!$ERROR) && (!$NOTICE)) {
-				$ERROR++;
-				$ERRORSTR[] = "<strong>Unable to download the selected file.</strong><br /><br />The file you have selected cannot be downloaded at this time, ".((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"]) ? "please try again later." : "Please log in to continue.");
+				$url = ENTRADA_URL."/admin/gradebook/?".replace_query(array("step" => false, "section" => "view", "id" => $COURSE_ID));
+				$NOTICE++;
+				$NOTICESTR[] = "<strong>No assignment files to download yet.</strong><br /><br />You will now be redirected to the <strong>Gradebook</strong> page; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+				$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
 			}
 
 			if ($NOTICE) {

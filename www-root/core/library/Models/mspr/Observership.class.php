@@ -90,7 +90,7 @@ class Observership extends ModelBase implements Editable, Validation {
 			}
 
 			if ($ENTRADA_USER->getGroup() == "staff" || $ENTRADA_USER->getGroup() == "medtech") {
-				$res->status = "confirmed";
+				$res->status = "approved";
 			}
 			
 			if(!$res->end){

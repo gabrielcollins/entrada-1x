@@ -37,7 +37,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] does not have access to this module [".$MODULE."]");
 } else {
 	$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/questions?section=add", "title" => "Add Question");
-
 	/**
 	 * Required field "questiontype_id" / Question Type
 	 * Currently only multile choice questions are supported, although
@@ -95,6 +94,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					}
 				break;
 				case 1 :
+                case 5 :
 				default :
 					/**
 					 * Required field "allow_comments" / Allow Question Comments.
@@ -162,7 +162,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 						if ($response_is_html) {
 							$response_text = clean_input($response_text, array("trim", "allowedtags"));
 						} else {
-							$response_text = clean_input($response_text, array("trim"));
+							$response_text = clean_input($response_text, array("trim", "notags"));
 						}
 
 						if (($response_key) && ($response_text != "")) {
@@ -289,6 +289,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 								$PROCESSED_QUESTION = array("questiontype_id" => 3,
 															"question_text" => $category["category"],
 															"question_code" => $category["category"],
+															"organisation_id" => $ENTRADA_USER->getActiveOrganisation(),
 															"allow_comments" => $PROCESSED["allow_comments"]);
 								$equestion_id = 0;
 								if ($db->AutoExecute("evaluations_lu_questions", $PROCESSED_QUESTION, "INSERT") && ($equestion_id = $db->Insert_Id()) &&
@@ -379,6 +380,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							}
 						}
 					} else {
+						$PROCESSED["organisation_id"] = $ENTRADA_USER->getActiveOrganisation();
 						if ($db->AutoExecute("evaluations_lu_questions", $PROCESSED, "INSERT") && ($equestion_id = $db->Insert_Id())) {	
 							/**
 							 * Add the question responses to the evaluations_lu_question_responses table.

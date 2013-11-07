@@ -26,6 +26,15 @@
  */
 require_once("init.inc.php");
 
+require_once "Entrada/lti/oauth/oauth-utils.class.php";
+require_once "Entrada/lti/oauth/oauth-exception.class.php";
+require_once "Entrada/lti/oauth/oauth-request.class.php";
+require_once "Entrada/lti/oauth/oauth-token.class.php";
+require_once "Entrada/lti/oauth/oauth-consumer.class.php";
+require_once "Entrada/lti/oauth/oauth-signature-method.interface.php";
+require_once "Entrada/lti/oauth/method/oauth-signature-method-hmac-sha1.class.php";
+require_once "Entrada/lti/LTIConsumer.class.php";
+
 require_once("Entrada/smarty/Smarty.class.php");
 
 ob_start("on_checkout");
@@ -736,6 +745,83 @@ if ($COMMUNITY_URL) {
 
 							echo display_error();
 						}
+					}  elseif ($COMMUNITY_MODULE == "ltiProvider") {
+						$query  = "SELECT `page_title`, `page_content` FROM `community_pages` WHERE `cpage_id` = " . $db->qstr($PAGE_ID);
+						$result = $db->GetRow($query);
+
+						if($result) {
+							if(trim($result["page_title"]) != "") {
+								echo "<h1>".html_encode($result["page_title"])."</h1>";
+							}
+
+							if(!empty($result["page_content"])) {
+								$ltiSettings = json_decode($result["page_content"]);
+
+								$parameters = array(
+					                "resource_link_id" => $PAGE_ID,
+					                "resource_link_title" => html_encode($result["page_title"]),
+					                "resource_link_description" => "",
+					                "user_id" => $ENTRADA_USER->getId(),
+					                "roles" => "Learner",
+					                "lis_person_name_full" => $ENTRADA_USER->getFirstname() . " " . $ENTRADA_USER->getLastname(),
+					                "lis_person_name_family" => $ENTRADA_USER->getLastname(),
+					                "lis_person_name_given" => $ENTRADA_USER->getFirstname(),
+					                "lis_person_contact_email_primary" => $ENTRADA_USER->getEmail(),
+					                "context_id" => $PAGE_ID,
+					                "context_title" => html_encode($result["page_title"]),
+					                "context_label" => "",
+					                "tool_consumer_info_product_family_code" => APPLICATION_NAME,
+					                "tool_consumer_info_version" => APPLICATION_VERSION,
+					                "tool_consumer_instance_guid" => ENTRADA_URL,
+					                "tool_consumer_instance_description" => "",
+					                "launch_presentation_locale" => "en-US",
+					                "launch_presentation_document_target" => "iframe",
+					                "launch_presentation_width" => "",
+					                "launch_presentation_height" => "",
+					                "launch_presentation_css_url" => ""
+					            );
+
+					                $paramsList = explode(";", $ltiSettings->lti_params);
+					                if ($paramsList && count($paramsList) > 0) {
+					                    foreach ($paramsList as $param) {
+					                        $parts = explode("=", $param);
+					                        if ($parts && (count($parts) == 2)) {
+					                            $key = clean_input($parts[0], array("trim", "notags"));
+					                            $value = clean_input($parts[1], array("trim", "notags"));
+
+					                            if ($key) {
+					                                $parameters["custom_".$key] = $value;
+					                            }
+					                        }
+					                    }
+					                }
+
+					            $ltiConsumer = new LTIConsumer();
+					            $signedParams = $ltiConsumer->sign($parameters, $ltiSettings->lti_url, "POST", $ltiSettings->lti_key, $ltiSettings->lti_secret);
+					            ?>
+					                <iframe name="ltiTestFrame" id="ltiTestFrame" src="" width="100%" height="700px" scrolling="auto" style="border: 1px solid rgba(0, 0, 0, 0.075);" transparency=""></iframe>
+					                <form id="ltiSubmitForm" name="ltiSubmitForm" method="POST" action="<?php echo html_encode($ltiSettings->lti_url); ?>" target="ltiTestFrame" enctype="application/x-www-form-urlencoded">
+					                    <?php
+					                    if ($signedParams && count($signedParams) > 0) {
+					                        foreach ($signedParams as $key => $value) {
+					                            $key = htmlspecialchars($key);
+					                            $value = htmlspecialchars($value);
+
+					                            echo "<input type=\"hidden\" name=\"" . $key . "\" value=\"" . $value . "\"/>";
+					                        }
+					                    }
+					                    ?>
+					                    <input id="ltiSubmitBtn" type="submit" style="display: none;"/>
+					                </form>
+					                <script>
+					                	window.onload = function(){
+											document.forms['ltiSubmitForm'].submit();
+										};
+					                </script>
+					            <?php
+							}
+						} 
+						
 					} else {
 						$url		= COMMUNITY_URL.$COMMUNITY_URL;
 						$ONLOAD[]	= "setTimeout('window.location=\\'".$url."\\'', 5000)";

@@ -79,7 +79,18 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 					$PROCESSED["periods"][$key]["finish_date"] = strtotime(clean_input($_POST["curriculum_finish_date"][$key],array("trim","notags")));
 					$PROCESSED["periods"][$key]["active"] = clean_input($_POST["curriculum_active"][$key],array("trim","int"));
 					$PROCESSED["periods"][$key]["curriculum_period_title"] = clean_input($_POST["curriculum_period_title"][$key],array("trim","notags"));
+					
+					if (!$PROCESSED["periods"][$key]["start_date"]) {
+						add_error("A start date is required.");
+					} elseif (!$PROCESSED["periods"][$key]["finish_date"]) {
+						add_error("An end date is required.");
+					} elseif ($PROCESSED["periods"][$key]["finish_date"] < $PROCESSED["periods"][$key]["start_date"]) {
+						$fieldname = (($PROCESSED["periods"][$key]["curriculum_period_title"]) ? $PROCESSED["periods"][$key]["curriculum_period_title"] : date("F jS, Y" ,$PROCESSED["periods"][$key]["start_date"])." to ".date("F jS, Y" ,$PROCESSED["periods"][$key]["finish_date"]));
+						add_error("The curriculum period <strong>".$fieldname."</strong> has a Finish Date that is before the Start Date.");
+					}
 				}
+			} else {
+				add_error("A <strong>Curriculum Period</strong> is required.");
 			}	
 			
 			if (!$ERROR) {
@@ -97,22 +108,28 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 							if ($PROCESSED["periods"]) {						
 								foreach($PROCESSED["periods"] as $period){
 									$period["curriculum_type_id"] = $TYPE_ID;
-									if ($db->AutoExecute("curriculum_periods", $period, "INSERT")) {
-										$SUCCESS++;
-										$SUCCESSSTR[] = "You have successfully added a curriculum period to the system.";										
-									} else {
+									if (!$db->AutoExecute("curriculum_periods", $period, "INSERT")) {
+										//only increment $ERROR once for all potential curriculum period errors.
+										if(!$ERROR) {
 										$ERROR++;
-										$ERRORSTR[] = "There was an error while processing a curriculum period. Please try adding it again from the Edit page.";
+										}
 									}
 
 								}
 							}
 							
+							if (!$ERROR) {
 							$url = ENTRADA_URL . "/admin/settings/manage/curriculumtypes?org=".$ORGANISATION_ID;
 							$SUCCESS++;
 							$SUCCESSSTR[] = "You have successfully added <strong>".html_encode($PROCESSED["curriculum_type_name"])."</strong> to the system.<br /><br />You will now be redirected to the Curriculum Types index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 							$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
-							application_log("success", "New Hot Topic [".$TOPIC_ID."] added to the system.");
+								application_log("success", "New Curriculum type [".$TYPE_ID."] added to the system.");
+							} else {
+								$url = ENTRADA_URL . "/admin/settings/manage/curriculumtypes?section=edit&org=".$ORGANISATION_ID."&type_id=".$TYPE_ID;								
+								$ERRORSTR[] = "There was an error while processing the curriculum period. Please try adding it again from the Edit page.<br /><br />You will now be redirected to the Curriculum Types index; this will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
+								$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+								application_log("error", "Failed to add new Curriculum type [".$TYPE_ID."] added to the system.");
+							}								
 						}
 					}
 					else {
@@ -221,7 +238,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 						<?php
 							foreach ($results as $result) {
 						?>
-								<option value="<?php echo $result["curriculum_level_id"] ?>">
+								<option value="<?php echo $result["curriculum_level_id"]; ?>" <?php echo ($result["curriculum_level_id"] == $PROCESSED["curriculum_level_id"]) ? "selected=\"selected\"" : ""; ?>>
 							<?php echo $result["curriculum_level"] ?>
 							</option>
 						<?php
@@ -278,7 +295,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 													<input type="text" name="curriculum_finish_date[]" id="finish_<?php echo $currentIdx;?>" class="end_date" disabled = "disabled" value="<?php echo date("Y-m-d",$period["finish_date"]);?>" style="border:none;"/><img src="<?php echo ENTRADA_URL; ?>/images/cal-calendar.gif" alt="Select End Date" class="calendar" id="finish_calendar_<?php echo $currentIdx;?>" style="float:right;cursor:pointer;"/>
 												</td>
 												<td>
-													<input type="text" name="curriculum_period_title[]" id="curriculum_period_title_<?php echo $currentIdx;?>" value="<?php echo $period["curriculum_period_title"];?>" style="border:none;" />
+													<input type="text" name="curriculum_period_title[]" id="curriculum_period_title_<?php echo $currentIdx;?>" value="<?php echo $period["curriculum_period_title"];?>" />
 												</td>
 												<td>
 													<select id="curriculum_active_<?php echo $currentIdx;?>" name="curriculum_active[]">
@@ -328,8 +345,6 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 							var numRows = 0;
 							jQuery(function($){
 								$(document).ready(function(){
-									$('#add_period').trigger("click");
-
 									$('#delete_btn_row').hide();
 									$(".calendar").live('click',function(e){
 										var info = e.target.id.split("_");
@@ -349,10 +364,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_CONFIGURATION"))) {
 
 								});
 
-								$('#add_period').click(function(){
+								$('#add_period').click(function(){										
 									var today = new Date();
-									var month = ((today.getMonth()+1)/10 > 1)?today.getMonth()+1:"0"+(today.getMonth()+1);
-									var day = (today.getDate()/10 > 1)?today.getDate():"0"+(today.getDate());
+									var month = ((today.getMonth()+1).toString().length > 1) ? today.getMonth()+1 : "0"+(today.getMonth()+1);
+									var day = (today.getDate().toString().length > 1) ? today.getDate() : "0"+(today.getDate());
 									var date = today.getFullYear()+"-"+month+"-"+day;
 									var formattedRow = rowTemplate.replace(/:id/g,currentIdx).replace(/:date/g,date);
 									$('#curriculum_periods').append(formattedRow);

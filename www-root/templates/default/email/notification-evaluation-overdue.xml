@@ -3,6 +3,8 @@
     <template lang="en">
         <subject>%UC_CONTENT_TYPE_NAME% [%CONTENT_TITLE%] Requires Attention</subject>
         <body>
+Dear %EVALUATOR_FULLNAME%,
+            
 A %CONTENT_TYPE_NAME% is overdue completion and requires your attention. 
 
 Further details regarding this mandatory %CONTENT_TYPE_SHORTNAME% can be found below:
@@ -18,6 +20,7 @@ The %CONTENT_TYPE_SHORTNAME% can be found here:
 %URL%
 
 Please complete all remaining required attempts as soon as possible.
+%LOCKOUT_STRING%
 
 Regards,
 

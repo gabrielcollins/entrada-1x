@@ -31,7 +31,7 @@ if(!defined("PARENT_INCLUDED")) {
 } elseif((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 	header("Location: ".ENTRADA_URL);
 	exit;
-} elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "read")) {
+} elseif (!$ENTRADA_ACL->amIAllowed("gradebook", "read", false)) {
 	$ERROR++;
 	$ERRORSTR[]	= "You do not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
 
@@ -58,6 +58,10 @@ if(!defined("PARENT_INCLUDED")) {
 
 		if (isset($_GET["id"]) && ($tmp_input = clean_input($_GET["id"], array("nows", "int")))) {
 			$COURSE_ID = $tmp_input;
+			$query = "	SELECT * FROM `courses`
+						WHERE `course_id` = ".$db->qstr($COURSE_ID)."
+						AND `course_active` = '1'";
+			$course_details	= $db->GetRow($query);
 		} else {
 			$COURSE_ID = 0;
 		}

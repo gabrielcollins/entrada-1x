@@ -106,8 +106,8 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_CURRICULUM"))) {
 						JOIN `courses` AS e
 						ON c.`course_id` = e.`course_id`
 						JOIN `event_audience` AS f
-						ON c.`event_id` = f.`event_id`
-						AND f.`audience_type` = 'cohort'
+						ON c.`event_id` = f.`event_id` ".
+						($PROCESSED["group_id"] ? " AND f.`audience_type` = 'cohort' " : "")."
 						WHERE a.`objective_id` = ".$db->qstr($PROCESSED["objective_parent"])."
 						AND b.`organisation_id` = ".$db->qstr($ENTRADA_USER->getActiveOrganisation()).
 						($PROCESSED["year"] ? " AND (IF (c.`event_id` IS NOT NULL, c.`event_start` BETWEEN ".$db->qstr($SEARCH_DURATION["start"])." AND ".$db->qstr($SEARCH_DURATION["end"]).", '1' = '1'))" : "").

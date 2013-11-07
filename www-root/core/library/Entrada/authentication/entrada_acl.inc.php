@@ -33,11 +33,11 @@ class Entrada_ACL extends ACL_Factory {
 					"evaluationformquestion"
 				),
 				"evaluationquestion"
-			),
-			"gradebook" => array (
-				"assessment"
-			),
-			"assignment",
+			),			
+			"gradebook" => array(
+				"assessment",
+				"assignment"
+			),						
 			"regionaled" => array (
 				"apartments",
 				"regions",
@@ -91,7 +91,9 @@ class Entrada_ACL extends ACL_Factory {
 			"mydepartment",
 			"myowndepartment",
 			"group",
-            "encounter_tracking"
+            "encounter_tracking",
+			"eportfolio",
+			"eportfolio-artifact"
 		)
 	);
 	/**
@@ -1196,7 +1198,7 @@ class GradebookOwnerAssertion extends CourseOwnerAssertion {
  * @author Developer: Harry Brundage <hbrundage@qmed.ca>, Don Zuiker <zuikerd@qmed.ca>
  * @copyright Copyright 2010, 2013 Queen's University. All Rights Reserved.
  */
-class GradebookDropboxAssertion implements Zend_Acl_Assert_Interface {
+class GradebookDropboxAssertion extends CourseOwnerAssertion {	
 /**
  *
  * @param Zend_Acl $acl The ACL object isself (the one calling the assertion)
@@ -1206,13 +1208,13 @@ class GradebookDropboxAssertion implements Zend_Acl_Assert_Interface {
  * @return boolean
  */
 	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
-		global $db;
-
+		global $db;			
+		
 		//If asserting is off then return true right away
 		if ((isset($resource->assert) && $resource->assert == false) || (isset($acl->_entrada_last_query) && isset($acl->_entrada_last_query->assert) && $acl->_entrada_last_query->assert == false)) {
 			return true;
 		}
-
+		
 		if (isset($resource->course_id)) {
 			$course_id = $resource->course_id;
 		} else if (isset($acl->_entrada_last_query->course_id)) {
@@ -1220,7 +1222,7 @@ class GradebookDropboxAssertion implements Zend_Acl_Assert_Interface {
 		} else {
 			//Parse out the user ID and course ID
 			$resource_id = $resource->getResourceId();
-			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);
+			$resource_type = preg_replace('/[0-9]+/', "", $resource_id);						
 
 			if ($resource_type !== "gradebook" && $resource_type !== "assessment") {
 				//This only asserts for users on gradebooks.
@@ -1229,7 +1231,7 @@ class GradebookDropboxAssertion implements Zend_Acl_Assert_Interface {
 
 			$course_id = preg_replace('/[^0-9]+/', "", $resource_id);
 		}
-
+		
 		$role_id = $role->getRoleId();
 		$access_id	= preg_replace('/[^0-9]+/', "", $role_id);
 
@@ -1244,22 +1246,26 @@ class GradebookDropboxAssertion implements Zend_Acl_Assert_Interface {
 			$query = "SELECT `user_id` FROM `".AUTH_DATABASE."`.`user_access`
 						WHERE `id` = ".$db->qstr($access_id);
 			$user_id = $db->GetOne($query);
-		}
-		return $this->_checkGradebookDropbox($user_id, $course_id);
+		}					
+        if ($this->_checkGradebookDropbox($user_id, $course_id)) {
+            return true;
+        } else {
+            return $this->_checkCourseOwner($user_id, $course_id);
+        }
 	}
-
+	
 	static function _checkGradebookDropbox($user_id, $course_id) {
-		global $db;
-
+		global $db;		
+		
 		$query		= "	SELECT *
 						FROM `assignment_contacts` a
 						JOIN `assignments` b
 						ON a.`assignment_id` = b.`assignment_id`
 						WHERE a.`proxy_id` = " . $db->qstr($user_id) . "
 						AND b.`assignment_active` = 1
-						AND b.`course_id` = " . $db->qstr($course_id);
+						AND b.`course_id` = " . $db->qstr($course_id);			
 		$results	= $db->GetAll($query);
-
+		
 		if ($results) {
 			return true;
 		} else {
@@ -2204,37 +2210,40 @@ class GradebookResource extends CourseResource {
 	}
 }
 
-class AssessmentResource extends EntradaAclResource {
+class AssessmentResource extends GradebookResource {
 	var $assessment_id;
-
-	function __construct($assessment_id, $assert = null) {
+	
+	function __construct($course_id, $organisation_id, $assessment_id, $assert = null) {		
 		$this->assessment_id = $assessment_id;
-
+		parent::__construct($course_id, $organisation_id, $assert);
 		if (isset($assert)) {
 			$this->assert = $assert;
 		}
 	}
-
+	
 	public function getResourceId() {
 		return "assessment".($this->specific ? $this->assessment_id : "");
 	}
 }
 
-class AssignmentResource extends EntradaAclResource {
+class AssignmentResource extends GradebookResource {
 	var $assignment_id;
-
-	function __construct($assignment_id, $assert = null) {
+	
+	function __construct($course_id, $organisation_id, $assignment_id, $assert = null) {		
 		$this->assignment_id = $assignment_id;
-
+		
+		parent::__construct($course_id, $organisation_id, $assert);
+		
 		if (isset($assert)) {
 			$this->assert = $assert;
 		}
 	}
-
+	
 	public function getResourceId() {
 		return "assignment".($this->specific ? $this->assignment_id : "");
 	}
 }
+
 
 /**
  * Creates a photo resource.
@@ -2517,8 +2526,9 @@ class QuizQuestionResource extends QuizResource {
 class EvaluationResource extends EntradaAclResource {
 	var $evaluation_id;
 
-	function __construct($evaluation_id, $assert = null) {
+	function __construct($evaluation_id, $organisation_id, $assert = null) {
 		$this->evaluation_id = $evaluation_id;
+		$this->organisation_id = $organisation_id;
 	}
 
 	public function getResourceId() {
@@ -2637,8 +2647,9 @@ class EvaluationResultResource extends EvaluationResource {
 class EvaluationFormResource extends EvaluationResource {
 	var $eform_id;
 
-	function __construct($eform_id, $assert = null) {
+	function __construct($eform_id, $organisation_id, $assert = null) {
 		$this->eform_id = $eform_id;
+		$this->organisation_id = $organisation_id;
 	}
 	public function getResourceId() {
 		return "evaluationform".($this->specific ? $this->evaluation_id : "");
@@ -2648,8 +2659,9 @@ class EvaluationFormResource extends EvaluationResource {
 class EvaluationQuestionResource extends EvaluationResource {
 	var $equestion_id;
 
-	function __construct($equestion_id, $assert = null) {
+	function __construct($equestion_id, $organisation_id, $assert = null) {
 		$this->equestion_id = $equestion_id;
+		$this->organisation_id = $organisation_id;
 	}
 	public function getResourceId() {
 		return "evaluationquestion".($this->specific ? $this->equestion_id : "");
@@ -2771,5 +2783,11 @@ class LoggableFoundAssertion implements Zend_Acl_Assert_Interface {
 		}
 
 		return false;
+	}
+}
+
+class EportfolioOwnerAssertion implements Zend_Acl_Assert_Interface {
+	public function assert(Zend_Acl $acl, Zend_Acl_Role_Interface $role = null, Zend_Acl_Resource_Interface $resource = null, $privilege = null) {
+		return true;
 	}
 }

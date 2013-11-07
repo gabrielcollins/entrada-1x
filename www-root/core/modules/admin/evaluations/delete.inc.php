@@ -170,7 +170,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 			} else {
 				$total_evaluations	= count($EVALUATION_IDS);
 
-				$query_evaluations = "	SELECT `evaluation_id`, `eform_id`, `evaluation_title`, `evaluation_description`, `evaluation_active`,
+				$query_evaluations = "	SELECT `evaluation_id`, `eform_id`, `organisation_id`, `evaluation_title`, `evaluation_description`, `evaluation_active`,
                                                             `evaluation_start`, `evaluation_finish`, `min_submittable`, `max_submittable`, `release_date`,
                                                             `release_until`, `updated_date`, `updated_by` from `evaluations`
                                                             WHERE `evaluation_id` IN (".implode(", ", $EVALUATION_IDS).")
@@ -210,7 +210,7 @@ if((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							$accessible		= true;
 							$administrator	= false;
 
-							if($ENTRADA_ACL->amIAllowed(new EvaluationResource($result["evaluation_id"]), 'delete')) {
+							if($ENTRADA_ACL->amIAllowed(new EvaluationResource($result["evaluation_id"], $result["organisation_id"], true), 'delete')) {
 								$administrator = true;
 							} else {
 								if((($result["release_date"]) && ($result["release_date"] > time())) || (($result["release_until"]) && ($result["release_until"] < time()))) {

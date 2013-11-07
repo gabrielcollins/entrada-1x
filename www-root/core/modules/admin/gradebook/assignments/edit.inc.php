@@ -71,7 +71,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 				$PROCESSED["name"] = "";
 			}
 			
-			if($IS_CONTACT){
+			if($IS_CONTACT || $ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
 				$query = "	SELECT * FROM `courses`
 							WHERE `course_id` = ".$db->qstr($COURSE_ID)."
 							AND `course_active` = '1'";

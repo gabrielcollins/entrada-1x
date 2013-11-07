@@ -224,6 +224,7 @@ switch ($STEP) {
 				!@is_writable($entrada_storage."/cache") ||
 				!@is_writable($entrada_storage."/community-galleries") ||
 				!@is_writable($entrada_storage."/community-shares") ||
+                !@is_writable($entrada_storage."/eportfolio") ||
 				!@is_writable($entrada_storage."/event-files") ||
 				!@is_writable($entrada_storage."/logs") ||
 				!@is_writable($entrada_storage."/user-photos")) {
@@ -237,6 +238,7 @@ switch ($STEP) {
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/cache<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-galleries<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/community-shares<br />\n";
+                $ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/eportfolio<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/event-files<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/logs<br />\n";
 				$ERRORSTR[$i] .= "chmod 777 ".$entrada_storage."/user-photos<br />\n";

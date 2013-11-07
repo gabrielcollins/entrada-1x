@@ -212,12 +212,12 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					/**
 					 * Required field "max_submittable" / Max Submittable
 					 */
-					if (isset($_POST["max_submittable"]) && ($max_submittable = clean_input($_POST["max_submittable"], "int")) && ($max_submittable <= 99)) {
+					if (isset($_POST["max_submittable"]) && (($max_submittable = clean_input($_POST["max_submittable"], "int")) || ($max_submittable === 0)) && ($max_submittable <= 999)) {
 						$PROCESSED["max_submittable"] = $max_submittable;
 					} elseif ($evaluation_target_type == "peer") {
 						$PROCESSED["max_submittable"] = 0;
 					} else {
-						add_error("The evaluation <strong>Max Submittable</strong> field is required and must be less than 99.");
+						add_error("The evaluation <strong>Max Submittable</strong> field is required and must be less than 999.");
 					}
 
 					if ($PROCESSED["min_submittable"] > $PROCESSED["max_submittable"]) {
@@ -1267,6 +1267,35 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
                                 <input type="hidden" id="reviewer_id" name="reviewer_id" value="" />
                             </div>
                         </div>
+						<div class="control-group">
+							<label for="evaluation_exclusions" class="control-label form-nrequired">
+								Evaluator Exclusions<br />
+								<span class="content-small">Evaluators in the Exclusions list are not allowed (or required) to fill out the evaluation, despite being in the evaluators list.</span>
+							</label>
+							<div class="controls">
+								<input type="text" id="exclusion_name" name="fullname" size="30" autocomplete="off" style="width: 203px; vertical-align: middle" />
+								<?php $ONLOAD[] = "exclusion_list = new AutoCompleteList({ type: 'exclusion', url: '". ENTRADA_RELATIVE ."/api/personnel.api.php?type=evaluators&id=".$EVALUATION_ID."', remove_image: '". ENTRADA_RELATIVE ."/images/action-delete.gif'})"; ?>
+								<div class="autocomplete" id="exclusion_name_auto_complete"></div>
+								<input type="hidden" id="associated_exclusion" name="associated_exclusion" />
+								<input type="button" class="button-sm" id="add_associated_exclusion" value="Add" style="vertical-align: middle" />
+								<span class="content-small">(<strong>Example:</strong> <?php echo html_encode($_SESSION["details"]["lastname"].", ".$_SESSION["details"]["firstname"]); ?>)</span>
+								<ul id="exclusion_list" class="menu" style="margin-top: 15px">
+								<?php
+								if (is_array($PROCESSED["associated_exclusions"]) && count($PROCESSED["associated_exclusions"])) {
+									foreach ($PROCESSED["associated_exclusions"] as $exclusion) {
+										if ((array_key_exists($exclusion, $EVALUATOR_LIST)) && is_array($EVALUATOR_LIST[$exclusion])) {
+											?>
+											<li class="user" id="exclusion_<?php echo $EVALUATOR_LIST[$exclusion]["proxy_id"]; ?>" style="cursor: move;margin-bottom:10px;width:350px;"><?php echo $EVALUATOR_LIST[$exclusion]["fullname"]; if ($exclusion != $ENTRADA_USER->getID()) {?> <img src="<?php echo ENTRADA_URL; ?>/images/action-delete.gif" onclick="exclusion_list.removeItem('<?php echo $EVALUATOR_LIST[$exclusion]["proxy_id"]; ?>');" class="list-cancel-image" /><?php } ?></li>
+											<?php
+										}
+									}
+								}
+								?>
+								</ul>
+								<input type="hidden" id="exclusion_ref" name="exclusion_ref" value="" />
+								<input type="hidden" id="exclusion_id" name="exclusion_id" value="" />
+							</div>
+						</div>
                         <div class="control-group">
                             <label for="threshold_notifications_type" class="form-nrequired control-label">Mandatory Threshold Notifications:</label>
                             <div class="controls">

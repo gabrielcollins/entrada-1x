@@ -190,4 +190,90 @@ class Models_Notice {
 		}
 		return $output;
 	}
+	
+	public static function UserPushNotificationsInfo ($proxy_id = 0, $max_notice_id = 0) {
+		global $db;
+		$i = 0;
+		$user = User::get($proxy_id);
+		$total_organisations = count($user->getOrganisationGroupRole());
+		$query = "  SELECT COUNT(*) AS `notice_count`, MAX(a.`notice_id`) AS `max_notice_id`
+					FROM `notices` AS a
+					LEFT JOIN `statistics` AS b
+					ON b.`module` = 'notices'
+					AND b.`proxy_id` = ".$db->qstr($user->getId())."
+					AND b.`action` = 'read'
+					AND b.`action_field` = 'notice_id'
+					AND b.`action_value` = a.`notice_id`
+					JOIN `notice_audience` AS c
+					ON a.`notice_id` = c.`notice_id`
+					LEFT JOIN `".AUTH_DATABASE."`.`user_data` AS c
+					ON c.`id` = a.`updated_by`
+					WHERE (
+						(";
+		foreach ($user->getOrganisationGroupRole() as $organisation_id => $groups) {
+			$i++;
+
+			$all_audience_types = array();
+			$all_groups = array();
+
+			foreach ($groups as $group) {
+				/**
+				 * Allows the MEdTech group to be classified as staff by
+				 * the notices module.
+				 */
+				if ($group["group"] == "medtech") {
+					$group["group"] = "staff";
+				}
+
+				if ($group["group"] != "staff" || !in_array("staff", $all_groups)) { // This makes sure staff are only added once.
+					$all_audience_types[] = "all:" . $group["group"];
+					$all_groups[] = $group["group"];
+				}
+			}
+
+			$query .= "     (
+								a.`organisation_id` = ".$db->qstr($organisation_id)."
+								AND (
+									c.`audience_type` = 'all'
+									OR c.`audience_type` IN ('".implode("', '", $all_audience_types)."')
+									OR (
+										c.`audience_type` IN ('".implode("', '", $all_groups)."')
+										AND c.`audience_value` = ".$db->qstr($user->getId())."
+									)
+								)
+							)";
+
+			if ($i < $total_organisations) {
+				$query .= " OR ";
+			}
+
+		}
+		$query .= "
+					)
+					OR (
+						(c.`audience_type` = 'cohort' OR c.`audience_type` = 'course_list')
+						AND c.`audience_value` IN (
+							SELECT a.`group_id`
+							FROM `group_members` AS a
+							JOIN `groups` AS b
+							ON b.`group_id` = a.`group_id`
+							WHERE a.`proxy_id` = ".$db->qstr($user->getId())."
+							AND a.`member_active` = 1
+							AND (a.`start_date` IS NULL OR a.`start_date` = 0 OR a.`start_date` <= UNIX_TIMESTAMP())
+							AND (a.`finish_date` IS NULL OR a.`finish_date` = 0 OR a.`finish_date` > UNIX_TIMESTAMP())
+							AND b.`group_active` = 1
+							AND (b.`start_date` IS NULL OR b.`start_date` = 0 OR b.`start_date` <= UNIX_TIMESTAMP())
+							AND (b.`expire_date` IS NULL OR b.`expire_date` = 0 OR b.`expire_date` > UNIX_TIMESTAMP())
+						)
+					)
+				)
+				AND (a.`display_from` IS NULL OR a.`display_from` = 0 OR a.`display_from` <= UNIX_TIMESTAMP())
+				AND (a.`display_until` IS NULL OR a.`display_until` = 0 OR a.`display_until` >= UNIX_TIMESTAMP())
+				AND (a.`notice_id` > " . $db->qstr($max_notice_id) . ")
+				ORDER BY a.`updated_date` DESC, a.`display_until` ASC";
+		$notices = $db->GetRow($query);
+		if ($notices) {
+			return $notices;
+		}
+	}
 }

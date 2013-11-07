@@ -95,7 +95,7 @@ if ($RECORD_ID) {
 			if (isset($_GET["pv"])) {
 				$PAGE_CURRENT = (int) trim($_GET["pv"]);
 
-				if (($PAGE_CURRENT < 1) || ($PAGE_CURRENT > $TOTAL_PAGES)) {
+				if (($PAGE_CURRENT < 1) || (isset($TOTAL_PAGES) && !empty($TOTAL_PAGES) && $PAGE_CURRENT > $TOTAL_PAGES)) {
 					$PAGE_CURRENT = 1;
 				}
 			} else {

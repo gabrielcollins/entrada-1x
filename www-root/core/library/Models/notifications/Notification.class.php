@@ -239,6 +239,7 @@ class Notification {
                                             "%MANDATORY_STRING%",
                                             "%URL%",
                                             "%APPLICATION_NAME%",
+                                            "%LOCKOUT_STRING%",
                                             "%ENTRADA_URL%");
                             if (strpos($notification_user->getContentTypeName(), "assessment") !== false) {
                                 $content_type_shortname = "assessment";
@@ -250,7 +251,7 @@ class Notification {
                                 $clerkship_event = $db->GetRow($query);
                                 if ($clerkship_event) {
                                     if ($evaluation["target_shortname"] != "rotation_elective") {
-                                        $evaluation["evaluation_start"] = $clerkship_event["event_finish"];
+                                        $evaluation["evaluation_start"] = ($clerkship_event["event_finish"] - (86400 * 5));
                                         $evaluation["evaluation_finish"] = $clerkship_event["event_finish"] + CLERKSHIP_EVALUATION_TIMEOUT;
                                     }
                                     $evaluation["evaluation_lockout"] = $clerkship_event["event_finish"] + CLERKSHIP_EVALUATION_LOCKOUT;
@@ -261,7 +262,7 @@ class Notification {
                                 }
                             } else {
                                 $event_title = "";
-                                $evaluation["evaluation_lockout"] = $evaluation["evaluation_finish"];
+                                $evaluation["evaluation_lockout"] = $evaluation["evaluation_finish"] + (defined('EVALUATION_LOCKOUT') && EVALUATION_LOCKOUT ? EVALUATION_LOCKOUT : 0);
                             }
                             $mandatory = $evaluation["evaluation_mandatory"];
                             $evaluation_start = date(DEFAULT_DATE_FORMAT, $evaluation["evaluation_start"]);
@@ -283,6 +284,7 @@ class Notification {
                                                 html_encode((isset($mandatory) && $mandatory ? "mandatory" : "non-mandatory")),
                                                 html_encode($content_url),
                                                 html_encode(APPLICATION_NAME),
+                                                html_encode((defined('EVALUATION_LOCKOUT') && EVALUATION_LOCKOUT ? "\nAccess to this evaluation will be closed as of ".$evaluation_lockout."." : "")),
                                                 html_encode(ENTRADA_URL));
                             if ($evaluation["target_shortname"] == "rotation_core") {
                                 $notification_body = file_get_contents($ENTRADA_TEMPLATE->absolute()."/email/notification-rotation-core-evaluation-".($evaluation["evaluation_finish"] >= time() || $evaluation["evaluation_start"] >= strtotime("-1 day") ? "release" : "overdue").".xml");

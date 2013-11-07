@@ -41,7 +41,7 @@ if ($ASSIGNMENT_ID) {
 		$folder_record	= $db->GetRow($query);
 		if ($folder_record){
 			//if user is member of group associated with assignment			
-			if ($ENTRADA_ACL->amIAllowed(new AssignmentResource($ASSIGNMENT_ID), "update")) {
+			if ($ENTRADA_ACL->amIAllowed(new AssignmentResource($COURSE_ID, $course_details["organisation_id"], $ASSIGNMENT_ID), "update")) {
 				$query = "SELECT CONCAT_WS(' ', `firstname`,`lastname`) AS `uploader` FROM `".AUTH_DATABASE."`.`user_data` WHERE `id` = ".$db->qstr($file_record["proxy_id"]);
 				$user_name = $db->GetOne($query);
 				$BREADCRUMB = array();

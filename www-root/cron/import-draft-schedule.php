@@ -65,7 +65,8 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 						
 						$query = "	SELECT *
 									FROM `draft_events`
-									WHERE `draft_id` = ".$db->qstr($draft["draft_id"]);
+									WHERE `draft_id` = ".$db->qstr($draft["draft_id"])."
+									ORDER BY `parent_id` ASC";
 						$events = $db->GetAll($query);
 						if ($events) {
 
@@ -75,6 +76,7 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 
 								if ($event["event_id"]) {
 									$old_event_id = $event["event_id"];
+									$old_events[$old_event_id] = $event;
 									unset($event["event_id"]);
 								} else {
 									$old_event_id = false;
@@ -85,8 +87,14 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 								if (empty($event["event_children"])) {
 									$event["event_children"] = 0;
 								}
+								echo $event["parent_id"]."-";
+								if (isset($event["parent_id"]) && in_array($event["parent_id"], $old_events[$event["parent_id"]])) {
+									$event["parent_id"] = $old_events[$event["parent_id"]]["new_event_id"];
+								}
+								echo $event["parent_id"]."\n";
 								if ($db->AutoExecute("`events`", $event, 'INSERT')) {
 									$event_id = $db->Insert_ID();
+									$old_events[$old_event_id]["new_event_id"] = $event_id;
 									application_log("success", "Successfully created event [".$event_id."]");
 								} else {
 									$error++;
@@ -194,13 +202,14 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 													application_log("success", "Successfully inserted file [".$db->Insert_ID()."] from old event [".$old_event_id."], for new event [".$event_id."].");
 
 													$new_file_id = (int) $db->Insert_ID();
-													if (copy(FILE_STORAGE_PATH."/".$old_event_file, FILE_STORAGE_PATH."/".$new_file_id)) {
-														application_log("success", "Successfully copied file [".$old_event_file."] to file [".$new_file_id."], for new event [".$event_id."].");
-														$copied_files[] = $processed_file["file_name"];
-													} else {
-														application_log("success", "Failed to copy file [".$old_event_file."] to file [".$new_file_id."].");
+													if (file_exists(FILE_STORAGE_PATH."/".$old_event_file)) {
+														if (copy(FILE_STORAGE_PATH."/".$old_event_file, FILE_STORAGE_PATH."/".$new_file_id)) {
+															application_log("success", "Successfully copied file [".$old_event_file."] to file [".$new_file_id."], for new event [".$event_id."].");
+															$copied_files[] = $processed_file["file_name"];
+														} else {
+															application_log("success", "Failed to copy file [".$old_event_file."] to file [".$new_file_id."].");
+														}
 													}
-
 												} else {
 													$error++;
 													application_log("error", "Error inserting event_files [".$event_id."] on draft schedule import. DB said: ".$db->ErrorMsg());

@@ -112,7 +112,7 @@ if ($RECORD_ID) {
 			}
 		}
 	}
-	if ($evaluation && $ENTRADA_ACL->amIAllowed(new EvaluationResource(null, true), 'update')) {
+	if ($evaluation && $ENTRADA_ACL->amIAllowed(new EvaluationResource(null, null, true), 'update')) {
 		array_unshift($permissions, array("contact_type" => "reviewer"));
 	}
 	if ($evaluation && isset($permissions) && $permissions) {

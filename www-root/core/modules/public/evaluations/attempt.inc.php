@@ -87,6 +87,7 @@ if ($RECORD_ID) {
 						LEFT JOIN `evaluations_lu_targets` AS e
 						ON ef.`target_id` = e.`target_id`
 						WHERE a.`evaluation_id` = ".$db->qstr($RECORD_ID)."
+                        ".(defined("EVALUATION_LOCKOUT") && EVALUATION_LOCKOUT ? "AND a.`evaluation_finish` > ".$db->qstr(time() + EVALUATION_LOCKOUT) : "")."
 						AND 
 						(
 							(
@@ -818,7 +819,7 @@ if ($RECORD_ID) {
 									}
 									</script>
 									<?php
-									$sidebar_html = evaluation_generate_description((isset($evaluation_record["base_min_submittable"]) && $evaluation_record["base_min_submittable"] ? $evaluation_record["base_min_submittable"] : $evaluation_record["min_submittable"]), $total_questions, (isset($evaluation_record["base_max_submittable"]) && $evaluation_record["base_max_submittable"] ? $evaluation_record["base_max_submittable"] : $evaluation_record["max_submittable"]), $evaluation_record["evaluation_finish"]);
+									$sidebar_html = evaluation_generate_description((isset($evaluation_record["base_min_submittable"]) && $evaluation_record["base_min_submittable"] ? $evaluation_record["base_min_submittable"] : $evaluation_record["min_submittable"]), $total_questions, (isset($evaluation_record["base_max_submittable"]) && ($evaluation_record["base_max_submittable"] || ((int)$evaluation_record["base_max_submittable"] === 0)) ? $evaluation_record["base_max_submittable"] : $evaluation_record["max_submittable"]), $evaluation_record["evaluation_finish"]);
 									new_sidebar_item("Evaluation Statement", $sidebar_html, "page-anchors", "open", "1.9");
 								} else {
 									$ERROR++;

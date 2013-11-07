@@ -68,14 +68,14 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 		$erubric_id = $db->GetOne($query);
 		if ($erubric_id) {
 			$return_value = 200;
-			$query = "SELECT b.* FROM `evaluation_rubric_questions` AS a
+			$query = "SELECT a.`organisation_id`, b.* FROM `evaluation_rubric_questions` AS a
 						JOIN `evaluation_form_questions` AS b
 						ON a.`equestion_id` = b.`equestion_id`
 						WHERE a.`erubric_id` = ".$db->qstr($erubric_id)."
 						AND b.`eform_id` = ".$db->qstr($FORM_ID);
 			$question_records = $db->GetAll($query);
 			if ($question_records) {
-				if ($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"]), "update")) {
+				if ($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"], $question_record["organisation_id"], true), "update")) {
 					if ($ALLOW_QUESTION_MODIFICATIONS) {
 						foreach ($question_records as $question_record) {
 							$efresponse_ids_string = "";
@@ -140,7 +140,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 				exit;
 			}
 		} else {
-			$query = "	SELECT a.`form_title`, a.`form_description`, b.*
+			$query = "	SELECT a.`form_title`, a.`form_description`, a.`organisation_id`, b.*
 						FROM `evaluation_forms` AS a
 						LEFT JOIN `evaluation_form_questions` AS b
 						ON b.`eform_id` = b.`eform_id`
@@ -149,7 +149,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 						AND b.`equestion_id` = ".$db->qstr($RECORD_ID);
 			$question_record = $db->GetRow($query);
 			if ($question_record) {
-				if ($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"]), "update")) {
+				if ($ENTRADA_ACL->amIAllowed(new EvaluationFormResource($question_record["eform_id"], $question_record["organisation_id"], true), "update")) {
 					if ($ALLOW_QUESTION_MODIFICATIONS) {
 						/**
 						 * Clears all open buffers so we can return a simple REST response.

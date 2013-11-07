@@ -347,15 +347,6 @@ if ($RECORD_ID) {
 							<col style="width: 20%" />
 							<col style="width: 77%" />
 						</colgroup>
-						<tfoot>
-							<tr>
-								<td colspan="3" style="padding-top: 15px; text-align: right">
-									<div id="display-upload-button">
-										<input type="button" class="btn btn-primary" value="Upload File(s)" onclick ="uploadFile()" />
-									</div>
-								</td>
-							</tr>
-						</tfoot>
 						<tbody>
 							<tr>
 								<td colspan="3">
@@ -441,6 +432,11 @@ if ($RECORD_ID) {
 							</tr>
 					</tbody>
 					</table>
+					<div class="row-fluid space-above">
+						<div id="display-upload-button" class="pull-right">
+							<input type="button" class="btn btn-primary" value="Upload File(s)" onclick ="uploadFile()" />
+						</div>
+					</div>
 					</form>
 						<div id="display-upload-status" style="display: none">
 							<div style="text-align: left; background-color: #EEEEEE; border: 1px #666666 solid; padding: 10px">

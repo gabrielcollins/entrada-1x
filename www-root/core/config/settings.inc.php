@@ -105,6 +105,9 @@ define("CLERKSHIP_EVALUATION_LOCKOUT", 0);
 define("CLERKSHIP_TOP_CATEGORY_ID", 1);
 define("CLERKSHIP_SETTINGS_REQUIREMENTS", false);
 
+
+define("EVALUATION_LOCKOUT", ONE_WEEK);
+
 $CLERKSHIP_REQUIRED_WEEKS = 14;
 $CLERKSHIP_CATEGORY_TYPE_ID = 13;
 $CLERKSHIP_EVALUATION_FORM = "http://url_of_your_schools_precptor_evaluation_of_clerk_form.pdf";
@@ -297,6 +300,7 @@ define("STORAGE_USER_PHOTOS", $config->entrada_storage . "/user-photos");		// Fu
 define("FILE_STORAGE_PATH", $config->entrada_storage . "/event-files");			// Full directory path where off-line files are stored without trailing slash.
 define("MSPR_STORAGE",$config->entrada_storage . "/msprs");						//Full directory path where student Medical School Performance Reports should be sotred
 define("SEARCH_INDEX_PATH",$config->entrada_storage . "/search-indexes");		//Full directory path where student Medical School Performance Reports should be sotred
+define("EPORTFOLIO_STORAGE_PATH", $config->entrada_storage . "/eportfolio");	// Full directory path where eportfolio files should be sotred 
 
 define("SENDMAIL_PATH", "/usr/sbin/sendmail -t -i");							// Full path and parametres to sendmail.
 
@@ -509,6 +513,7 @@ $MODULES["events"] = array("title" => "Manage Events", "resource" => "eventconte
 $MODULES["gradebook"] = array("title" => "Manage Gradebook", "resource" => "gradebook", "permission" => "update");
 $MODULES["mspr"] = array("title" => "Manage MSPRs", "resource" => "mspr", "permission" => "create");
 $MODULES["notices"] = array("title" => "Manage Notices", "resource" => "notice", "permission" => "update");
+$MODULES["eportfolio"] = array("title" => "Manage ePortfolios", "resource" => "eportfolio", "permission" => "read");
 $MODULES["polls"] = array("title" => "Manage Polls", "resource" => "poll", "permission" => "update");
 $MODULES["quizzes"] = array("title" => "Manage Quizzes", "resource" => "quiz", "permission" => "update");
 $MODULES["users"] = array("title" => "Manage Users", "resource" => "user", "permission" => "update");

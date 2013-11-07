@@ -168,22 +168,25 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_ENROLMENT"))) {
 
 			$ONLOAD[]	= "showgroup('".$group_name."',".$GROUP_ID.")";
 
-				$query = "	SELECT * FROM `courses`
-					WHERE `course_id` = ".$db->qstr($COURSE_ID)."
-					AND `course_active` = '1'";
-				$course_details	= $db->GetRow($query);
+			$query = "	SELECT * FROM `courses`
+						WHERE `course_id` = ".$db->qstr($COURSE_ID)."
+						AND `course_active` = '1'";
+			$course_details	= $db->GetRow($query);
 
-
-			$query = "	SELECT `cperiod_id`
-                        FROM `curriculum_periods`
-						WHERE `curriculum_type_id` = ".$db->qstr($course_details["curriculum_type_id"])."
-						AND `start_date` < ".$db->qstr(time())."
-						AND `finish_date` > ".$db->qstr(time())."
-                        AND `active` = 1
-                        LIMIT 1";
-			$cperiod = $db->GetOne($query);
-			if (!$cperiod) {
-				$cperiod = 0;
+			if (isset($_GET["cperiod_id"]) && $temp = clean_input($_GET["cperiod_id"], array("trim", "int"))) {
+				$cperiod = $temp;				
+			} else {
+				$query = "	SELECT `cperiod_id`
+							FROM `curriculum_periods`
+							WHERE `curriculum_type_id` = ".$db->qstr($course_details["curriculum_type_id"])."
+							AND `start_date` < ".$db->qstr(time())."
+							AND `finish_date` > ".$db->qstr(time())."
+							AND `active` = 1
+							LIMIT 1";
+				$cperiod = $db->GetOne($query);
+				if (!$cperiod) {
+					$cperiod = 0;
+				}
 			}
 
 			$query = "	SELECT * FROM `course_audience`
@@ -286,8 +289,40 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_COURSE_ENROLMENT"))) {
 			if (!$group_names && !$single_members) {
 				add_notice('There is currently no student enrolment for this course at this time.');
 				echo display_notice();
-			}
-
+			} ?>			
+			<div class="span12 clearfix">
+				<form class="pull-right form-horizontal" style="margin-bottom:0;">
+					<div class="control-group">
+						<label for="cperiod_select" class="control-label content-small">
+							Enrolment Period:
+						</label>
+						<div class="controls">
+							<select id="cperiod_select" name="cperiod_select" onchange="window.location='<?php echo ENTRADA_URL;?>/admin/courses/enrolment?id=<?php echo $COURSE_ID;?>&cperiod_id='+this.options[this.selectedIndex].value">
+								<option value="0">-- Select a Period --</option>
+								<?php							
+								$query = "	SELECT * 
+											FROM `curriculum_periods` a
+											JOIN `course_audience` b
+											ON a.`cperiod_id` = b.`cperiod_id`
+											WHERE a.`curriculum_type_id` = ".$db->qstr($course_details["curriculum_type_id"])." 
+											AND a.`active` = 1
+											AND b.`course_id` = " . $db->qstr($course_details["course_id"]) . "
+											GROUP BY a.`cperiod_id`";	
+								$periods = $db->GetAll($query);									
+								if ($periods) {
+									foreach ($periods as $period) { ?>
+										<option value="<?php echo $period["cperiod_id"];?>" <?php echo (($period["cperiod_id"] == $cperiod) ? "selected=\"selected\"" : "");?>>
+											<?php echo (($period["curriculum_period_title"]) ? $period["curriculum_period_title"] . " - " : "") . date("F jS, Y" ,$period["start_date"])." to ".date("F jS, Y" ,$period["finish_date"]); ?>
+										</option>
+								<?php
+									}
+								} ?>
+							</select>
+						</div>
+					</div>
+				</form>
+			</div>
+			<?php
 			if ($group_names) {
 				foreach ($group_names as $key=>$group) {
 					if ($group["group_type"] == "course_list") { ?>

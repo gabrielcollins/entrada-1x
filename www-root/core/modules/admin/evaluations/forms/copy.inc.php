@@ -42,7 +42,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					WHERE a.`eform_id` = ".$db->qstr($FORM_ID)."
 					AND a.`form_active` = '1'";
 		$form_record = $db->GetRow($query);
-		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), 'update')) {
+		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"], $form_record["organisation_id"], true), 'update')) {
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=edit&id=".$FORM_ID, "title" => limit_chars($form_record["form_title"], 32));
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=copy&id=".$FORM_ID, "title" => "Copying Evaluation");
 

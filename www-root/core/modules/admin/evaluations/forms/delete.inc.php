@@ -50,7 +50,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 							WHERE a.`eform_id` = ".$db->qstr($eform_id)."
 							AND a.`form_active` = '1'";
 				$form_record = $db->GetRow($query);
-				if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), "delete")) {
+				if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"], $form_record["organisation_id"], true), "delete")) {
 					$eform_ids[$eform_id] = $form_record;
 				}
 			}

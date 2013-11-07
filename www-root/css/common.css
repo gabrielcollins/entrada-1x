@@ -4416,3 +4416,134 @@ a.help {
 .previous-notices {
 	margin-top:21px;
 }
+
+/*Style for eportfolio module*/
+.artifact-container h3 {
+	line-height: 17px;
+}
+
+.artifact-due-warning {
+	background: #f0f0f0;
+	border-bottom: 1px solid #dfdfdf;
+}
+
+.artifact-meta-warning {
+	color: #fe1e1e;
+	font-weight: bold;
+}
+
+.entries-list-title {
+	background: #cac9c9;
+	border-bottom: 1px solid #b6b5b5;
+	padding: 4px 10px;
+}
+
+/*
+Evaluation Question Browser CSS
+*/
+#evaluation-question-browser {
+	position:relative;
+	overflow:hidden;
+	/*padding-bottom: 35px;*/
+	max-height: 700px;
+	border: 1px solid #F0F0F0;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+}
+#evaluation-question-browser #evaluation-question-list {
+	float:left;
+	width:225px;
+	overflow-y:scroll;
+	overflow-x:hidden;
+	height:700px;
+}
+
+#evaluation-question-browser #evaluation-question-list ul {
+	list-style:none;
+	margin:0px;
+	padding:0px;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li {
+	position: relative;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li span {
+	margin-right:5px;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li span.green {
+	background: url('../images/marker-green.png') no-repeat;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li span.yellow {
+	background: url('../images/marker-yellow.png') no-repeat;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li span.red {
+	background: url('../images/marker-red.png') no-repeat;
+
+}
+
+#evaluation-question-browser #evaluation-question-list ul li a {
+	display:block;
+	padding:12px 10px;
+	white-space: nowrap;
+	width: 190px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+#evaluation-question-browser #evaluation-question-list ul li a.active {
+	background: #f9f9f9; /* Old browsers */
+	background: -moz-linear-gradient(top,  #f9f9f9 0%, #f2f2f2 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f9f9f9), color-stop(100%,#f2f2f2)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #f9f9f9 0%,#f2f2f2 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #f9f9f9 0%,#f2f2f2 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f9f9f9', endColorstr='#f2f2f2',GradientType=0 ); /* IE6-9 */
+	border-bottom: none;
+}
+
+#evaluation-question-browser #evaluation-question-list ul li a.active:hover {
+	/*color:#fff;*/
+}
+
+#evaluation-question-browser #evaluation-question-list ul li a:hover {
+	color: #036;
+}
+#evaluation-question-browser #evaluation-question-container {
+	border-left: 1px solid #f0f0f0;
+	height:700px;
+	overflow-y:auto;
+	overflow-x:hidden;
+	position:relative;
+	z-index:1;
+}
+#evaluation-question-browser #evaluation-question-details {
+	float:left;
+	width:413px;
+	height:600px;
+	padding:10px;
+}
+#evaluation-question-browser #evaluation-question-details h3 {
+	color:#545454;
+}
+#evaluation-question-browser #evaluation-question-details h1 {
+	margin-top:0px;
+}
+#evaluation-question-breadcrumb {
+	z-index:2;
+	padding:10px;
+}
+#evaluation-question-browser .event-container {
+	margin-bottom:15px;
+}
+#evaluation-question-browser .loading {
+	width:350px;
+	margin:auto;
+	color:#777;
+	text-align:center;
+	font-size:1.2em;
+}

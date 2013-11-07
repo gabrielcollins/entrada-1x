@@ -44,6 +44,10 @@ if(!defined("PARENT_INCLUDED")) {
 
 		if (isset($_GET["id"]) && ($tmp_input = clean_input($_GET["id"], array("nows", "int")))) {
 			$COURSE_ID = $tmp_input;
+			$query = "	SELECT * FROM `courses`
+						WHERE `course_id` = ".$db->qstr($COURSE_ID)."
+						AND `course_active` = '1'";
+			$course_details	= $db->GetRow($query);
 		} else {
 			$COURSE_ID = 0;
 		}
@@ -52,10 +56,22 @@ if(!defined("PARENT_INCLUDED")) {
 			$ASSIGNMENT_ID = $tmp_input;
 		} else {
 			$ASSIGNMENT_ID = 0;
-		}
-		if (!$ENTRADA_ACL->amIAllowed(new AssignmentResource($ASSIGNMENT_ID), "update")) {
+		}		
+		//Display this assignment if the user is a Dropbox Contact for an assignment associated with this assessment or if they are the Course Owner.
+		$query =  "	SELECT a.`course_id`, a.`assignment_id`, a.`assignment_title` 
+					FROM `assignments` a
+					JOIN `assignment_contacts`	b
+					ON a.`assignment_id` = b.`assignment_id`
+					WHERE a.`assignment_id` = " . $db->qstr($ASSIGNMENT_ID) . "
+					AND b.`proxy_id` = " . $db->qstr($ENTRADA_USER->getActiveId()) . "
+					AND a.`assignment_active` = 1";
+		$assignment_contact = $db->GetRow($query);		
+		if (!$assignment_contact && !$ENTRADA_ACL->amIAllowed(new CourseContentResource($course_details["course_id"], $course_details["organisation_id"]), "update")) {
+			$url = ENTRADA_URL."/admin/gradebook";
+			$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+			
 			$ERROR++;
-			$ERRORSTR[]	= "You do not have the permissions required to access this assignment.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+			$ERRORSTR[]	= "You do not have the permissions required to access this assignment.<br /><br />You will now be redirected to the <strong>Gradebook index</strong> page.  This will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 			echo display_error();
 

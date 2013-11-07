@@ -43,7 +43,7 @@ if (!defined("IN_EVALUATIONS")) {
 					WHERE a.`eform_id` = ".$db->qstr($FORM_ID)."
 					AND a.`form_active` = '1'";
 		$FORM_RECORD = $db->GetRow($query);
-		if ($FORM_RECORD && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($FORM_ID), "update")) {
+		if ($FORM_RECORD && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($FORM_ID, $FORM_RECORD["organisation_id"], true), "update")) {
 			define("IN_QUESTION", true);
 
 			$BREADCRUMB[] = array("url" => ENTRADA_URL."/admin/evaluations/forms?section=edit&amp;id=".$FORM_ID, "title" => limit_chars($FORM_RECORD["form_title"], 32));

@@ -115,6 +115,7 @@ function add_profile_sidebar () {
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/profile/observerships\">My Observerships</a></li>\n";
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/profile/gradebook\">My Gradebooks</a></li>\n";
 		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/profile/gradebook/assignments\">My Assignments</a></li>\n";
+		$sidebar_html .= "	<li class=\"link\"><a href=\"".ENTRADA_URL."/profile/eportfolio\">My ePortfolio</a></li>\n";
 	}
 	
 	$sidebar_html .= "</ul>";

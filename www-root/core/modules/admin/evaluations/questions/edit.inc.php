@@ -44,7 +44,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 	$query = "	SELECT * FROM `evaluations_lu_questions`
 				WHERE `equestion_id` = ".$db->qstr($QUESTION_ID);
 	$question_record = $db->GetRow($query);
-	if ($question_record && $ENTRADA_ACL->amIAllowed(new EvaluationQuestionResource($QUESTION_ID), "update")) {
+	if ($question_record && $ENTRADA_ACL->amIAllowed(new EvaluationQuestionResource($QUESTION_ID, $question_record["organisation_id"], true), "update")) {
 		$default_parent_id = (isset($question_record["question_parent_id"]) && $question_record["question_parent_id"] ? $question_record["question_parent_id"] : $QUESTION_ID);
 		$PROCESSED = $question_record;
 		

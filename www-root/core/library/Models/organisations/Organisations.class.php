@@ -45,7 +45,26 @@ class Organisations extends Collection {
 		$organisations = array();
 		if ($results) {
 			foreach ($results as $result) {
-				$organisation = new Organisation($result['organisation_id'],$result['organisation_title'],$result['organisation_address1'],$result['organisation_address2'],$result['organisation_city'],$result['organisation_province'],$result['organisation_country'],$result['organisation_postcode'],$result['organisation_telephone'],$result['organisation_fax'],$result['organisation_email'],$result['organisation_url'],$result['organisation_desc']);			
+				$organisation = new Organisation(
+									$result['organisation_id'],
+									$result['organisation_title'],
+									$result['organisation_address1'],
+									$result['organisation_address2'],
+									$result['organisation_city'],
+									$result['organisation_province'],
+									$result['organisation_country'],
+									$result['organisation_postcode'],
+									$result['organisation_telephone'],
+									$result['organisation_fax'],
+									$result['organisation_email'],
+									$result['organisation_url'],
+									$result['organisation_desc'],
+									$result['aamc_institution_id'],
+									$result['aamc_institution_name'],
+									$result['aamc_program_id'],
+									$result['aamc_program_name'],
+									$result['organisation_active']
+						);
 				$organisations[] = $organisation;
 			}
 		}

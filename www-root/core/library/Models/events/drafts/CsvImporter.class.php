@@ -85,7 +85,7 @@ class CsvImporter {
 		*/
 
 		$event_id				= ((isset($row[0]) ? clean_input($row[0], "int") : 0 ));
-		$parent_event			= ((isset($row[1]) ? clean_input($row[1], "int") : 0 ));
+		$parent_event			= ($row[1] === "1" ? "1" : ($row[1] === "0" ? "0" : NULL));
 		$term					= ((isset($row[2]) ? clean_input($row[2], array("trim","striptags")) : 0 ));
 		$course_code			= ((isset($row[3]) ? clean_input($row[3], array("trim","striptags")) : 0 ));
 		$course_name			= ((isset($row[4]) ? clean_input($row[4], array("trim","striptags")) : 0 ));
@@ -124,11 +124,13 @@ class CsvImporter {
 		$output[$event_id]["event_id"] = $event_id;
 
 		// check the parent_id column
-		if ($parent_event == 1) {
-			$output[$event_id]["parent_event"] = 0;
-			$this->last_parent = $event_id;
-		} else if ($parent_event == 0) {
-			$output[$event_id]["parent_event"] = $this->last_parent;
+		if (!is_null($parent_event)) {
+			if ($parent_event === 1) {
+				$output[$event_id]["parent_event"] = 0;
+				$this->last_parent = $event_id;
+			} else if ($parent_event === 0) {
+				$output[$event_id]["parent_event"] = $this->last_parent;
+			}
 		} else {
 			$err["errors"][] = "Parent ID field must be 1 or 0.";
 			$skip_row = true;

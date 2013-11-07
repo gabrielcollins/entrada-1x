@@ -42,7 +42,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_EVALUATIONS"))) {
 					WHERE a.`eform_id` = ".$db->qstr($FORM_ID)."
 					AND a.`form_active` = '0'";
 		$form_record = $db->GetRow($query);
-		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"]), "update")) {
+		if ($form_record && $ENTRADA_ACL->amIAllowed(new EvaluationFormResource($form_record["eform_id"], $form_record["organisation_id"], true), "update")) {
 			if ($db->AutoExecute("evaluation_forms", array("form_active" => 1), "UPDATE", "`eform_id` = ".$FORM_ID)) {
 				$url = ENTRADA_URL."/admin/evaluations/forms";
 				$SUCCESS++;

@@ -765,10 +765,10 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 							*/
 							function fetchOptions(select, selected_options) {
 								jQuery.ajax({
-									url: "<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments/?section=add",
+									url: "<?php echo ENTRADA_URL; ?>/admin/gradebook/assessments/?section=add&id=" + <?php echo $COURSE_ID; ?>,
 									data: "mode=ajax&method=fetch-extended-options&type=" + select.val(),
 									type: "POST",
-									success: function(data) {
+									success: function(data) {																				
 										if (data.length > 0) {
 											jQuery("#assessment_options .options").append(data);
 											

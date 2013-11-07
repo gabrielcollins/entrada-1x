@@ -58,7 +58,7 @@ $query = "SELECT *, '0' AS `event_id` FROM `evaluations` AS a
 			ON g.`evaluator_value` = h.`group_id`
 			AND h.`proxy_id` = f.`etype_id`
 			AND h.`member_active`
-			WHERE e.`event_finish` <= ".$db->qstr(time())."
+			WHERE e.`event_finish` <= ".$db->qstr(strtotime("+5 days"))."
 			AND e.`event_finish` >= ".$db->qstr(strtotime("-36 hours"))."
 			
 			
@@ -86,7 +86,7 @@ $query = "SELECT *, '0' AS `event_id` FROM `evaluations` AS a
 			ON g.`evaluator_value` = h.`cgroup_id`
 			AND h.`proxy_id` = f.`etype_id`
 			AND h.`active` = 1
-			WHERE e.`event_finish` <= ".$db->qstr(time())."
+			WHERE e.`event_finish` <= ".$db->qstr(strtotime("+5 days"))."
 			AND e.`event_finish` >= ".$db->qstr(strtotime("-36 hours"))."
 			
 			
@@ -111,7 +111,7 @@ $query = "SELECT *, '0' AS `event_id` FROM `evaluations` AS a
 			ON a.`evaluation_id` = g.`evaluation_id`
 			AND g.`evaluator_type` = 'proxy_id'
 			AND g.`evaluator_value` = f.`etype_id`
-			WHERE e.`event_finish` <= ".$db->qstr(time())."
+			WHERE e.`event_finish` <= ".$db->qstr(strtotime("+5 days"))."
 			AND e.`event_finish` >= ".$db->qstr(strtotime("-36 hours"));
 $new_evaluations = $db->GetAll($query);
 

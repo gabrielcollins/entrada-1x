@@ -54,6 +54,10 @@ if (!defined("IN_EVALUATIONS")) {
 			<a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=student-teacher-evaluations">Teacher Evaluations</a><br />
 			Reports showing the students' evaluation of their pre-clerkship teachers.
 		</li>
+		<li>
+			<a href="<?php echo ENTRADA_URL; ?>/admin/evaluations/reports?section=learner-evaluations">Learner Evaluations</a><br />
+			Reports showing the results of evaluations on the learners with a progress-over-time aspect for individual questions, or questions associated with Objectives.
+		</li>
 	<?php
 	}
 	?>

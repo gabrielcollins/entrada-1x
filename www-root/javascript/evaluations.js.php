@@ -1,5 +1,5 @@
 <script type="text/javascript">
-	function updateResponses(noResponses) {
+	function updateResponses(noResponses, questiontype_id) {
 		categories = {};
 		categories["evaluation_question_responses"] = {};
 		$$('input.response_text').each(function (i) {
@@ -10,8 +10,8 @@
 		new Ajax.Updater({ success: 'response_list' }, '<?php echo ENTRADA_URL; ?>/api/evaluations-question-response-list.api.php?responses='+noResponses, {
 			method: 'post',
 			parameters: {
-				response_text: JSON.stringify(categories)
-
+				response_text: JSON.stringify(categories),
+                questiontype: questiontype_id
 			},
 			onCreate: function () {
 				$('response_list').innerHTML = '<tr><td colspan="3">&nbsp;</td></tr><tr><td>&nbsp;</td><td colspan="3"><span class="content-small" style="align: center;">Loading... <img src="<?php echo ENTRADA_URL; ?>/images/indicator.gif" style="vertical-align: middle;" /></span></td></tr>';

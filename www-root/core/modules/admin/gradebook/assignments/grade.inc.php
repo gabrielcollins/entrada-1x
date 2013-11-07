@@ -670,7 +670,7 @@ if ((!defined("PARENT_INCLUDED")) || (!defined("IN_GRADEBOOK"))) {
 								modal: true,
 								buttons: {
 									'Delete': function() {
-										window.location = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-comment&id='+id+'&returnto=grade';
+										window.location = '<?php echo ENTRADA_URL."/profile/gradebook/assignments";?>?section=delete-comment&acomment_id='+id+'&returnto=grade';
 										return true;
 									},
 									Cancel: function() {

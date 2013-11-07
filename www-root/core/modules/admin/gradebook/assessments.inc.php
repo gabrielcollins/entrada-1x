@@ -61,8 +61,11 @@ if(!defined("PARENT_INCLUDED")) {
 		$organisation_id = $db->getOne($query);
 		
 		if (!$ENTRADA_ACL->amIAllowed(new CourseContentResource($COURSE_ID, $organisation_id), "update")) {
+			$url = ENTRADA_URL."/admin/gradebook";
+			$ONLOAD[] = "setTimeout('window.location=\\'".$url."\\'', 5000)";
+			
 			$ERROR++;
-			$ERRORSTR[]	= "You do not have the permissions required to access this assessment.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+			$ERRORSTR[]	= "You do not have the permissions required to access this assessment.<br /><br />You will now be redirected to the <strong>Gradebook index</strong> page.  This will happen <strong>automatically</strong> in 5 seconds or <a href=\"".$url."\" style=\"font-weight: bold\">click here</a> to continue.";
 
 			echo display_error();
 

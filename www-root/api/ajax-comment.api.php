@@ -91,7 +91,7 @@ if ((isset($_SESSION["isAuthorized"])) && ((bool) $_SESSION["isAuthorized"])) {
 							</div>
 							<div style="float: right">
 							<?php
-							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;id=".$PROCESSED["assignment_id"]."&amp;cid=".$COMMENT_ID."\">edit</a>)" : "");
+							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class=\"action\" href=\"".ENTRADA_URL."/profile/gradebook/assignments?section=edit-comment&amp;assignment_id=".$PROCESSED["assignment_id"]."&amp;cid=".$COMMENT_ID."\">edit</a>)" : "");
 							echo (($PROCESSED["proxy_id"] == $ENTRADA_USER->getID()) ? " (<a class= \"action delete\" id=\"delete_".$COMMENT_ID."\" href=\"#delete_".$COMMENT_ID."\">delete</a>)":"");
 							?>
 							</div>

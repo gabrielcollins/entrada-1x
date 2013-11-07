@@ -119,17 +119,19 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 			$results = $db->GetAll($query);
 			
 			if ($results) {
-				foreach ($results as $course) {
-					$syllabus = Models_Syllabus::fetchRowByCourseID($course["course_id"], 1);
+				foreach ($results as $result) {
+					$syllabus = Models_Syllabus::fetchRowByCourseID($result["course_id"], 1);
+					echo "\n---------------------------------------------------------------------\n";
+					echo "Starting syllabus generation for course: [".$result["course_code"]."-".$syllabus->getID()."]\n";
 					if (!is_null($syllabus->getID())) {
 
 						unset($pages_html);
-						$g_start = time();
-						$s_start = mktime(0, 0, 0, $syllabus->getStart());
-						$s_end	 = mktime(0, 0, 0, $syllabus->getFinish());
-
-						$start_string = date("F", $s_start)." 1, ".date("Y", time());
-						$end_string = date("F", $s_end)." ".date("t", $s_end).", ".date("Y", time());
+//						$g_start = time();
+//						$s_start = mktime(0, 0, 0, $syllabus->getStart());
+//						$s_end	 = mktime(0, 0, 0, $syllabus->getFinish());
+//
+//						$start_string = date("F", $s_start)." 1, ".date("Y", time());
+//						$end_string = date("F", $s_end)." ".date("t", $s_end).", ".date("Y", time());
 
 						$course = $syllabus->getCourse();
 						$course_contacts = $course->getContacts();
@@ -212,7 +214,7 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 							$pages_html["course_contacts"] = $contacts_html;
 						}
 
-						$events = $course->getEvents(strtotime($start_string), strtotime($end_string));
+						$events = $course->getEvents($syllabus->getStart(), $syllabus->getFinish());
 						$calendar_html = "";
 						if (is_array($events) && !empty($events)) {
 							foreach ($events as $event) {
@@ -222,7 +224,7 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 								$calendar_html .= "<p>".$event["event_description"]."</p>";
 
 								if ($event["objectives"]) {
-									$calendar_html .= "<p style=\"margin:0px 30px;\"><strong>Event Objectives:</strong> <em>" . html_encode(implode(", ", $event["objectives"]))."</em>";
+									$calendar_html .= "<p style=\"margin:0px 30px;\">Event Objectives: <em>" . html_encode(implode(", ", $event["objectives"]))."</em>";
 								}			
 
 								$calendar_html .= "</div>";
@@ -259,7 +261,7 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 											ON d.`eventtype_id` = c.`eventtype_id`
 											WHERE c.`eventtype_id` = ".$db->qstr($event_type["eventtype_id"])."
 											AND (a.`parent_id` IS NULL OR a.`parent_id` = 0)
-											AND (a.`event_start` BETWEEN ".$db->qstr(strtotime($start_string))." AND ".$db->qstr(strtotime($end_string)).")
+											AND (a.`event_start` BETWEEN ".$db->qstr($syllabus->getStart())." AND ".$db->qstr($syllabus->getFinish()).")
 											AND a.`course_id` = ".$db->qstr($course->getID())."
 											ORDER BY d.`eventtype_order` ASC, b.`course_name` ASC, a.`event_start` ASC";
 								$results = $db->GetAll($query);
@@ -289,13 +291,13 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 								$STATISTICS["legend"]		= array();
 								$STATISTICS["results"]		= array();
 
-								$eventtypes_html .= "<table class=\"table table-bordered table-striped\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n";
+								$eventtypes_html .= "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">";
 								$eventtypes_html .= "<thead>";
-								$eventtypes_html .= "\t<tr>\n";
-								$eventtypes_html .= "\t\t<th><strong>Event Type</strong></td>\n";
-								$eventtypes_html .= "\t\t<th><strong>Event Count</strong></td>\n";
-								$eventtypes_html .= "\t\t<th><strong>Hour Count</strong></td>\n";
-								$eventtypes_html .= "\t</tr>\n";		
+								$eventtypes_html .= "<tr>";
+								$eventtypes_html .= "<th style=\"text-align:left;\"><strong>Event Type</strong></td>";
+								$eventtypes_html .= "<th style=\"text-align:left;\"><strong>Event Count</strong></td>";
+								$eventtypes_html .= "<th style=\"text-align:left;\"><strong>Hour Count</strong></td>";
+								$eventtypes_html .= "</tr>";		
 								$eventtypes_html .= "</thead>";
 								$eventtypes_html .= "<tbody>";
 
@@ -319,90 +321,34 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 										$percent_duration = 0;
 									}
 
-									$eventtypes_html .= "\t<tr>\n";
-									$eventtypes_html .= "\t\t<td>".html_encode($eventtype_legend[$eventtype_id])."</td>\n";
-									$eventtypes_html .= "\t\t<td class=\"report-hours large\" style=\"text-align: left\">".$event["events"]." (~ ".$percent_events."%)</td>\n";
-									$eventtypes_html .= "\t\t<td class=\"report-hours large\" style=\"text-align: left\">".display_hours($event["duration"])." hrs (~ ".$percent_duration."%)</td>\n";
-									$eventtypes_html .= "\t</tr>\n";
+									$eventtypes_html .= "<tr>";
+									$eventtypes_html .= "<td>".html_encode($eventtype_legend[$eventtype_id])."</td>";
+									$eventtypes_html .= "<td class=\"report-hours large\" style=\"text-align: left\">".$event["events"]." (~ ".$percent_events."%)</td>";
+									$eventtypes_html .= "<td class=\"report-hours large\" style=\"text-align: left\">".display_hours($event["duration"])." hrs (~ ".$percent_duration."%)</td>";
+									$eventtypes_html .= "</tr>";
 								}
 								$eventtypes_html .= "</tbody>";
 								$eventtypes_html .= "<tfoot>";
-								$eventtypes_html .= "\t<tr>\n";
-								$eventtypes_html .= "\t\t<td><strong>Totals</strong></td>\n";
-								$eventtypes_html .= "\t\t<td><strong>".$result["total_events"]."</strong></td>\/n";
-								$eventtypes_html .= "\t\t<td><strong>".display_hours($result["total_duration"])." hrs</strong></td>\n";
-								$eventtypes_html .= "\t</tr>";
+								$eventtypes_html .= "<tr>";
+								$eventtypes_html .= "<td><strong>Totals</strong></td>";
+								$eventtypes_html .= "<td><strong>".$result["total_events"]."</strong></td>";
+								$eventtypes_html .= "<td><strong>".display_hours($result["total_duration"])." hrs</strong></td>";
+								$eventtypes_html .= "</tr>";
 								$eventtypes_html .= "</tfoot>";
 								$eventtypes_html .= "</table>";
 							}
 						}
 
-						$query = "	SELECT a.*,b.`objective_type`, b.`importance`
-									FROM `global_lu_objectives` a
-									JOIN `course_objectives` b
-									ON a.`objective_id` = b.`objective_id`
-									AND b.`course_id` = ".$db->qstr($course->getID())."
-									WHERE a.`objective_active` = '1'
-									GROUP BY a.`objective_id`
-									ORDER BY b.`importance` ASC";
-						$mapped_objectives = $db->GetAll($query);
-						$hierarchical_objectives = array();
-						$flat_objectives = array();
-						if ($mapped_objectives) {
-							foreach($mapped_objectives as $objective){
-								//this should be using id from language file, not hardcoded to 1
-								if($objective["objective_type"] == "course"){
-									$hierarchical_objectives[] = $objective;
-								}else{
-									$flat_objectives[] = $objective;
-								}
-							}
+						$ENTRADA_USER = new User();
+						$ENTRADA_USER->setActiveOrganisation($org_id);
+						list($objectives,$top_level_id) = courses_fetch_objectives($org_id, array($course->getID()), -1, 1, false);
+						$pages_html["course_objectives"] = course_objectives_in_list($objectives, $top_level_id, $top_level_id, false, false, 1, false);
+						if ($objectives) {
+							$pages_html["course_objectives"] = "<h1>Course Objectives</h1>" . $pages_html["course_objectives"];
+						} else {
+							unset($pages_html["course_objectives"]);
 						}
-
-						$levels = array(
-							"1" => "Primary",
-							"2" => "Secondary",
-							"3" => "Tertiary"
-						);
-						$course_objective_html = "";
-						if ($hierarchical_objectives) {
-							$level = 0;
-							$prev_level = 0;
-							foreach($hierarchical_objectives as $objective){
-								if ($level != $objective["importance"]) {
-									$prev_level = $level;
-									$level = $objective["importance"];
-									if ($prev_level >= 1) {
-										$course_objective_html .= "</ul>";
-									}
-									$course_objective_html .= "<h2>".$levels[$objective["importance"]]."</h2>";
-									$course_objective_html .= "<ul>";
-								}
-								$title = ($objective["objective_code"] ? $objective["objective_code"] . ': ' . $objective["objective_name"] : $objective["objective_name"]);
-								$course_objective_html .= "<li><strong>".$title."</strong><br /><small>".$objective["objective_description"]."</small></li>";
-							}
-						}
-						if ($flat_objectives) {
-							if ($hierarchical_objectives) {
-								$course_objective_html .= "</ul>";
-							}
-							$course_objective_html .= "<h2>Other Objectives</h2>";
-							$course_objective_html .= "<ul>";
-							foreach($flat_objectives as $objective){
-								$title = ($objective["objective_code"]?$objective["objective_code"].': '.$objective["objective_name"]:$objective["objective_name"]);
-								$course_objective_html .= "<li><strong>".$title."</strong><br /><small>".$objective["objective_description"]."</small></li>";
-							}
-							$course_objective_html .= "</ul>";
-						}
-
-						if (strlen($course_objective_html) > 0) {
-							$course_objective_html = "<h1>Course Objectives</h1>" . $course_objective_html;
-						}
-
-						if (is_null($pages_html["course_objectives"]) && in_array("%COURSE_OBJECTIVES%", $search_terms)) {
-							$pages_html["course_objectives"] = $course_objective_html;
-						}
-
+						
 						/* Gradebook */
 						$query =  "	SELECT a.`course_id`, a.`assessment_id`, a.`name`, a.`grade_weighting`, a.`order`, c.`title`
 									FROM `assessments` AS a
@@ -479,12 +425,15 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 						}
 
 						if (empty($pages_html["course_calendar"]) && in_array("%COURSE_CALENDAR%", $search_terms)) {
-							$pages_html["course_calendar"] .= "<div class=\"page ".($level == 1 ? "break" : "")."\">";
-							$pages_html["course_calendar"] .= "<h1>Course Calendar</h1>";
-							$pages_html["course_calendar"] .= $calendar_html;
-							$pages_html["course_calendar"] .= "</div>";
+							if ($calendar_html) {
+								$pages_html["course_calendar"] .= "<div class=\"page ".($level == 1 ? "break" : "")."\">";
+								$pages_html["course_calendar"] .= "<h1>Course Calendar</h1>";
+								$pages_html["course_calendar"] .= $calendar_html;
+								$pages_html["course_calendar"] .= "</div>";
+							}
 						}
-
+						
+						echo "pages_html is :" . count($pages_html)."\n";
 						$replacement_values = $pages_html;
 
 						if (file_exists(SYLLABUS_STORAGE."/syllabus-".$syllabus->getID().".html")) {
@@ -496,10 +445,10 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 						}
 
 						file_put_contents(SYLLABUS_STORAGE."/syllabus-".$syllabus->getID().".html", str_replace($search_terms, $replacement_values, $template));
-						$command = $APPLICATION_PATH["wkhtmltopdf"]." cover ".SYLLABUS_STORAGE."/cover-".$syllabus->getID().".html toc page ".SYLLABUS_STORAGE."/syllabus-".$syllabus->getID().".html --footer-left \"[section]\" --footer-right \"[page]\" ".SYLLABUS_STORAGE."/".$course->getCourseCode()."-syllabus-".date("Y")."-".date("n").".pdf";
+						$command = $APPLICATION_PATH["wkhtmltopdf"]." cover ".SYLLABUS_STORAGE."/cover-".$syllabus->getID().".html toc page ".SYLLABUS_STORAGE."/syllabus-".$syllabus->getID().".html --footer-left \"[section]\" --footer-right \"[page]\" ".SYLLABUS_STORAGE."/".clean_input($course->getCourseCode(), "alphanumeric")."-syllabus-".date("Y")."-".date("n").".pdf";
 						exec ($command);
 
-						application_log("success", "Generated syllabus: ".$course->getCourseCode(). " - " . $course->getCourseName() . " syllabus in ".(time() - $g_start)." seconds.");
+						application_log("success", "Generated syllabus: ".clean_input($course->getCourseCode(), "alphanumeric"). " - " . $course->getCourseName() . " syllabus in ".(time() - $g_start)." seconds.");
 					}
 
 					if (file_exists(CACHE_DIRECTORY."/generate_syllabi.lck")) {
@@ -509,6 +458,8 @@ if ((@is_dir(CACHE_DIRECTORY)) && (@is_writable(CACHE_DIRECTORY))) {
 							application_log("error", "Unable to delete syllabus generation lock file: ".CACHE_DIRECTORY."/generate_syllabi.lck");
 						}
 					}
+					echo "Syllabus generation for course: [".$result["course_code"]."] finished\n";
+					echo "---------------------------------------------------------------------\n\n";
 				}
 			} else {
 				application_log("notice", "No syllabi found, no syllabi generated.");

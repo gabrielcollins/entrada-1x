@@ -119,7 +119,7 @@ if (!defined("IN_EVALUATIONS")) {
 				echo "	<td class=\"date\"><a href=\"".$url."\" alt=\"".$result["evaluation_finish"]."\">".date(DEFAULT_DATE_FORMAT, $result["evaluation_finish"])."</a></td>\n";
 				echo "	<td class=\"date-smallest\"><a href=\"".$url."\">".html_encode($result["evaluation_type"])."</a></td>\n";
 				echo "	<td class=\"attachment\">\n";
-                if ($ENTRADA_ACL->amIAllowed(new EvaluationResource($result["evaluation_id"], true), 'update')) {
+                if ($ENTRADA_ACL->amIAllowed(new EvaluationResource($result["evaluation_id"], $result["organisation_id"], true), 'update')) {
                 echo "  <div class=\"btn-group\">\n";
                 echo "      <button class=\"btn btn-mini dropdown-toggle\" data-toggle=\"dropdown\">\n";
                 echo "          <i class=\"icon-cog\"></i>\n";

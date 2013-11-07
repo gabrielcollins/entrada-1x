@@ -31,8 +31,14 @@ if (isset($_GET["responses"]) && $_GET["responses"]) {
 	$responses = (int) $_GET["responses"];
 }
 
+if (isset($_POST["questiontype"]) && $_POST["questiontype"]) {
+	$questiontype = (int) $_POST["questiontype"];
+    $query = "SELECT `questiontype_shortname` FROM `evaluations_lu_questiontypes` WHERE `questiontype_id` = ".$db->qstr($questiontype);
+    $questiontype = $db->GetOne($query);
+}
+
 $question_data["responses_count"] = $responses;
 
-echo Models_Evaluation::getQuestionResponseList($question_data);
+echo Models_Evaluation::getQuestionResponseList($question_data, $questiontype);
 
 ?>

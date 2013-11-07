@@ -33,19 +33,17 @@ if (!defined("PARENT_INCLUDED")) {
 } elseif (!$ENTRADA_ACL->amIAllowed("regionaled", "read")) {
 	$ONLOAD[]	= "setTimeout('window.location=\\'".ENTRADA_URL."\\'', 15000)";
 
-	$ERROR++;
-	$ERRORSTR[]	= "Your account does not have the permissions required to use this module.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
+	$NOTICE++;
+	$NOTICESTR[]	= "You are not scheduled into any accommodations.<br /><br />If you believe you are receiving this message in error please contact <a href=\"mailto:".html_encode($AGENT_CONTACTS["administrator"]["email"])."\">".html_encode($AGENT_CONTACTS["administrator"]["name"])."</a> for assistance.";
 
-	echo display_error();
+	echo display_notice();
 
 	application_log("error", "Group [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["group"]."] and role [".$_SESSION["permissions"][$ENTRADA_USER->getAccessId()]["role"]."] do not have access to this module [".$MODULE."]");
 } else {
 	?>
 
 	<h1>Regional Accommodations</h1>
-	<div class="display-generic">
-		The <?php echo $APARTMENT_INFO["department_title"]; ?> Office has assigned you the following regional accommodations.
-	</div>
+	
 	<?php
 	$query = "	SELECT a.*, b.`apartment_title`, c.`region_name`, d.`id` AS `proxy_id`, d.`firstname`, d.`lastname`, IF(e.`group` = 'student', 'Clerk', 'Resident') AS `learner_type`
 				FROM `".CLERKSHIP_DATABASE."`.`apartment_schedule` AS a
@@ -58,11 +56,16 @@ if (!defined("PARENT_INCLUDED")) {
 				LEFT JOIN `".AUTH_DATABASE."`.`user_access` AS e
 				ON e.`user_id` = d.`id`
 				AND e.`app_id` = ".$db->qstr(AUTH_APP_ID)."
+				AND e.`organisation_id` = " . $db->qstr($ENTRADA_USER->getActiveOrganisation()) . "
 				WHERE a.`proxy_id` = ".$db->qstr($ENTRADA_USER->getID())."
 				ORDER BY a.`confirmed` ASC, a.`inhabiting_start` ASC";
+	
 	$results = $db->GetAll($query);
 	if ($results) {
 		?>
+		<div class="display-generic">
+			The <?php echo $APARTMENT_INFO["department_title"]; ?> Office has assigned you the following regional accommodations.
+		</div>
 		<table class="tableList" summary="List of accommodations been assigned to me by the Regional Education office.">
 			<colgroup>
 				<col class="modified" />
@@ -104,6 +107,7 @@ if (!defined("PARENT_INCLUDED")) {
 		<?php
 	} else {
 		$NOTICE++;
-		$NOTICESTR[] = "The " . $APARTMENT_INFO["department_title"] . " Office has not yet assigned you any accommodations.";
+		$NOTICESTR[] = "You have not been assigned any accommodations.";
+		echo display_notice();
 	}
 }
