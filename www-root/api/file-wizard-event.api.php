@@ -1,7 +1,7 @@
 <?php
 /**
  * Entrada [ http://www.entrada-project.org ]
- * 
+ *
  * Entrada is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,13 +17,13 @@
  *
  * Loads the Learning Event file wizard when a teacher / director wants to add /
  * edit a file on the Manage Events > Content page.
- * 
+ *
  * @author Organisation: Queen's University
  * @author Unit: School of Medicine
  * @author Developer: Matt Simpson <matt.simpson@queensu.ca>
  * @author Developer: James Ellis <james.ellis@queensu.ca>
  * @copyright Copyright 2010 Queen's University. All Rights Reserved.
- * 
+ *
 */
 
 @set_include_path(implode(PATH_SEPARATOR, array(
@@ -286,39 +286,39 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													if(!DEMO_MODE) {
 														if($db->AutoExecute("event_files", $PROCESSED, "UPDATE", "efile_id = ".$db->qstr($EFILE_ID)." AND event_id = ".$db->qstr($EVENT_ID))) {
 															last_updated("event", $EVENT_ID);
-	
+
 															if((@is_dir(FILE_STORAGE_PATH)) && (@is_writable(FILE_STORAGE_PATH))) {
 																if(@file_exists(FILE_STORAGE_PATH."/".$EFILE_ID)) {
 																	application_log("notice", "File ID [".$EFILE_ID."] already existed and was overwritten with newer file.");
 																}
-	
+
 																if(@move_uploaded_file($_FILES["filename"]["tmp_name"], FILE_STORAGE_PATH."/".$EFILE_ID)) {
 																	application_log("success", "File ID ".$EFILE_ID." was successfully added to the database and filesystem for event [".$EVENT_ID."].");
 																} else {
 																	$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 																	$ERROR++;
 																	$ERRORSTR[]		= "q5";
 																	$JS_INITSTEP	= 3;
-	
+
 																	application_log("error", "The move_uploaded_file function failed to move temporary file over to final location.");
 																}
 															} else {
 																$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 																$ERROR++;
 																$ERRORSTR[]		= "q5";
 																$JS_INITSTEP	= 3;
-	
+
 																application_log("error", "Either the FILE_STORAGE_PATH doesn't exist on the server or is not writable by PHP.");
 															}
 														} else {
 															$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 															$ERROR++;
 															$ERRORSTR[]		= "q5";
 															$JS_INITSTEP	= 3;
-	
+
 															application_log("error", "Unable to insert the file into the database for event ID [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());
 														}
 													} else {
@@ -411,7 +411,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 												<h3 class="border-below">File Wizard <span class="content-small space-left large"><strong>Editing</strong> <?php echo html_encode($PROCESSED["file_title"]); ?></span></h3>
 												<div id="body">
 													<h2>File Updated Successfully</h2>
-		
+
 													<div class="display-success">
 														<?php if(!DEMO_MODE) { ?>
 															You have successfully updated <strong><?php echo html_encode($PROCESSED["file_title"]); ?></strong> in this event.
@@ -420,7 +420,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 															You are in demo mode therefore <strong><?php echo html_encode($PROCESSED["file_title"]); ?></strong> as been replaced with our default demo file and linked to this event.
 														<?php } ?>
 													</div>
-		
+
 													To <strong>re-edit this file</strong> or <strong>close this window</strong> please use the buttons below.
 												</div>
 												<div id="footer">
@@ -468,7 +468,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 																?>
 															</div>
 														</div>
-	
+
 														<div id="q1b" class="wizard-question<?php echo ((in_array("q1b", $ERRORSTR)) ? " display-error" : ""); ?>">
 															<div style="font-size: 14px">How do you want people to view this file?</div>
 															<div style="padding-left: 65px">
@@ -476,7 +476,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 																<input type="radio" id="access_method_1" name="access_method" value="1" style="vertical-align: middle"<?php echo (((isset($PROCESSED["access_method"])) && ((int) $PROCESSED["access_method"])) ? " checked=\"checked\"" : ""); ?> /> <label for="access_method_1">Attempt to view it directly in the web-browser.</label><br />
 															</div>
 														</div>
-	
+
 														<div id="q2" class="wizard-question<?php echo ((in_array("q2", $ERRORSTR)) ? " display-error" : ""); ?>">
 															<div style="font-size: 14px">Should viewing this file be considered optional or required?</div>
 															<div style="padding-left: 65px">
@@ -484,7 +484,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 																<input type="radio" id="required_yes" name="required" value="yes"<?php echo (($PROCESSED["required"] == 1) ? " checked=\"checked\"" : ""); ?> /> <label for="required_yes">required</label><br />
 															</div>
 														</div>
-	
+
 														<div id="q3" class="wizard-question<?php echo ((in_array("q3", $ERRORSTR)) ? " display-error" : ""); ?>">
 															<div style="font-size: 14px">When should this resource be used by the learner?</div>
 															<div style="padding-left: 65px">
@@ -498,7 +498,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 															</div>
 														</div>
 													</div>
-	
+
 													<div id="step2" style="display: none">
 														<div id="q4" class="wizard-question<?php echo ((in_array("q4", $ERRORSTR)) ? " display-error" : ""); ?>">
 															<div style="font-size: 14px">Would you like to add timed release dates to this file?</div>
@@ -506,7 +506,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 																<input type="radio" id="timedrelease_no" name="timedrelease" value="no" onclick="timedRelease('none')"<?php echo ((((!isset($_POST["timedrelease"])) || ($_POST["timedrelease"] == "no")) && ((!isset($show_timed_release)) || (!$show_timed_release))) ? " checked=\"checked\"" : ""); ?> /> <label for="timedrelease_no">No, this file is accessible any time.</label><br />
 																<input type="radio" id="timedrelease_yes" name="timedrelease" value="yes" onclick="timedRelease('block')"<?php echo ((((isset($_POST["timedrelease"])) && ($_POST["timedrelease"] == "yes")) || ((isset($show_timed_release)) && ($show_timed_release))) ? " checked=\"checked\"" : ""); ?> /> <label for="timedrelease_yes">Yes, this file has timed release information.</label><br />
 															</div>
-	
+
 															<div id="timed-release-info" style="display: none">
 																<br />
 																By checking the box on the left, you will enable the ability to select release / revoke dates and times for this file.
@@ -522,7 +522,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 															</div>
 														</div>
 													</div>
-	
+
 													<div id="step3" style="display: none">
 														<div id="q5" class="wizard-question<?php echo ((in_array("q5", $ERRORSTR)) ? " display-error" : ""); ?>">
 															<div style="font-size: 14px">Would you like to replace the current file with a new one?</div>
@@ -617,7 +617,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 									$ERRORSTR[] = "q8";
 								}
 */
-								
+
 								/**
 								 * Step 3 Error Checking
 								 */
@@ -765,46 +765,46 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										if(!DEMO_MODE) {
 
 											// parse the file's contents so we can search it later
-											require_once('Entrada/FileToText.php');
+
 											$pathinfo = pathinfo($PROCESSED["file_name"]);
- 											$PROCESSED['file_contents'] = FileToText::decode($_FILES["filename"]["tmp_name"], $pathinfo['extension']);
- 											
+ 											$PROCESSED['file_contents'] = Entrada_FileToText::decode($_FILES["filename"]["tmp_name"], $pathinfo['extension']);
+
 
 											if(($db->AutoExecute("event_files", $PROCESSED, "INSERT")) && ($EFILE_ID = $db->Insert_Id())) {
 												last_updated("event", $EVENT_ID);
-	
+
 												if((@is_dir(FILE_STORAGE_PATH)) && (@is_writable(FILE_STORAGE_PATH))) {
 													if(@file_exists(FILE_STORAGE_PATH."/".$EFILE_ID)) {
 														application_log("notice", "File ID [".$EFILE_ID."] already existed and was overwritten with newer file.");
 													}
-	
+
 													if(@move_uploaded_file($_FILES["filename"]["tmp_name"], FILE_STORAGE_PATH."/".$EFILE_ID)) {
 														application_log("success", "File ID ".$EFILE_ID." was successfully added to the database and filesystem for event [".$EVENT_ID."].");
 													} else {
 														$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 														$ERROR++;
 														$ERRORSTR[]		= "q5";
 														$JS_INITSTEP	= 3;
-	
+
 														application_log("error", "The move_uploaded_file function failed to move temporary file over to final location.");
 													}
 												} else {
 													$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 													$ERROR++;
 													$ERRORSTR[]		= "q5";
 													$JS_INITSTEP	= 3;
-	
+
 													application_log("error", "Either the FILE_STORAGE_PATH doesn't exist on the server or is not writable by PHP.");
 												}
 											} else {
 												$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 												$ERROR++;
 												$ERRORSTR[]		= "q5";
 												$JS_INITSTEP	= 3;
-	
+
 												application_log("error", "Unable to insert the file into the database for event ID [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());
 											}
 										} else {
@@ -835,42 +835,42 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													$DEMO_FILE = DEMO_FILE;
 													break;
 											}
-											
+
 											if(($db->AutoExecute("event_files", $PROCESSED, "INSERT")) && ($EFILE_ID = $db->Insert_Id())) {
 												last_updated("event", $EVENT_ID);
-	
+
 												if((@is_dir(FILE_STORAGE_PATH)) && (@is_writable(FILE_STORAGE_PATH))) {
 													if(@file_exists(FILE_STORAGE_PATH."/".$EFILE_ID)) {
 														application_log("notice", "File ID [".$EFILE_ID."] already existed and was overwritten with newer file.");
 													}
-													
+
 													if(@copy($DEMO_FILE, FILE_STORAGE_PATH."/".$EFILE_ID)) {
 														application_log("success", "Success, however, since this is the Entrada demo site we do not allow uploading of files. Instead we've linked the information you just entered to a file that already exists on the demo server for demonstration purposes.");
 													} else {
 														$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 														$ERROR++;
 														$ERRORSTR[]		= "q5";
 														$JS_INITSTEP	= 3;
-	
+
 														application_log("error", "The move_uploaded_file function failed to move temporary file over to final location.");
 													}
 												} else {
 													$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 													$ERROR++;
 													$ERRORSTR[]		= "q5";
 													$JS_INITSTEP	= 3;
-	
+
 													application_log("error", "Either the FILE_STORAGE_PATH doesn't exist on the server or is not writable by PHP.");
 												}
 											} else {
 												$modal_onload[]		= "alert('The new file was not successfully saved. The MEdTech Unit has been informed of this error, please try again later.')";
-	
+
 												$ERROR++;
 												$ERRORSTR[]		= "q5";
 												$JS_INITSTEP	= 3;
-	
+
 												application_log("error", "Unable to insert the file into the database for event ID [".$EVENT_ID."]. Database said: ".$db->ErrorMsg());
 											}
 										}
@@ -897,7 +897,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 										<h3 class="border-below">File Wizard <span class="content-small space-left large"><strong>Adding</strong> new event file</span></h3>
 										<div id="body">
 											<h2>File Added Successfully</h2>
-		
+
 											<div class="display-success">
 												<?php if(!DEMO_MODE) { ?>
 													You have successfully added <strong><?php echo html_encode($PROCESSED["file_title"]); ?></strong> to this event.
@@ -906,7 +906,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													You are in demo mode therefore <strong><?php echo html_encode($PROCESSED["file_title"]); ?></strong> as been replaced with our default demo file and linked to this event.
 												<?php } ?>
 											</div>
-		
+
 											To <strong>add another file</strong> or <strong>close this window</strong> please use the buttons below.
 										</div>
 										<div id="footer">
@@ -954,7 +954,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 														?>
 													</div>
 												</div>
-	
+
 												<div id="q1b" class="wizard-question<?php echo ((in_array("q1b", $ERRORSTR)) ? " display-error" : ""); ?>">
 													<div style="font-size: 14px">How do you want people to view this file?</div>
 													<div style="padding-left: 65px">
@@ -962,7 +962,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 														<input type="radio" id="access_method_1" name="access_method" value="1" style="vertical-align: middle"<?php echo (((isset($PROCESSED["access_method"])) && ((int) $PROCESSED["access_method"])) ? " checked=\"checked\"" : ""); ?> /> <label for="access_method_1">Attempt to view it directly in the web-browser.</label><br />
 													</div>
 												</div>
-	
+
 												<div id="q2" class="wizard-question<?php echo ((in_array("q2", $ERRORSTR)) ? " display-error" : ""); ?>">
 													<div style="font-size: 14px">Should viewing this file be considered optional or required?</div>
 													<div style="padding-left: 65px">
@@ -970,7 +970,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 														<input type="radio" id="required_yes" name="required" value="yes"<?php echo (($PROCESSED["required"] == 1) ? " checked=\"checked\"" : ""); ?> /> <label for="required_yes">required</label><br />
 													</div>
 												</div>
-	
+
 												<div id="q3" class="wizard-question<?php echo ((in_array("q3", $ERRORSTR)) ? " display-error" : ""); ?>">
 													<div style="font-size: 14px">When should this resource be used by the learner?</div>
 													<div style="padding-left: 65px">
@@ -984,7 +984,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													</div>
 												</div>
 											</div>
-	
+
 											<div id="step2" style="display: none">
 												<div id="q4" class="wizard-question<?php echo ((in_array("q4", $ERRORSTR)) ? " display-error" : ""); ?>">
 													<div style="font-size: 14px">Would you like to add timed release dates to this file?</div>
@@ -992,7 +992,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 														<input type="radio" id="timedrelease_no" name="timedrelease" value="no" onclick="timedRelease('none')"<?php echo (((!isset($_POST["timedrelease"])) || ($_POST["timedrelease"] == "no")) ? " checked=\"checked\"" : ""); ?> /> <label for="timedrelease_no">No, this file is accessible any time.</label><br />
 														<input type="radio" id="timedrelease_yes" name="timedrelease" value="yes" onclick="timedRelease('block')"<?php echo (((isset($_POST["timedrelease"])) && ($_POST["timedrelease"] == "yes")) ? " checked=\"checked\"" : ""); ?> /> <label for="timedrelease_yes">Yes, this file has timed release information.</label><br />
 													</div>
-	
+
 													<div id="timed-release-info" style="display: none">
 														<br />
 														By checking the box on the left, you will enable the ability to select release / revoke dates and times for this file.
@@ -1008,7 +1008,7 @@ if((!isset($_SESSION["isAuthorized"])) || (!$_SESSION["isAuthorized"])) {
 													</div>
 												</div>
 											</div>
-	
+
 											<div id="step3" style="display: none">
 												<div id="q5" class="wizard-question<?php echo ((in_array("q5", $ERRORSTR)) ? " display-error" : ""); ?>">
 													<div style="font-size: 14px">Please select the file to upload from your computer:</div>

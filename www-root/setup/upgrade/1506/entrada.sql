@@ -13,7 +13,3 @@ CREATE TABLE IF NOT EXISTS `assessment_option_values` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 UPDATE `settings` SET `value` = '1506' WHERE `shortname` = 'version_db';
-
-ALTER TABLE `event_files` ADD COLUMN `event_contents` longtext DEFAULT NULL AFTER `file_notes`;
-
-CREATE FULLTEXT INDEX `event_contents` ON `event_files` (`event_contents`);

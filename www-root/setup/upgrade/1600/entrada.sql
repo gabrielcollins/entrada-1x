@@ -47,5 +47,11 @@ CREATE TABLE IF NOT EXISTS `course_lti_consumers` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+ALTER TABLE `event_files` ADD COLUMN `event_contents` longtext DEFAULT NULL AFTER `file_notes`;
+
+CREATE FULLTEXT INDEX `event_contents` ON `event_files` (`event_contents`);
+
+ALTER TABLE `curriculum_periods` ADD COLUMN `curriculum_period_title` VARCHAR(200) NOT NULL DEFAULT '' AFTER `curriculum_type_id`;
+
 UPDATE `settings` SET `value` = '1600' WHERE `shortname` = 'version_db';
 UPDATE `settings` SET `value` = '1.6.0' WHERE `shortname` = 'version_entrada';
